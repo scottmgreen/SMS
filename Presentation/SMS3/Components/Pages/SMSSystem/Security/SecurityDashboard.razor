@@ -1,4 +1,4 @@
-@page "/SMSSystem/Security/SecurityDashboard"
+﻿@page "/SMSSystem/Security/SecurityDashboard"
 @using SMS_Application.Services
 @using SMS3.Components.Shared
 @inject ICurrentUserService _currentUserService
@@ -176,21 +176,3 @@
 }
 </style>
 
-@code {
-    private SecurityStats? _securityStats;
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            _securityStats = SecurityMonitoring.GetSecurityStats();
-            Logger.LogInformation("Security dashboard loaded - SQL: {SqlAttempts}, XSS: {XssAttempts}", 
-                _securityStats.SqlInjectionAttempts24h, _securityStats.XssAttempts24h);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error loading security dashboard");
-            _securityStats = new SecurityStats(); // Empty stats
-        }
-    }
-}

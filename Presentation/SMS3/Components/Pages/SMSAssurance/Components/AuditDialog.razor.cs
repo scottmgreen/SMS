@@ -1,7 +1,14 @@
-using SMS_Domain.Enums;
+﻿using SMS_Domain.Enums;
 using SMS3.Components.Shared.UIHelpers;
 using Radzen;
 using SMS_Domain.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
+using Radzen.Blazor;
 
 namespace SMS3.Components.Pages.SMSAssurance.Components;
 
@@ -354,6 +361,9 @@ public partial class AuditDialog : ComponentBase
 
     private bool _showActualDates => _status == "In Progress" || _status == "Completed";
     #endregion
+
+// Component logic is in the code-behind file
 }
+
 
 

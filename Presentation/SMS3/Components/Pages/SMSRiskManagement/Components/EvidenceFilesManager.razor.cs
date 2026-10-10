@@ -1,9 +1,24 @@
-
+﻿
 using Microsoft.JSInterop;
 
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Application.Queries;
+using SMS_Application.Commands;
+using SMS_Application.Interfaces;
+using SMS_Shared.Common;
+using Radzen;
+using Radzen.Blazor;
+using SMS3.Components.Pages.SMSRiskManagement.Components;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
@@ -405,4 +420,20 @@ public partial class EvidenceFilesManager : ComponentBase
         return $"{fileName}";
     }
     #endregion
+
+private string FormatFileSize(long bytes)
+    {
+        const int scale = 1024;
+        string[] orders = { "GB", "MB", "KB", "Bytes" };
+        long max = (long)Math.Pow(scale, orders.Length - 1);
+
+        foreach (string order in orders)
+        {
+            if (bytes > max)
+                return $"{decimal.Divide(bytes, max):##.##} {order}";
+            max /= scale;
+        }
+        return "0 Bytes";
+    }
 }
+

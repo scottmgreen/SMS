@@ -1,4 +1,4 @@
-@using SMS_Domain.ValueObjects
+﻿@using SMS_Domain.ValueObjects
 
 <RadzenCard class="event-details-dialog">
     <RadzenRow>
@@ -89,10 +89,7 @@
     </RadzenRow>
 </RadzenCard>
 
-@code {
-    [Parameter] public QueuedEvent Event { get; set; } = null!;
-    [Inject] private DialogService DialogService { get; set; } = null!;
-}
+
 
 <style>
     .event-details-dialog {
@@ -131,3 +128,4 @@
         border-color: #f5c6cb;
     }
 </style>
+

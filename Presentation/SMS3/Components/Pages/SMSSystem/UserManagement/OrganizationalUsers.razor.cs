@@ -492,10 +492,10 @@ public partial class OrganizationalUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Organizational user '{_newFirstName} {_newLastName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
-            await (_usersGrid?.Reload() ?? Task.CompletedTask);
+                await (_usersGrid?.Reload() ?? Task.CompletedTask);
+                await ShowSuccessAsyncNotification($"Organizational user '{_newFirstName} {_newLastName}' created successfully.");
             }
             else
             {

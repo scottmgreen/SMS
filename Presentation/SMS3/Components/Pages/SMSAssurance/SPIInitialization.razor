@@ -1,4 +1,4 @@
-@page "/SMSAssurance/SPIInitialization"
+﻿@page "/SMSAssurance/SPIInitialization"
 @using SMS3.Components.Shared
 @using Radzen.Blazor
 <PageTitle>SPI Initialization - SMS3</PageTitle>
@@ -31,10 +31,10 @@
             <RadzenAlert AlertStyle="AlertStyle.Info" Icon="info" Style="margin-bottom: 1.5rem;">
                 <RadzenText TextStyle="TextStyle.Body2">
                     <strong>Note:</strong> These SPIs will be automatically populated with data from:
-                    <br />� External Reporting submissions (Hazard Report Rate)
-                    <br />� Risk Assessment completions (Completion Rate, High Risk Exposure)
-                    <br />� Mitigation activities (Implementation Rate, Closure Rate)
-                    <br />� Hazard closure events (Average Closure Time)
+                    <br />ï¿½ External Reporting submissions (Hazard Report Rate)
+                    <br />ï¿½ Risk Assessment completions (Completion Rate, High Risk Exposure)
+                    <br />ï¿½ Mitigation activities (Implementation Rate, Closure Rate)
+                    <br />ï¿½ Hazard closure events (Average Closure Time)
                 </RadzenText>
             </RadzenAlert>
 
@@ -83,53 +83,3 @@
     </div>
 </RadzenCard>
 
-@code {
-    private List<string> GetDefaultSPIList()
-    {
-        return new List<string>
-        {
-            "Hazard Report Rate - Daily count of hazard submissions (automated)",
-            "Risk Assessment Completion Rate - Percentage completed on time (automated)",
-            "Mitigation Implementation Rate - Effectiveness score based on timing (automated)",
-            "Corrective Action Closure Rate - Percentage closed on time (automated)",
-            "High Risk Exposure Count - Daily count of critical/high risks (automated)",
-            "Average Hazard Closure Time - Days from submission to closure (automated)"
-        };
-    }
-
-    private AlertStyle GetAlertStyle()
-    {
-        if (StatusMessage.StartsWith("?"))
-            return AlertStyle.Success;
-        else if (StatusMessage.StartsWith("?") || StatusMessage.StartsWith("??"))
-            return AlertStyle.Danger;
-        else
-            return AlertStyle.Info;
-    }
-
-    private string GetAlertIcon()
-    {
-        if (StatusMessage.StartsWith("?"))
-            return "check_circle";
-        else if (StatusMessage.StartsWith("?") || StatusMessage.StartsWith("??"))
-            return "error";
-        else
-            return "info";
-    }
-
-    private string GetButtonText()
-    {
-        if (IsInitializing)
-            return "Initializing...";
-        else
-            return "Initialize Default SPIs";
-    }
-
-    private string GetButtonIcon()
-    {
-        if (IsInitializing)
-            return "hourglass_empty";
-        else
-            return "play_circle_filled";
-    }
-}

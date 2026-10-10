@@ -1,4 +1,12 @@
-﻿//-----------------------------------------------------------------------
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
+using SMS3.Components.Shared;
+using Radzen.Blazor;
+//-----------------------------------------------------------------------
 // <copyright file="SPIInitialization.razor.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -80,4 +88,54 @@ public partial class SPIInitialization : ComponentBase
     {
         _navigation.NavigateTo("/SMSAssurance/SPIDashboard");
     }
+
+private List<string> GetDefaultSPIList()
+    {
+        return new List<string>
+        {
+            "Hazard Report Rate - Daily count of hazard submissions (automated)",
+            "Risk Assessment Completion Rate - Percentage completed on time (automated)",
+            "Mitigation Implementation Rate - Effectiveness score based on timing (automated)",
+            "Corrective Action Closure Rate - Percentage closed on time (automated)",
+            "High Risk Exposure Count - Daily count of critical/high risks (automated)",
+            "Average Hazard Closure Time - Days from submission to closure (automated)"
+        };
+    }
+
+    private AlertStyle GetAlertStyle()
+    {
+        if (StatusMessage.StartsWith("?"))
+            return AlertStyle.Success;
+        else if (StatusMessage.StartsWith("?") || StatusMessage.StartsWith("??"))
+            return AlertStyle.Danger;
+        else
+            return AlertStyle.Info;
+    }
+
+    private string GetAlertIcon()
+    {
+        if (StatusMessage.StartsWith("?"))
+            return "check_circle";
+        else if (StatusMessage.StartsWith("?") || StatusMessage.StartsWith("??"))
+            return "error";
+        else
+            return "info";
+    }
+
+    private string GetButtonText()
+    {
+        if (IsInitializing)
+            return "Initializing...";
+        else
+            return "Initialize Default SPIs";
+    }
+
+    private string GetButtonIcon()
+    {
+        if (IsInitializing)
+            return "hourglass_empty";
+        else
+            return "play_circle_filled";
+    }
 }
+

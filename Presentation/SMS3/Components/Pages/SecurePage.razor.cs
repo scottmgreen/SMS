@@ -1,0 +1,178 @@
+﻿using SMS3.Security;
+using global::System.Reflection;
+using Microsoft.AspNetCore.Components;
+
+namespace SMS3.Components.Pages;
+
+public partial class SecurePage
+{
+    [Parameter] public string EncryptedUrl { get; set; } = "";
+
+    private Type? ComponentToRender;
+    private Dictionary<string, object>? ComponentParameters;
+    private bool IsLoading = true;
+    private string _lastEncryptedUrl = "";
+
+    protected override void OnParametersSet()
+    {
+        if (EncryptedUrl != _lastEncryptedUrl)
+        {
+            _lastEncryptedUrl = EncryptedUrl;
+            ResolveComponent();
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ResolveComponent()
+    {
+        try
+        {
+            // Decrypt the complete URL
+            var decryptedUrl = SecureRoutingService.DecryptRouteParameter(EncryptedUrl);
+
+            if (string.IsNullOrEmpty(decryptedUrl) || decryptedUrl == EncryptedUrl)
+                return;
+
+            // Parse the decrypted URL
+            var uri = new Uri($"https://localhost{decryptedUrl}");
+            var path = uri.AbsolutePath;
+
+            // ?? DYNAMIC COMPONENT DISCOVERY - No hardcoded mappings!
+            var componentInfo = FindComponentByPageAttributeWithParameters(path);
+            ComponentToRender = componentInfo.ComponentType;
+
+            if (componentInfo.RouteParameters?.Any() == true)
+            {
+                ComponentParameters = new Dictionary<string, object>(componentInfo.RouteParameters);
+            }
+            else
+            {
+                ComponentParameters = new Dictionary<string, object>();
+            }
+
+            // Extract parameters from query string and add to existing parameters
+            if (!string.IsNullOrEmpty(uri.Query))
+            {
+                var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
+                foreach (var param in queryParams)
+                {
+                    var value = param.Value.FirstOrDefault();
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        continue;
+                    }
+
+                    var parameterName = ComponentToRender?
+                        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                        .FirstOrDefault(p => p.Name.Equals(param.Key, StringComparison.OrdinalIgnoreCase))
+                        ?.Name ?? param.Key;
+
+                    ComponentParameters[parameterName] = value;
+                }
+            }
+        }
+        catch (Exception)
+        {
+            ComponentToRender = null;
+            ComponentParameters = null;
+        }
+    }
+
+    /// <summary>
+    /// Dynamically find component by reading @page attributes and extract route parameters
+    /// </summary>
+    private (Type? ComponentType, Dictionary<string, object>? RouteParameters) FindComponentByPageAttributeWithParameters(string requestedPath)
+    {
+        try
+        {
+            // Get all component types that inherit from ComponentBase
+            var assembly = Assembly.GetExecutingAssembly();
+            var componentTypes = assembly.GetTypes()
+                .Where(t => typeof(ComponentBase).IsAssignableFrom(t) &&
+                           !t.IsAbstract &&
+                           t.Namespace?.Contains("Components.Pages") == true)
+                .ToList();
+
+            // Check each component for matching @page attributes
+            foreach (var componentType in componentTypes)
+            {
+                var routeAttributes = componentType.GetCustomAttributes<RouteAttribute>(false);
+
+                foreach (var routeAttribute in routeAttributes)
+                {
+                    var routeTemplate = routeAttribute.Template;
+
+                    // Simple exact match first
+                    if (string.Equals(routeTemplate, requestedPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return (componentType, null);
+                    }
+
+                    // Handle parameterized routes and extract parameters
+                    var routeParams = ExtractRouteParameters(routeTemplate, requestedPath);
+                    if (routeParams != null)
+                    {
+                        return (componentType, routeParams);
+                    }
+                }
+            }
+
+            return (null, null);
+        }
+        catch (Exception)
+        {
+            return (null, null);
+        }
+    }
+
+    /// <summary>
+    /// Extract route parameters from a parameterized route
+    /// </summary>
+    private Dictionary<string, object>? ExtractRouteParameters(string routeTemplate, string requestedPath)
+    {
+        try
+        {
+            var templateParts = routeTemplate.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            var pathParts = requestedPath.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+            if (templateParts.Length != pathParts.Length)
+                return null;
+
+            var parameters = new Dictionary<string, object>();
+            bool hasParameters = false;
+
+            for (int i = 0; i < templateParts.Length; i++)
+            {
+                var templatePart = templateParts[i];
+                var pathPart = pathParts[i];
+
+                // If template part is a parameter (starts with {), extract the value
+                if (templatePart.StartsWith("{") && templatePart.EndsWith("}"))
+                {
+                    var paramName = templatePart.Trim('{', '}');
+                    parameters[paramName] = pathPart;
+                    hasParameters = true;
+                }
+                // Otherwise, must be exact match
+                else if (!string.Equals(templatePart, pathPart, StringComparison.OrdinalIgnoreCase))
+                {
+                    return null;
+                }
+            }
+
+            return hasParameters ? parameters : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void GoHome()
+    {
+        Navigation.NavigateTo("/");
+    }
+}
+

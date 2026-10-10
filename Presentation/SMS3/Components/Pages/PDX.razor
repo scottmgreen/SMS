@@ -234,39 +234,3 @@
        ============================================================================= */
 </style>
 
-@code {
-    private bool IsProcessing { get; set; } = false;
-    
-    protected override void OnInitialized()
-    {
-        Logger.LogInformation("PDX disclaimer page initialized");
-    }
-
-    /// <summary>
-    /// Handle terms acceptance and proceed to login
-    /// </summary>
-    private async Task ProceedToLogin()
-    {
-        try
-        {
-            IsProcessing = true;
-            
-            Logger.LogInformation("✅ User accepted PDX terms, proceeding to login");
-            
-            // Simulate processing delay for better UX
-            await Task.Delay(500);
-            
-            // Navigate directly to login page - 2FA will be handled there if enabled
-            Navigation.NavigateToSecure("/login");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error proceeding to login from PDX terms");
-        }
-        finally
-        {
-            IsProcessing = false;
-            StateHasChanged();
-        }
-    }
-}

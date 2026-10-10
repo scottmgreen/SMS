@@ -197,8 +197,8 @@ public partial class Login : ComponentBase
         await TryRunDailyMitigationTargetDateScanAsync();
         await TryRunDailyReportStatusEscalationScanAsync();
 
-        // Navigate to default page /SMSRiskManagement/ReportProcessing
-        Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing", forceLoad: false);
+        // Navigate to default page using secure route obfuscation
+        Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing", forceLoad: false);
     }
 
     private string BuildCurrentSessionKey()

@@ -1,4 +1,4 @@
-@page "/Help"
+﻿@page "/Help"
 @using Radzen
 @using Radzen.Blazor
 @using SMS3.Components.Shared
@@ -202,16 +202,7 @@
     </RadzenCard>
 </div>
 
-@code {
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
 
-    private void ContactSupport()
-    {
-            NotificationHelper.ShowInfoAsync("Support Contact: sms-support@pdx.com or call (503) 555-SMS3 (7673)", 8000);
-    }
-}
 
 <style>
     .help-page-container {
@@ -276,3 +267,4 @@
         }
     }
 </style>
+

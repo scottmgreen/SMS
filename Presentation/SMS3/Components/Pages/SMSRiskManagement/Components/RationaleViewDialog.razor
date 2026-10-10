@@ -1,12 +1,6 @@
-<ScoreRationale IsReadOnly="true"
+﻿<ScoreRationale IsReadOnly="true"
                 HazardCode="@HazardCode"
                 MatrixCode="@MatrixCode"
                 Rationale="@Rationale"
                 OnClose="@OnClose" />
 
-@code {
-    [Parameter] public string HazardCode { get; set; } = string.Empty;
-    [Parameter] public string MatrixCode { get; set; } = string.Empty;
-    [Parameter] public string Rationale { get; set; } = string.Empty;
-    [Parameter] public EventCallback OnClose { get; set; }
-}

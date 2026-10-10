@@ -1,4 +1,4 @@
-@using SMS_Domain.Entities
+﻿@using SMS_Domain.Entities
 @using SMS_Domain.Enums
 @using Radzen
 @using Radzen.Blazor
@@ -98,22 +98,22 @@
                             <RadzenStack Gap="0.5rem">
                                 <RadzenText TextStyle="TextStyle.Subtitle2" Text="Severity Scale:" Style="margin: 0;" />
                                 <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                    � <strong>5 - Catastrophic:</strong> Multiple fatalities, total loss<br />
-                                    � <strong>4 - Major:</strong> Single fatality, major damage<br />
-                                    � <strong>3 - Serious:</strong> Serious injury, significant damage<br />
-                                    � <strong>2 - Moderate:</strong> Minor injury, minor damage<br />
-                                    � <strong>1 - Minor:</strong> No injury, negligible damage
+                                    ï¿½ <strong>5 - Catastrophic:</strong> Multiple fatalities, total loss<br />
+                                    ï¿½ <strong>4 - Major:</strong> Single fatality, major damage<br />
+                                    ï¿½ <strong>3 - Serious:</strong> Serious injury, significant damage<br />
+                                    ï¿½ <strong>2 - Moderate:</strong> Minor injury, minor damage<br />
+                                    ï¿½ <strong>1 - Minor:</strong> No injury, negligible damage
                                 </RadzenText>
                             </RadzenStack>
 
                             <RadzenStack Gap="0.5rem">
                                 <RadzenText TextStyle="TextStyle.Subtitle2" Text="Likelihood Scale:" Style="margin: 0;" />
                                 <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                    � <strong>5 - Frequent:</strong> Will occur repeatedly<br />
-                                    � <strong>4 - Likely:</strong> Will occur several times<br />
-                                    � <strong>3 - Possible:</strong> Will occur sometimes<br />
-                                    � <strong>2 - Unlikely:</strong> Will occur rarely<br />
-                                    � <strong>1 - Rare:</strong> Will occur very rarely
+                                    ï¿½ <strong>5 - Frequent:</strong> Will occur repeatedly<br />
+                                    ï¿½ <strong>4 - Likely:</strong> Will occur several times<br />
+                                    ï¿½ <strong>3 - Possible:</strong> Will occur sometimes<br />
+                                    ï¿½ <strong>2 - Unlikely:</strong> Will occur rarely<br />
+                                    ï¿½ <strong>1 - Rare:</strong> Will occur very rarely
                                 </RadzenText>
                             </RadzenStack>
                         </RadzenStack>
@@ -148,23 +148,3 @@
     </RadzenStack>
 </RadzenCard>
 
-@code {
-    [Parameter] public int StepNumber { get; set; } = 1;
-
-    private bool isExpanded = false;
-
-    private string GetGuidanceTitle()
-    {
-        var stage = StepNumber switch
-        {
-            1 => RiskAssessmentStage.DescribingSystem,
-            2 => RiskAssessmentStage.IdentifyingHazards,
-            3 => RiskAssessmentStage.AnalyzingRisk,
-            4 => RiskAssessmentStage.AssessingRisk,
-            5 => RiskAssessmentStage.MitigatingRisk,
-            _ => RiskAssessmentStage.DescribingSystem
-        };
-
-        return $"{stage.Name} Guidance";
-    }
-}

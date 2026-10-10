@@ -1,5 +1,18 @@
-using SMS3.Components.Shared.UIHelpers;
+﻿using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
+using Radzen;
+using Radzen.Blazor;
+using SMS3.Components.Shared;
+using SMS_Application.Queries;
+using SMS_Application.Commands;
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
 using SMS_Domain.Entities; // Add explicit domain entities
 
 namespace SMS3.Components.Pages.SMSAssurance;
@@ -500,5 +513,8 @@ public partial class SPIDashboard : ComponentBase, SMS3.Components.Shared.ISPIDa
         }
     }
     #endregion
+
+// Component state and data binding will be in the code-behind file
 }
+
 

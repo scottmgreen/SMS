@@ -1,4 +1,4 @@
-@using Radzen
+﻿@using Radzen
 @using Radzen.Blazor
 @using SMS_Application.Commands
 @using SMS_Domain.Entities
@@ -179,42 +179,3 @@
     }
 </style>
 
-@code {
-    private RadzenTemplateForm<FindingViewModel>? findingForm;
-    private readonly Variant variant = Variant.Outlined;
-
-    public class FindingViewModel
-    {
-        public string Code { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string Severity { get; set; } = "Minor";
-        public string Category { get; set; } = "Process";
-        public string Status { get; set; } = "Open";
-        public DateTime DiscoveredDate { get; set; } = DateTime.Today;
-        public DateTime? TargetResolutionDate { get; set; }
-        public DateTime? ActualResolutionDate { get; set; }
-        public string? ResponsiblePerson { get; set; }
-        public string? CorrectiveAction { get; set; }
-        public string? RootCauseAnalysis { get; set; }
-        public bool VerificationRequired { get; set; } = false;
-        public string? VerifiedBy { get; set; }
-        public DateTime? VerificationDate { get; set; }
-        public string? Notes { get; set; }
-    }
-
-    public List<string> SeverityOptions { get; } = new()
-    {
-        "Critical", "Major", "Minor", "Observation"
-    };
-
-    public List<string> CategoryOptions { get; } = new()
-    {
-        "Process", "Documentation", "Training", "Equipment", "Facility", "Personnel", "Compliance", "Safety"
-    };
-
-    public List<string> StatusOptions { get; } = new()
-    {
-        "Open", "In Progress", "Pending Verification", "Closed", "Cancelled"
-    };
-}

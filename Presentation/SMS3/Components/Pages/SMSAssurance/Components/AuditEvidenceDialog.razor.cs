@@ -1,4 +1,4 @@
-
+﻿
 using Radzen;
 
 using SMS_Application.Interfaces;
@@ -8,6 +8,16 @@ using SMS_Domain.Events;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
+using Radzen.Blazor;
+using SMS_Application.Commands;
+using SMS_Domain.Entities;
+using SMS_Shared.Common;
 
 namespace SMS3.Components.Pages.SMSAssurance.Components;
 
@@ -370,4 +380,45 @@ public partial class AuditEvidenceDialog : ComponentBase
         await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
     }
     #endregion
+
+private RadzenTemplateForm<EvidenceViewModel>? evidenceForm;
+    private readonly Variant variant = Variant.Outlined;
+
+    public class EvidenceViewModel
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string EvidenceType { get; set; } = "Document";
+        public string Source { get; set; } = string.Empty;
+        public string CollectedBy { get; set; } = string.Empty;
+        public DateTime CollectionDate { get; set; } = DateTime.Today;
+        public string? FilePath { get; set; }
+        public string? OriginalFileName { get; set; }
+        public long? FileSize { get; set; }
+        public string? ContentType { get; set; }
+        public string StorageLocation { get; set; } = "Local";
+        public string ConfidentialityLevel { get; set; } = "Internal";
+        public int RetentionPeriodMonths { get; set; } = 84;
+        public string? RetentionReason { get; set; }
+        public bool IsVerified { get; set; } = false;
+        public string? VerifiedBy { get; set; }
+        public DateTime? VerificationDate { get; set; }
+        public string? Notes { get; set; }
+    }
+
+    public List<string> EvidenceTypeOptions { get; } = new()
+    {
+        "Document", "Photo", "Video", "Audio", "Email", "Screenshot", "Log File", "Other"
+    };
+
+    public List<string> StorageLocationOptions { get; } = new()
+    {
+        "Local", "Cloud", "Network Share", "Archive"
+    };
+
+    public List<string> ConfidentialityLevelOptions { get; } = new()
+    {
+        "Public", "Internal", "Confidential", "Restricted"
+    };
 }

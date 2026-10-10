@@ -1,0 +1,218 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
+using Radzen;
+using Radzen.Blazor;
+using SMS3.Components.Pages.SMSRiskManagement;
+using SMS3.Components.Pages.SMSRiskManagement.Models;
+using SMS3.Components.Shared;
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using global::System.Text.Json;
+namespace SMS3.Components.Pages.SMSRiskManagement.Components;
+
+public partial class TechnicalAssessmentStep3
+{
+
+#region Parameters
+
+    [Parameter] public Step1Model Step1 { get; set; } = new();
+    [Parameter] public Step3Model Step3 { get; set; } = default!;
+    [Parameter] public EventCallback<Step3Model> Step3Changed { get; set; }
+    [Parameter] public List<Hazard> Step3Hazards { get; set; } = new();
+
+    #endregion
+
+    #region Lifecycle Methods
+
+    /// <summary>
+    /// Component initialization - Step3 data loading is handled by parent component
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        // Step3 data loading is handled by parent component's LoadStepDataFromAssessment method
+        // This ensures proper timing and avoids race conditions with data loading
+    }
+
+    private static bool IsInitialFieldInvalid(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) || value.Trim().Length < 10;
+    }
+
+    #endregion
+
+    #region Progress Tracking Methods
+
+    /// <summary>
+    /// Count how many hazards have completed risk analysis
+    /// </summary>
+    /// <returns>Number of hazards with complete analysis</returns>
+    private int GetAnalyzedCount()
+    {
+        return Step3.Step3RiskAnalyses?.Count(ha => IsAnalysisComplete(ha.Value)) ?? 0;
+    }
+
+    /// <summary>
+    /// Calculate completion percentage for progress display
+    /// </summary>
+    /// <returns>Percentage of completion (0-100)</returns>
+    private int GetAnalysisProgress()
+    {
+        var totalHazards = Step3Hazards?.Count ?? 0;
+        if (totalHazards == 0) return 0;
+        
+        return (GetAnalyzedCount() * 100) / totalHazards;
+    }
+
+    /// <summary>
+    /// Determine if a RiskAnalysis has sufficient data for completion
+    /// </summary>
+    /// <param name="analysis">The RiskAnalysis to evaluate</param>
+    /// <returns>True if analysis meets completion criteria</returns>
+    private bool IsAnalysisComplete(RiskAnalysis analysis)
+    {
+        return !string.IsNullOrWhiteSpace(analysis.InitialWorstCredibleOutcome) &&
+               analysis.InitialWorstCredibleOutcome.Length >= 10 &&
+               !string.IsNullOrWhiteSpace(analysis.InitialRootCause) &&
+               analysis.InitialRootCause.Length >= 10;
+    }
+
+    #endregion
+
+    #region Field Validation Methods
+
+    /// <summary>
+    /// Provide validation feedback for text fields based on content length
+    /// </summary>
+    /// <param name="text">The text to validate</param>
+    /// <param name="minLength">Minimum required length</param>
+    /// <returns>Validation message for display</returns>
+    private string GetFieldValidation(string? text, int minLength)
+    {
+        var length = text?.Trim().Length ?? 0;
+        
+        if (length == 0)
+            return $"0/{minLength} characters";
+        else if (length < minLength)
+            return $"{length}/{minLength} characters (minimum {minLength} required)";
+        else
+            return $"{length} characters ?";
+    }
+
+    /// <summary>
+    /// Generate summary validation message for the entire step
+    /// </summary>
+    /// <returns>Summary validation message</returns>
+    private string GetValidationSummary()
+    {
+        var totalHazards = Step3Hazards?.Count ?? 0;
+        var analyzedCount = GetAnalyzedCount();
+        
+        if (totalHazards == 0)
+            return "No hazards to analyze";
+        
+        if (analyzedCount == totalHazards)
+            return "All hazards analyzed ?";
+        
+        return $"{totalHazards - analyzedCount} hazards need analysis";
+    }
+
+    #endregion
+
+    #region Event Handlers
+
+    /// <summary>
+    /// Handle changes to analysis fields and update the underlying data model
+    /// </summary>
+    /// <param name="hazardCode">The hazard whose analysis is being updated</param>
+    /// <param name="fieldName">The specific field being changed</param>
+    /// <param name="args">Event arguments containing the new value</param>
+    private async Task OnAnalysisFieldChanged(string hazardCode, string fieldName, ChangeEventArgs args)
+    {
+        var newValue = args.Value?.ToString() ?? string.Empty;
+        
+        // Update the specific field in the RiskAnalysis entity
+        if (Step3.Step3RiskAnalyses.TryGetValue(hazardCode, out var analysis))
+        {
+            switch (fieldName)
+            {
+                case "WorstCredibleOutcome":
+                    analysis.InitialWorstCredibleOutcome = newValue;
+                    break;
+                case "RootCause":
+                    analysis.InitialRootCause = newValue;
+                    break;
+                case "AdditionalComments":
+                    analysis.InitialAdditionalComments = newValue;
+                    break;
+            }
+            
+            // Ensure the updated entity is maintained in the dictionary
+            Step3.Step3RiskAnalyses[hazardCode] = analysis;
+        }
+        
+        // Trigger UI refresh and notify parent component of changes
+        await InvokeAsync(StateHasChanged);
+        await Step3Changed.InvokeAsync(Step3);
+    }
+
+    /// <summary>
+    /// Handle general field changes (legacy method for backward compatibility)
+    /// </summary>
+    private async Task OnAnalysisFieldChanged()
+    {
+        await InvokeAsync(StateHasChanged);
+        await Step3Changed.InvokeAsync(Step3);
+    }
+
+    
+
+    #endregion
+
+    #region Display Helper Methods
+
+    /// <summary>
+    /// Get display-friendly text for hazard category
+    /// </summary>
+    /// <param name="categoryValue">Raw category value</param>
+    /// <returns>Formatted category display text</returns>
+    private string GetHazardCategoryDisplay(string? categoryValue)
+    {
+        if (string.IsNullOrEmpty(categoryValue)) return "";
+
+        var category = HazardCategory.FromValue(categoryValue);
+        return category?.Name ?? categoryValue.Replace("_", " ");
+    }
+
+    /// <summary>
+    /// Get display-friendly text for hazard type
+    /// </summary>
+    /// <param name="typeValue">Raw type value</param>
+    /// <returns>Formatted type display text</returns>
+    private string GetHazardTypeDisplay(string? typeValue)
+    {
+        if (string.IsNullOrEmpty(typeValue)) return "";
+
+        var hazardType = HazardType.FromValue(typeValue);
+        return hazardType?.Name ?? typeValue.Replace("_", " ");
+    }
+
+    /// <summary>
+    /// Generate comprehensive display text for a hazard combining category and type
+    /// </summary>
+    /// <param name="hazard">The hazard to generate display text for</param>
+    /// <returns>Formatted display text combining category and type</returns>
+    private string GetHazardDisplayText(Hazard hazard)
+    {
+        var category = GetHazardCategoryDisplay(hazard.HazardCategory);
+        var type = GetHazardTypeDisplay(hazard.HazardType);
+        return $"{category.ToUpper()} - {type.ToUpper()}";
+    }
+
+    #endregion
+}
+
+

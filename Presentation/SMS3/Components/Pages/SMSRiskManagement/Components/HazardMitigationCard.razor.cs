@@ -1,0 +1,628 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
+using Radzen;
+using Radzen.Blazor;
+using SMS3.Components.Pages.SMSRiskManagement;
+using SMS3.Components.Pages.SMSRiskManagement.Models;
+using SMS3.Components.Shared.UIHelpers;
+using SMS_Application.Interfaces;
+using SMS_Application.Commands;
+using SMS_Application.Queries;
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS_Domain.ValueObjects;
+using SMS_Shared.Common;
+using SMS3.Configuration;
+using global::System.Text.Json;
+namespace SMS3.Components.Pages.SMSRiskManagement.Components;
+
+public partial class HazardMitigationCard
+{
+
+[Parameter] public Hazard Hazard { get; set; } = new(new HazardID("HZ-0000"));
+    [Parameter] public Step4Model Step4 { get; set; } = default!;
+    [Parameter] public Step5Model Step5 { get; set; } = default!;
+    [Parameter] public bool NeedsMitigation { get; set; }
+    [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
+    [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
+    [Parameter] public RiskAssessment? CurrentRiskAssessment { get; set; }   // ? SINGLE risk assessment parameter
+    [Parameter] public bool DisableAddMitigation { get; set; } = false;
+    [Parameter] public int MitigationRefreshVersion { get; set; }
+    [Parameter] public EventCallback<string> OnMitigationUpdated { get; set; }
+    [Parameter] public EventCallback<string> OnResidualHazardScored { get; set; } // ? NEW: For residual scoring callbacks
+
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
+
+    // State properties
+    private bool IsLoading { get; set; } = true;
+    private bool IsSaving { get; set; } = false;
+    private bool ShowMitigationDialog { get; set; } = false;
+    private bool ShowResidualPanelDialog { get; set; } = false;
+    private bool IsEditMode { get; set; } = false;
+
+    // Data properties
+    private List<Mitigation> LoadedMitigations { get; set; } = new();
+    private Mitigation CurrentMitigation { get; set; } = new(new MitigationID(Guid.NewGuid().ToString()));
+    private List<ResidualStakeholderSelectionItem> ResidualStakeholderSelectionItems { get; set; } = new();
+
+    // Monitoring properties for acceptable risks
+    private string MonitoringFrequency { get; set; } = string.Empty;
+    private string MonitoringDepartment { get; set; } = string.Empty;
+    private string ReviewTrigger { get; set; } = string.Empty;
+
+    // ? NEW: Collapsible state for residual risk analysis section
+    private bool IsAnalysisSectionCollapsed { get; set; } = false;
+
+    private List<string> ControlTypes = new()
+    {
+        "Eliminate", "Engineering Control", "Administrative Control", "Personal Protective Equipment"
+    };
+
+    private List<string> PriorityLevels = new()
+    {
+        "Critical", "High", "Medium", "Low"
+    };
+
+    private List<MitigationStatus> StatusLevels => MitigationStatus.GetAllValues().ToList();
+
+    // ? UPDATED: Replace hardcoded organization list with SMSOrganization enum
+    private List<string> Departments => SMSOrganization.GetAllDepartments()
+        .Select(d => d.Name)
+        .OrderBy(name => name)
+        .ToList();
+
+    private List<string> MonitoringFrequencies = new()
+    {
+        "Continuous", "Daily", "Weekly", "Monthly", "Quarterly", "Annually"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMitigationsForHazard();
+        InitializeResidualStakeholderSelection();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadMitigationsForHazard();
+    }
+
+    /// <summary>
+    /// Load existing mitigations for this hazard using CQRS
+    /// </summary>
+    private async Task LoadMitigationsForHazard()
+    {
+        try
+        {
+            IsLoading = true;
+            StateHasChanged();
+
+            Logger.LogInformation("Loading mitigations for hazard: {HazardCode}", Hazard.Code);
+
+            var query = new GetMitigationsByHazardCodeQuery(Hazard.Code);
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (result.IsSuccess && result.Value != null)
+            {
+                LoadedMitigations = result.Value;
+                Logger.LogInformation("Loaded {Count} mitigations for hazard {HazardCode}", LoadedMitigations.Count, Hazard.Code);
+            }
+            else
+            {
+                LoadedMitigations = new List<Mitigation>();
+                Logger.LogInformation("No existing mitigations found for hazard {HazardCode}", Hazard.Code);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading mitigations for hazard {HazardCode}", Hazard.Code);
+            LoadedMitigations = new List<Mitigation>();
+            ShowErrorAsyncNotification("Failed to load existing mitigations");
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Add new mitigation strategy using proper CQRS commands
+    /// </summary>
+    private async Task AddMitigationStrategy()
+    {
+        if (DisableAddMitigation)
+        {
+            ShowErrorAsyncNotification("Hazard is marked as eliminated. Mitigation controls are read-only.");
+            return;
+        }
+
+        try
+        {
+            // Create new mitigation entity with proper HazardCode and RiskAssessmentCode
+            var newMitigation = new Mitigation(new MitigationID("MI-0000"));
+            // newMitigation.code: $"MI-0000",
+            newMitigation.HazardCode = Hazard.Code;
+            newMitigation.Name = "New Mitigation Strategy";
+            newMitigation.Description = "Enter mitigation description...";
+                              
+            CurrentMitigation = newMitigation;
+                
+            // CRITICAL: Assign the RiskAssessmentCode from the current assessment
+            CurrentMitigation.RiskAssessmentCode = CurrentRiskAssessment?.Code ?? string.Empty;
+                
+            // Set defaults
+            CurrentMitigation.Status = MitigationStatus.PendingApproval;
+            CurrentMitigation.Type = "Administrative Control";
+            CurrentMitigation.Progress = 0;
+            CurrentMitigation.TargetDate = DateTime.Now.AddMonths(3);
+
+            IsEditMode = false;
+            ShowMitigationDialog = true;
+            StateHasChanged();
+            
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating new mitigation");
+            ShowErrorAsyncNotification("Error creating new mitigation");
+        }
+    }
+
+    /// <summary>
+    /// Edit existing mitigation
+    /// </summary>
+    private void EditMitigation(Mitigation mitigation)
+    {
+        if (DisableAddMitigation)
+        {
+            ShowErrorAsyncNotification("Hazard is marked as eliminated. Mitigation controls are read-only.");
+            return;
+        }
+
+        CurrentMitigation = mitigation;
+        IsEditMode = true;
+        ShowMitigationDialog = true;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Save mitigation using CQRS commands
+    /// </summary>
+    private async Task SaveMitigation()
+    {
+        if (DisableAddMitigation)
+        {
+            ShowErrorAsyncNotification("Hazard is marked as eliminated. Mitigation controls are read-only.");
+            return;
+        }
+
+        try
+        {
+            IsSaving = true;
+            StateHasChanged();
+
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(CurrentMitigation.Name))
+            {
+                ShowErrorAsyncNotification("Mitigation name is required");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(CurrentMitigation.Description))
+            {
+                ShowErrorAsyncNotification("Mitigation description is required");
+                return;
+            }
+
+            // Ensure critical fields are set
+            CurrentMitigation.HazardCode = Hazard.Code;
+            CurrentMitigation.RiskAssessmentCode = CurrentRiskAssessment?.Code ?? string.Empty;
+
+            Result<Mitigation> result;
+
+            if (IsEditMode)
+            {
+                // Update existing mitigation
+                var updateCommand = new UpdateMitigationCommand(CurrentMitigation);
+                result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+                
+                if (result.IsSuccess)
+                {
+                    // Update local collection
+                    var index = LoadedMitigations.FindIndex(m => m.Id.Value == CurrentMitigation.Id.Value);
+                    if (index >= 0)
+                    {
+                        LoadedMitigations[index] = result.Value;
+                    }
+                    
+                    ShowSuccessAsyncNotification("Mitigation updated successfully");
+                    Logger.LogInformation("Updated mitigation {MitigationCode} for hazard {HazardCode}", CurrentMitigation.Code, Hazard.Code);
+                }
+            }
+            else
+            {
+                // Create new mitigation
+                var createCommand = new CreateMitigationCommand(CurrentMitigation);
+                result = await Mediator.SendAsync(createCommand, CancellationToken.None);
+                
+                if (result.IsSuccess)
+                {
+                    // Add to local collection
+                    LoadedMitigations.Add(result.Value);
+                    ShowSuccessAsyncNotification("Mitigation created successfully");
+                    Logger.LogInformation("Created mitigation {MitigationCode} for hazard {HazardCode}", CurrentMitigation.Code, Hazard.Code);
+                }
+            }
+
+            if (result.IsSuccess)
+            {
+                // ? NEW: Update Hazard status to ResidualRiskMitigation using CQRS pattern
+                await UpdateHazardStatusToResidualMitigation();
+                
+                CloseMitigationDialog();
+                await OnMitigationUpdated.InvokeAsync(Hazard.Code);
+                StateHasChanged();
+            }
+            else
+            {
+                ShowErrorAsyncNotification($"Failed to save mitigation: {result.Error?.Message}");
+                Logger.LogError("Failed to save mitigation: {Error}", result.Error?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving mitigation");
+            ShowErrorAsyncNotification("Error saving mitigation");
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Delete mitigation using CQRS commands
+    /// </summary>
+    private async Task DeleteMitigation(Mitigation mitigation)
+    {
+        if (DisableAddMitigation)
+        {
+            ShowErrorAsyncNotification("Hazard is marked as eliminated. Mitigation controls are read-only.");
+            return;
+        }
+
+        try
+        {
+            var deleteCommand = new DeleteMitigationCommand(new MitigationID(mitigation.Id.Value));
+            var result = await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                // Remove from local collection
+                LoadedMitigations.RemoveAll(m => m.Id.Value == mitigation.Id.Value);
+                ShowSuccessAsyncNotification("Mitigation deleted successfully");
+                Logger.LogInformation("Deleted mitigation {MitigationCode} for hazard {HazardCode}", mitigation.Code, Hazard.Code);
+                
+                await OnMitigationUpdated.InvokeAsync(Hazard.Code);
+                StateHasChanged();
+            }
+            else
+            {
+                ShowErrorAsyncNotification($"Failed to delete mitigation: {result.Error?.Message}");
+                Logger.LogError("Failed to delete mitigation: {Error}", result.Error?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error deleting mitigation");
+            ShowErrorAsyncNotification("Error deleting mitigation");
+        }
+    }
+
+    private void CloseMitigationDialog()
+    {
+        ShowMitigationDialog = false;
+        CurrentMitigation = new(new MitigationID(Guid.NewGuid().ToString()));
+        IsEditMode = false;
+        StateHasChanged();
+    }
+
+    private bool HasMitigations()
+    {
+        return LoadedMitigations?.Any() == true;
+    }
+
+    private int GetMitigationCount()
+    {
+        return LoadedMitigations?.Count ?? 0;
+    }
+
+    private string GetInitialRiskLevel()
+    {
+        if (Step4.HazardAverageScores.ContainsKey(Hazard.Code))
+        {
+            var score = Step4.HazardAverageScores[Hazard.Code];
+            return score switch
+            {
+                <= 4 => "Very Low",
+                <= 8 => "Low", 
+                <= 15 => "Medium",
+                <= 20 => "High",
+                _ => "Very High"
+            };
+        }
+        return "Unknown";
+    }
+
+    private string? GetTolerability()
+    {
+        var riskLevel = GetInitialRiskLevel();
+        return riskLevel switch
+        {
+            "Very Low" or "Low" => "Acceptable",
+            "Medium" => "ALARP",
+            "High" or "Very High" => "Unacceptable",
+            _ => null
+        };
+    }
+
+    private BadgeStyle GetRiskLevelBadgeStyle(string riskLevel)
+    {
+        return riskLevel switch
+        {
+            "Very Low" or "Low" => BadgeStyle.Success,
+            "Medium" => BadgeStyle.Warning,
+            "High" or "Very High" => BadgeStyle.Danger,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    private BadgeStyle GetStatusBadgeStyle(string status)
+    {
+        return status switch
+        {
+            "Completed" => BadgeStyle.Success,
+            "InProgress" => BadgeStyle.Info,
+            "Approved" => BadgeStyle.Primary,
+            "OnHold" => BadgeStyle.Warning,
+            "Cancelled" => BadgeStyle.Danger,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    private BadgeStyle GetPriorityBadgeStyle(string priority)
+    {
+        return priority switch
+        {
+            "Critical" => BadgeStyle.Danger,
+            "High" => BadgeStyle.Warning,
+            "Medium" => BadgeStyle.Info,
+            "Low" => BadgeStyle.Success,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    private List<string> GetResidualPanelMembers()
+    {
+        return Step5.ResidualRiskPanels.ContainsKey(Hazard.Code)
+            ? Step5.ResidualRiskPanels[Hazard.Code]
+            : new List<string>();
+    }
+
+    private void InitializeResidualStakeholderSelection()
+    {
+        var currentPanelMembers = GetResidualPanelMembers();
+        
+        ResidualStakeholderSelectionItems = AvailableStakeholders.Select(s => new ResidualStakeholderSelectionItem
+        {
+            Id = s.Code,
+            Name = s.DisplayName,
+            Organization = s.Organization,
+            Role = s.StakeholderType,
+            IsSelected = currentPanelMembers.Contains(s.Code)
+        }).ToList();
+
+        ResidualStakeholderSelectionItems.AddRange(AvailableAssessors.Select(a => new ResidualStakeholderSelectionItem
+        {
+            Id = a.Id.Value,
+            Name = a.DisplayName ?? a.UserName?.Value ?? SystemConstants.FlyPdxApiSource,
+            Organization = "SMS Team",
+            Role = a.UserRole?.Name ?? string.Empty,
+            IsSelected = currentPanelMembers.Contains(a.Id.Value)
+        }));
+    }
+
+    private List<ResidualStakeholderSelectionItem> GetResidualStakeholdersForSelection()
+    {
+        return ResidualStakeholderSelectionItems;
+    }
+
+    /// <summary>
+    /// ? NEW: Handle residual analysis field changes
+    /// </summary>
+    // private async Task OnResidualAnalysisFieldChangedHandler(string fieldName, string value)
+    // {
+    //     try
+    //     {
+    //         if (OnResidualAnalysisFieldChanged != null)
+    //         {
+    //             await OnResidualAnalysisFieldChanged(Hazard, fieldName, value);
+    //         }
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Logger.LogError(ex, "Error handling residual analysis field change for hazard {HazardCode}, field {FieldName}", 
+    //             Hazard.Code, fieldName);
+    //     }
+    // }
+
+    // private async Task HandleResidualHazardScoredAsync()
+    // {
+    //     try
+    //     {
+    //         Logger.LogInformation("Residual risk scoring completed for hazard: {HazardCode}", Hazard.Code);
+            
+    //         // Notify parent component about the residual scoring completion
+    //         if (OnResidualHazardScored.HasDelegate)
+    //         {
+    //             await OnResidualHazardScored.InvokeAsync(Hazard.Code);
+    //         }
+            
+    //         // Also trigger mitigation updated to refresh overall state
+    //         await OnMitigationUpdated.InvokeAsync(Hazard.Code);
+            
+    //         StateHasChanged();
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Logger.LogError(ex, "Error handling residual hazard scored for {HazardCode}", Hazard.Code);
+    //     }
+    // }
+
+    // /// <summary>
+    // /// ? NEW: Toggle the analysis section collapsed state
+    // /// </summary>
+    // private void ToggleAnalysisSectionAsync()
+    // {
+    //     try
+    //     {
+    //         IsAnalysisSectionCollapsed = !IsAnalysisSectionCollapsed;
+    //         InvokeAsync(StateHasChanged);
+            
+    //         Logger.LogInformation("Toggled analysis section for hazard {HazardCode} to {State}", 
+    //             Hazard.Code, IsAnalysisSectionCollapsed ? "collapsed" : "expanded");
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Logger.LogError(ex, "Error toggling analysis section for hazard {HazardCode}", Hazard.Code);
+    //     }
+    // }
+
+    private async Task UpdateResidualPanel()
+    {
+        try
+        {
+            var selectedMembers = ResidualStakeholderSelectionItems.Where(s => s.IsSelected).Select(s => s.Id).ToList();
+            
+            if (!selectedMembers.Any())
+            {
+                ShowErrorAsyncNotification("At least one stakeholder must be selected for the residual risk panel");
+                return;
+            }
+
+            // Update Step5 model directly for now (TODO: Implement proper command later)
+            Step5.ResidualRiskPanels[Hazard.Code] = selectedMembers;
+            Step5.HazardResidualPanelMembers[Hazard.Code] = selectedMembers.ToList();
+            
+            ShowResidualPanelDialog = false;
+            ShowSuccessAsyncNotification($"Updated residual risk panel for {Hazard.Code} with {selectedMembers.Count} members");
+            
+            // Notify parent component
+            await OnMitigationUpdated.InvokeAsync(Hazard.Code);
+            
+            Logger.LogInformation("Updated residual risk panel for hazard {HazardCode} with {Count} members: {Members}", 
+                Hazard.Code, selectedMembers.Count, string.Join(", ", selectedMembers));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating residual risk panel for hazard {HazardCode}", Hazard.Code);
+            ShowErrorAsyncNotification("Error updating residual risk panel");
+        }
+    }
+
+    /// <summary>
+    /// Update Hazard status to ResidualRiskMitigation using CQRS pattern
+    /// Called after successfully saving a mitigation to indicate hazard is now in mitigation phase
+    /// </summary>
+    private async Task UpdateHazardStatusToResidualMitigation()
+    {
+        try
+        {
+            Logger.LogInformation("Updating hazard {HazardCode} status to ResidualRiskMitigation", Hazard.Code);
+
+            // Get current hazard
+            var hazardQuery = new GetHazardByCodeQuery(new HazardID(Hazard.Code));
+            var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+
+            if (hazardResult.IsSuccess && hazardResult.Value is not null)
+            {
+                var currentHazard = hazardResult.Value;
+                var originalStatus = currentHazard.Status?.ToString();
+
+                // Update hazard status to ResidualRiskMitigation
+                currentHazard.Status = HazardStatus.ResidualRiskMitigation;
+                
+                // Update audit fields
+                currentHazard.UpdatedDate = DateTime.Now;
+                currentHazard.UpdatedBy = _currentUserService.UserCode;  // You might want to get the current user
+
+                // Save hazard using CQRS UpdateHazardCommand
+                var updateHazardCommand = new UpdateHazardCommand(currentHazard);
+                var updateResult = await Mediator.SendAsync(updateHazardCommand, CancellationToken.None);
+
+                if (updateResult.IsSuccess)
+                {
+                    // Update local hazard parameter with the updated hazard
+                    Hazard = updateResult.Value;
+                    
+                    Logger.LogInformation("Successfully updated hazard {HazardCode} status from {OldStatus} to {NewStatus}",
+                        Hazard.Code, originalStatus, HazardStatus.ResidualRiskMitigation.Name);
+                }
+                else
+                {
+                    Logger.LogWarning("Failed to update hazard {HazardCode} status: {Error}", 
+                        Hazard.Code, updateResult.Error?.Message);
+                    
+                    // Don't show error to user as mitigation was saved successfully
+                    // This is just a status update failure
+                }
+            }
+            else
+            {
+                Logger.LogWarning("Could not load hazard {HazardCode} for status update", Hazard.Code);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating hazard {HazardCode} status to ResidualRiskMitigation", Hazard.Code);
+            // Don't throw - mitigation was saved successfully, status update is secondary
+        }
+    }
+
+    /// <summary>
+    /// Show error notification to user
+    /// </summary>
+    private void ShowErrorAsyncNotification(string message)
+    {
+        NotificationHelper.ShowErrorAsync( message, 5000);
+    }
+
+    /// <summary>
+    /// Show success notification to user
+    /// </summary>
+    private void ShowSuccessAsyncNotification(string message)
+    {
+        NotificationHelper.ShowSuccessAsync( message, 3000);
+    }
+
+    /// <summary>
+    /// ? Helper class for residual stakeholder selection within HazardMitigationPanel
+    /// </summary>
+    public class ResidualStakeholderSelectionItem
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Organization { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public bool IsSelected { get; set; }
+    }
+}
+
+

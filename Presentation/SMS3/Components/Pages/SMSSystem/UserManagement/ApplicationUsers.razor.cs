@@ -583,6 +583,9 @@ public partial class ApplicationUsers : ComponentBase
     {
         try
         {
+            _isSaving = true;
+            StateHasChanged();
+
             if (_currentUser is null)
             {
                 await ShowErrorAsyncNotification("No user selected for update.");
@@ -660,6 +663,11 @@ public partial class ApplicationUsers : ComponentBase
         {
             _logger.LogError(ex, "Error updating application user: {UserId}", _currentUser?.Code);
             await ShowErrorAsyncNotification("Error updating application user. Please try again.");
+        }
+        finally
+        {
+            _isSaving = false;
+            StateHasChanged();
         }
     }
 

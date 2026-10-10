@@ -1,6 +1,16 @@
-using SMS_Domain.Enums;
+﻿using SMS_Domain.Enums;
 using SMS3.Components.Shared.UIHelpers;
 using Radzen;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
+using Radzen.Blazor;
+using SMS_Application.Commands;
+using SMS_Domain.Entities;
+using SMS_Shared.Common;
 
 
 namespace SMS3.Components.Pages.SMSAssurance.Components;
@@ -201,4 +211,42 @@ public partial class AuditFindingDialog : ComponentBase
         return true;
     }
     #endregion
+
+private RadzenTemplateForm<FindingViewModel>? findingForm;
+    private readonly Variant variant = Variant.Outlined;
+
+    public class FindingViewModel
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Severity { get; set; } = "Minor";
+        public string Category { get; set; } = "Process";
+        public string Status { get; set; } = "Open";
+        public DateTime DiscoveredDate { get; set; } = DateTime.Today;
+        public DateTime? TargetResolutionDate { get; set; }
+        public DateTime? ActualResolutionDate { get; set; }
+        public string? ResponsiblePerson { get; set; }
+        public string? CorrectiveAction { get; set; }
+        public string? RootCauseAnalysis { get; set; }
+        public bool VerificationRequired { get; set; } = false;
+        public string? VerifiedBy { get; set; }
+        public DateTime? VerificationDate { get; set; }
+        public string? Notes { get; set; }
+    }
+
+    public List<string> SeverityOptions { get; } = new()
+    {
+        "Critical", "Major", "Minor", "Observation"
+    };
+
+    public List<string> CategoryOptions { get; } = new()
+    {
+        "Process", "Documentation", "Training", "Equipment", "Facility", "Personnel", "Compliance", "Safety"
+    };
+
+    public List<string> StatusOptions { get; } = new()
+    {
+        "Open", "In Progress", "Pending Verification", "Closed", "Cancelled"
+    };
 }

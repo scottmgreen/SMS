@@ -79,21 +79,3 @@
     </RadzenStack>
 </RadzenCard>
 
-@code {
-    [Parameter] public string Title { get; set; } = "Risk Assessment Matrix";
-    [Parameter] public string CardStyle { get; set; } = string.Empty;
-    [Parameter] public bool ShowRiskLevelsLegend { get; set; }
-    [Parameter] public int MaxBadgesPerCell { get; set; } = 3;
-    [Parameter] public Func<int, string>? SeverityLabelProvider { get; set; }
-    [Parameter] public Func<int, int, List<string>>? HazardsAtMatrixCodeProvider { get; set; }
-
-    private string GetSeverityLabel(int severity)
-    {
-        return SeverityLabelProvider?.Invoke(severity) ?? HazardSeverity.GetDisplayName(severity);
-    }
-
-    private List<string> GetHazardsAtMatrixCode(int severity, int likelihood)
-    {
-        return HazardsAtMatrixCodeProvider?.Invoke(severity, likelihood) ?? new List<string>();
-    }
-}

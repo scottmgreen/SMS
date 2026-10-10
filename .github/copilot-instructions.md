@@ -65,6 +65,7 @@
 - In OrganizationalStructure, the unassign action must be per assigned person in the Assigned Personnel column, not in the role-level Actions column.
 - Ensure consistent explicit onchange handlers for CRUD dropdowns across Stakeholder, Application, and Organizational user management pages.
 - When handling empty Stakeholder edit fields for Title and Organization, default to empty string rather than falling back to current persisted values.
+- Username format rule: Stakeholder users use 's_<first>.<last>', Organizational users use 'o_<first>.<last>', and Application users use '<first>.<last>' to allow same person across three user account types.
 
 ## Email Routing
 - Implement a hard business rule for email routing: emails must only be sent to group contacts as primary To recipients; if the recipient is not part of a group, no email should be sent via fallback methods. Allow CC/BCC as exceptions for manually added individual recipients.
@@ -75,6 +76,7 @@
 
 ## Code Style
 - Private variables in SMS3 code-behind files must consistently follow the _variableName naming convention (e.g., _memberName).
+- Private fields and private state members should follow _camelCase naming convention instead of PascalCase.
 - Cleanup should continue in targeted batches with build validation.
 - Use enums only for display styles; do not use hard-coded strings for event source display naming.
 - Standardize data-reader string mapping to `GetValue<string>` with trimming handled in the extension method rather than direct `GetString` calls.

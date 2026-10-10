@@ -1,4 +1,4 @@
-@* 
+﻿@* 
 SMS Page Header Component
 Reusable component for consistent page headers across the SMS application
 *@
@@ -29,28 +29,3 @@ Reusable component for consistent page headers across the SMS application
     </div>
 </div>
 
-@code {
-    /// <summary>
-    /// The main title text for the page
-    /// </summary>
-    [Parameter, EditorRequired]
-    public string Title { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Optional subtitle/description text
-    /// </summary>
-    [Parameter]
-    public string? Subtitle { get; set; }
-
-    /// <summary>
-    /// Optional FontAwesome icon class (e.g., "fas fa-exclamation-triangle")
-    /// </summary>
-    [Parameter]
-    public string? Icon { get; set; }
-
-    /// <summary>
-    /// Optional additional content to display on the right side of the header
-    /// </summary>
-    [Parameter]
-    public RenderFragment? AdditionalContent { get; set; }
-}

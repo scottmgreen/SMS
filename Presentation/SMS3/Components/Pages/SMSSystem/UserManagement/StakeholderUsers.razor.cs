@@ -208,9 +208,9 @@ public partial class StakeholderUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Stakeholder user '{_newFirstName} {_newLastName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
+                await ShowSuccessAsyncNotification($"Stakeholder user '{_newFirstName} {_newLastName}' created successfully.");
             }
             else
             {
@@ -465,9 +465,9 @@ public partial class StakeholderUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Stakeholder user '{_editFirstName} {_editLastName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
+                await ShowSuccessAsyncNotification($"Stakeholder user '{_editFirstName} {_editLastName}' updated successfully.");
             }
             else
             {

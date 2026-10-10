@@ -1,4 +1,4 @@
-@using Radzen
+﻿@using Radzen
 @using Radzen.Blazor
 
 <RadzenCard>
@@ -13,12 +13,3 @@
     </div>
 </RadzenCard>
 
-@code {
-    [Parameter] public List<AllowedCompanyDisplayItem> AllowedCompanies { get; set; } = new();
-    [Inject] private DialogService _dialogService { get; set; } = default!;
-
-    private void CloseDialog()
-    {
-        _dialogService.Close();
-    }
-}

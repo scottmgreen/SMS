@@ -358,6 +358,12 @@ public sealed class EventDispatchService : IBaseEventBus
             _logger.LogApplicationInformation("Publishing UI event {EventType} for {TargetComponent} with resolved mode {ExecutionMode}",
                 uiEvent.EventType, uiEvent.TargetComponent, resolvedMode);
 
+            if (resolvedMode == EventExecutionMode.Immediate && uiEvent is UINotificationEvent)
+            {
+                _ = ExecuteUIHandlersInBackgroundAsync(uiEvent);
+                return Result.Success();
+            }
+
             switch (resolvedMode)
             {
                 case EventExecutionMode.Immediate:
@@ -1056,6 +1062,30 @@ public sealed class EventDispatchService : IBaseEventBus
             results.Count, uiEvent.EventType);
 
         return Result.Success();
+    }
+
+    private Task ExecuteUIHandlersInBackgroundAsync<T>(T uiEvent) where T : IBaseUIEvent
+    {
+        return Task.Run(async () =>
+        {
+            try
+            {
+                var backgroundResult = await ExecuteUIHandlersImmediately(uiEvent, CancellationToken.None).ConfigureAwait(false);
+                if (!backgroundResult.IsSuccess)
+                {
+                    _logger.LogApplicationWarning(
+                        "Background UI notification dispatch failed for event {EventType}: {Error}",
+                        uiEvent.EventType,
+                        backgroundResult.Error?.Message ?? "Unknown UI dispatch error");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogApplicationWarning(ex,
+                    "Background UI notification dispatch threw an exception for event {EventType}",
+                    uiEvent.EventType);
+            }
+        });
     }
     #endregion
 

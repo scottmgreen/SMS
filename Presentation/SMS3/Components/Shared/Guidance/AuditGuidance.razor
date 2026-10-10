@@ -1,4 +1,4 @@
-@using Radzen
+﻿@using Radzen
 @using Radzen.Blazor
 @namespace SMS3.Components.Shared.Components
 
@@ -203,19 +203,19 @@
 
                 <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                        � Assign specific, measurable actions
+                        ï¿½ Assign specific, measurable actions
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                        � Set realistic target completion dates
+                        ï¿½ Set realistic target completion dates
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                        � Define clear acceptance criteria
+                        ï¿½ Define clear acceptance criteria
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                        � Track progress through to closure
+                        ï¿½ Track progress through to closure
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                        � Verify effectiveness of implementation
+                        ï¿½ Verify effectiveness of implementation
                     </RadzenText>
                 </RadzenStack>
             </RadzenStack>
@@ -278,11 +278,3 @@
     </RadzenStack>
 </RadzenCard>
 
-@code {
-    [Parameter] public EventCallback OnAddFinding { get; set; }
-    [Parameter] public EventCallback OnUploadEvidence { get; set; }
-    [Parameter] public EventCallback OnGenerateReport { get; set; }
-    [Parameter] public EventCallback OnCompleteAudit { get; set; }
-
-    private bool isExpanded = false;
-}

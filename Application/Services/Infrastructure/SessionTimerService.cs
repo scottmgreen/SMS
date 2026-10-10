@@ -75,6 +75,9 @@ public class SessionTimerService : IDisposable
         _lastActivity = DateTime.Now;
         _isActive = true;
 
+        _timer?.Dispose();
+        _timer = null;
+
         // Create timer that checks every 30 seconds
         _timer = new Timer(CheckSessionTimeout, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
         

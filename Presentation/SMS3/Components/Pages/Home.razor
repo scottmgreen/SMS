@@ -13,8 +13,3 @@
     @* Home content can go here if needed *@
 </div>
 
-@code {
-    private bool IsAuthenticated => _currentUserService.IsAuthenticated;
-    private string? CurrentUserName => _currentUserService.UserDisplayName;
-    private string? CurrentUserType => _currentUserService.UserType;
-}
