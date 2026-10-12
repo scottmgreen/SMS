@@ -16,22 +16,18 @@
                 <div class="modal-header-custom">
                     <div class="d-flex align-items-center">
                         <i class="fas fa-exclamation-triangle text-primary me-2 fa-2x"></i>
-                        <h4 class="modal-title text-primary mb-0">Session Expiring Soon</h4>
+                        <h4 class="modal-title text-white mb-0">Session Expiring Soon</h4>
                     </div>
                 </div>
                 
                 <div class="modal-body-custom">
-                    <div class="alert alert-primary d-flex align-items-center mb-3">
+                    <div class="d-flex align-items-center mb-3">
                         <i class="fas fa-clock me-2"></i>
-                        <span>Your session will expire in <strong class="countdown-text">@FormatRemainingTime()</strong></span>
+                        <span class="text-primary">Your session is about to expire in <strong class="countdown-text">@FormatRemainingTime()</strong> due to inactivity. </span>
                     </div>
-                    
-                    <p class="mb-3">
-                        Your session is about to expire due to inactivity. Any unsaved changes will be lost.
-                    </p>
-                    
+                                                          
                     <div class="session-progress mb-3">
-                        <div class="progress" style="height: 8px;">
+                        <div class="progress" style="height: 3px;">
                             <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
                                  style="width: @GetProgressPercentage()%" 
                                  role="progressbar">
@@ -39,10 +35,6 @@
                         </div>
                     </div>
                     
-                    <p class="text-muted small mb-0">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Click "Continue Session" to extend your session, or "Logout" to securely end your session.
-                    </p>
                 </div>
                 
                 <div class="modal-footer-custom">
@@ -90,7 +82,7 @@
 .modal-dialog-custom {
     position: relative !important;
     z-index: 2147483647 !important;
-    max-width: 600px !important;
+    max-width: 500px !important;
     width: 90% !important;
     margin: 0 !important;
     pointer-events: auto !important;
@@ -151,7 +143,7 @@
 .countdown-text {
     font-family: 'Courier New', monospace !important;
     font-size: 1.2em !important;
-    color: #0d6efd !important;
+    color: red !important;
     font-weight: bold !important;
 }
 
@@ -167,7 +159,7 @@
     border-radius: 8px !important;
     border: none !important;
     background-color: #fff3cd !important;
-    border-left: 4px solid #ffc107 !important;
+    border-left: 4px solid black !important;
 }
 
 /* Modal title */

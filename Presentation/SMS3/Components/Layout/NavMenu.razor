@@ -35,9 +35,7 @@
                 <div class="navbar-nav d-flex flex-row align-items-center me-auto">
                     
                     <!-- 🔐 SESSION TIMER - Hidden but still functional for modal trigger -->
-                    <SessionTimer OnSessionExpired="@OnSessionTimerExpired" 
-                                         OnSessionWarning="@OnSessionWarning" 
-                                         ShowTimer="true" />
+                    
                     
                     <!-- SMS Risk Management Menu -->
                     @if (_currentUserService.CanRead("SMS_RiskManagement"))
@@ -262,7 +260,20 @@
                    
                 </div>
 
-                <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+
+               
+                <div class="navbar-nav ms-auto d-flex flex-row align-items-right">
+
+                    <div class="nav-item me-2">
+                        <SessionTimer OnSessionExpired="@OnSessionTimerExpired"
+                                      OnSessionWarning="@OnSessionWarning"
+                                      ShowTimer="true" />
+                    </div>
+
+
+
+
+
                     @if (_currentUserService.CanRead("SMS_System"))
                     {
                         <div class="nav-item me-2">

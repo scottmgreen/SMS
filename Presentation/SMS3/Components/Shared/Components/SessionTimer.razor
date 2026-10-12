@@ -13,12 +13,9 @@
     <div class="session-timer-container d-flex align-items-center me-3">
         <i class="fas fa-clock me-1 @GetIconClass()"></i>
         <span class="session-timer @SessionTimerSvc.GetTimerCssClass()" title="@GetTooltipText()">
-            @SessionTimerSvc.FormatRemainingTime()
+          @SessionTimerSvc.FormatRemainingTime()
         </span>
-        @* @if (IsNearExpiry())
-        {
-            <i class="fas fa-exclamation-triangle ms-1 text-warning"></i>
-        } *@
+        
     </div>
 }
 
@@ -27,9 +24,9 @@
     font-size: 0.875rem;
     font-weight: 500;
     padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    /* border-radius: 0.25rem; */
+    /* background-color: rgba(255, 255, 255, 0.1); */
+    /* border: 1px solid rgba(255, 255, 255, 0.2); */
 }
 
 .session-timer {
@@ -39,29 +36,35 @@
 }
 
 .session-normal {
-    color: #28a745;
+        /* color: yellow; */
+        color: white;
 }
 
 .session-warning {
-    color: #ffc107;
+    /* color: orangered; */
+        color: white;
 }
 
 .session-critical {
-    color: #dc3545;
+    /* color: #dc3545; */
+        color: yellow;
     font-weight: bold;
 }
 
 .session-expired {
-    color: #dc3545;
+    /* color: #dc3545; */
+        color: yellow;
     font-weight: bold;
 }
 
 .timer-icon-normal {
-    color: #28a745;
+    /* color: #28a745; */
+    color: white;
 }
 
 .timer-icon-warning {
-    color: #ffc107;
+    /* color: #ffc107; */
+    color: white;
 }
 
 .timer-icon-critical {

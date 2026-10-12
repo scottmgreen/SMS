@@ -81,7 +81,7 @@ public partial class SessionTimeoutModal
                     // Auto-logout if time runs out
                     if (remaining <= TimeSpan.Zero)
                     {
-                        _ = Task.Run(async () => await ForceLogout());
+                        _ = InvokeAsync(ForceLogout);
                         return;
                     }
                     
@@ -176,13 +176,16 @@ public partial class SessionTimeoutModal
 
     private async Task ExecuteLogoutAsync()
     {
-        if (OnLogout.HasDelegate)
+        await InvokeAsync(async () =>
         {
-            await OnLogout.InvokeAsync();
-            return;
-        }
+            if (OnLogout.HasDelegate)
+            {
+                await OnLogout.InvokeAsync();
+                return;
+            }
 
-        _navigation.NavigateTo("/pdx", forceLoad: true);
+            _navigation.NavigateTo("/pdx", forceLoad: true);
+        });
     }
 
     private async Task HideModalInternal()
