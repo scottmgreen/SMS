@@ -14,8 +14,10 @@ using SMS_Domain.Interfaces;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Components.Shared;
 using SMS3.Configuration.Extensions;
 using SMS3.Components.Pages.SMSRiskManagement.Models;
+using SMS3.Hubs.Contracts;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -36,7 +38,7 @@ public enum ProcessingStatusCategory
 /// Code-behind for ReportProcessing page
 /// Manages the comprehensive report processing workflow for all SMS reports
 /// </summary>
-public partial class ReportProcessing : ComponentBase
+public partial class ReportProcessing : ComponentBase, IEventReceiver, IDisposable
 {
     [Parameter]
     [SupplyParameterFromQuery(Name = "tab")]
@@ -45,6 +47,8 @@ public partial class ReportProcessing : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ReportProcessing> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
@@ -71,6 +75,7 @@ public partial class ReportProcessing : ComponentBase
     private bool _showDescriptionModal { get; set; } = false;
     private string _selectedDescription { get; set; } = string.Empty;
     private string _selectedReportId { get; set; } = string.Empty;
+    private readonly HashSet<string> _validationLockReportIds = new(StringComparer.OrdinalIgnoreCase);
 
     private string _basicTextStyle = "font-size:smaller;font-weight: 600";
 
@@ -81,6 +86,7 @@ public partial class ReportProcessing : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
         await LoadDataAsync();
     }
 
@@ -95,6 +101,116 @@ public partial class ReportProcessing : ComponentBase
             _ => 0
         };
     }
+
+public void Dispose()
+{
+    EventBusDispatcher.Unregister(this);
+}
+
+public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
+{
+    if (title.Contains(LiveUpdateEventNames.ReportProcessingValidationLocked, StringComparison.OrdinalIgnoreCase))
+    {
+        var reportId = ExtractReportIdFromValidationLockMessage(message);
+        if (!string.IsNullOrWhiteSpace(reportId))
+        {
+            await InvokeAsync(() =>
+            {
+                _validationLockReportIds.Add(reportId);
+                StateHasChanged();
+            });
+        }
+
+        return;
+    }
+
+    if (title.Contains(LiveUpdateEventNames.ReportProcessingValidationReleased, StringComparison.OrdinalIgnoreCase))
+    {
+        var reportId = ExtractReportIdFromValidationLockMessage(message);
+        if (!string.IsNullOrWhiteSpace(reportId))
+        {
+            await InvokeAsync(async () =>
+            {
+                _validationLockReportIds.Remove(reportId);
+                await LoadDataAsync();
+                StateHasChanged();
+            });
+        }
+
+        return;
+    }
+
+    if (!title.Contains(LiveUpdateEventNames.ReportSubmitted, StringComparison.OrdinalIgnoreCase)
+        && !title.Contains(LiveUpdateEventNames.ReportReturnedToValidation, StringComparison.OrdinalIgnoreCase)
+        && !message.Contains("New API report submitted", StringComparison.OrdinalIgnoreCase))
+    {
+        return;
+    }
+
+    await InvokeAsync(async () =>
+    {
+        await LoadDataAsync();
+        await _notificationHelper.ShowInfoAsync(message);
+        StateHasChanged();
+    });
+}
+
+private static string? ExtractReportIdFromValidationLockMessage(string? message)
+{
+    if (string.IsNullOrWhiteSpace(message))
+    {
+        return null;
+    }
+
+    const string marker = "ReportId=";
+    var index = message.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+    if (index < 0)
+    {
+        return null;
+    }
+
+    var value = message[(index + marker.Length)..].Trim();
+    return string.IsNullOrWhiteSpace(value) ? null : value;
+}
+
+private bool IsValidationLocked(ReportProcessingSummary report)
+{
+    var reportId = report?.ReportId;
+    return !string.IsNullOrWhiteSpace(reportId) && _validationLockReportIds.Contains(reportId);
+}
+
+private async Task OnValidationActionClicked(ReportProcessingSummary report, string navigationUrl)
+{
+    if (report is null || string.IsNullOrWhiteSpace(report.ReportId))
+    {
+        _navigation.NavigateToSecure(navigationUrl);
+        return;
+    }
+
+    _validationLockReportIds.Add(report.ReportId);
+    StateHasChanged();
+
+    var envelope = new LiveUpdateEnvelope
+    {
+        EventName = LiveUpdateEventNames.ReportProcessingValidationLocked,
+        SourceModule = "ReportProcessing",
+        OccurredOn = DateTime.Now,
+        ActorUserCode = _currentUserService.UserCode,
+        Severity = "Info",
+        Message = $"Validation lock acquired. ReportId={report.ReportId}",
+        EntityType = "Report",
+        EntityCode = report.ReportId
+    };
+
+    await _liveUpdatesPublisher.PublishToApplicationUsersAsync(envelope);
+    _navigation.NavigateToSecure(navigationUrl);
+}
+
+private string BuildCurrentSessionKey()
+{
+    var userCode = _currentUserService?.UserCode ?? "unknown";
+    return $"report-processing:{userCode}";
+}
 
     #region Data Loading
     /// <summary>
@@ -1508,17 +1624,17 @@ public partial class ReportProcessing : ComponentBase
     // Notification helper methods (EventBus-driven)
     private async Task ShowSuccessAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
+        await _notificationHelper.ShowSuccessAsync(message);
     }
 
     private async Task ShowErrorAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
+        await _notificationHelper.ShowErrorAsync(message);
     }
 
     private async Task ShowInfoAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
+        await _notificationHelper.ShowInfoAsync(message);
     }
 
     private void RenderEmptyState(RenderTreeBuilder builder, string icon, string title, string description)
@@ -1668,7 +1784,8 @@ public partial class ReportProcessing : ComponentBase
                     templateBuilder.AddAttribute(4, "ButtonStyle", buttonStyle);
                     templateBuilder.AddAttribute(5, "Size", ButtonSize.Small);
                     templateBuilder.AddAttribute(6, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                        (args) => _navigation.NavigateToSecure(navigationUrl)));
+                        async (args) => await OnValidationActionClicked(report, navigationUrl)));
+                    templateBuilder.AddAttribute(7, "Disabled", IsValidationLocked(report));
                     templateBuilder.CloseComponent();
                 })));
             builder.CloseComponent();
@@ -2443,7 +2560,7 @@ public partial class ReportProcessing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error showing description modal for report {ReportId}", report.ReportId);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error showing description details"));
+            await _notificationHelper.ShowErrorAsync("Error showing description details");
         }
     }
 

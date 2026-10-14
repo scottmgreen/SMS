@@ -150,6 +150,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
         removeCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompanyCode, companyCode));
         removeCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmGroupCode, groupCode));
         removeCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRemovedBy, updatedBy ?? string.Empty));
+        removeCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRowsAffected, 0, null));
         await removeCmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
     }
 

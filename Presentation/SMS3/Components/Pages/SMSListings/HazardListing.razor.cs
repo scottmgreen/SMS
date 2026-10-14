@@ -32,6 +32,7 @@ public partial class HazardListing : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<HazardListing> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
@@ -397,7 +398,7 @@ public partial class HazardListing : ComponentBase
     /// </summary>
     private async Task ShowErrorAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message, 7000));
+        await _notificationHelper.ShowErrorAsync(message, 7000);
     }
 
     /// <summary>
@@ -405,7 +406,7 @@ public partial class HazardListing : ComponentBase
     /// </summary>
     private async Task ShowSuccessAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message, 5000));
+        await _notificationHelper.ShowSuccessAsync(message, 5000);
     }
     #endregion
 

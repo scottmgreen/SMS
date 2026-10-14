@@ -7,6 +7,7 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using SMS3.Hubs.Contracts;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -22,6 +23,7 @@ public partial class ReportValidation : ComponentBase
 
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
 
     // Form Data Properties - Using Smart Enum
     private ValidationDecision? _selectedValidationDecision { get; set; }
@@ -71,7 +73,66 @@ public partial class ReportValidation : ComponentBase
     {
         _isLoading = true;
         await LoadDataAsync();
+        await PublishValidationLockAcquiredAsync("Open");
         _isLoading = false;
+    }
+
+    private async Task PublishValidationLockAcquiredAsync(string reason)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(ReportId))
+            {
+                return;
+            }
+
+            var envelope = new LiveUpdateEnvelope
+            {
+                EventName = LiveUpdateEventNames.ReportProcessingValidationLocked,
+                SourceModule = "ReportValidation",
+                OccurredOn = DateTime.Now,
+                ActorUserCode = _currentUserService.UserCode,
+                Severity = "Info",
+                Message = $"Validation lock acquired ({reason}). ReportId={ReportId}",
+                EntityType = "Report",
+                EntityCode = ReportId
+            };
+
+            await _liveUpdatesPublisher.PublishToApplicationUsersAsync(envelope);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish validation lock acquired for report {ReportId}", ReportId);
+        }
+    }
+
+    private async Task PublishValidationLockReleasedAsync(string reason)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(ReportId))
+            {
+                return;
+            }
+
+            var envelope = new LiveUpdateEnvelope
+            {
+                EventName = LiveUpdateEventNames.ReportProcessingValidationReleased,
+                SourceModule = "ReportValidation",
+                OccurredOn = DateTime.Now,
+                ActorUserCode = _currentUserService.UserCode,
+                Severity = "Info",
+                Message = $"Validation lock released ({reason}). ReportId={ReportId}",
+                EntityType = "Report",
+                EntityCode = ReportId
+            };
+
+            await _liveUpdatesPublisher.PublishToApplicationUsersAsync(envelope);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish validation lock released for report {ReportId}", ReportId);
+        }
     }
 
     #region Data Loading
@@ -279,6 +340,8 @@ public partial class ReportValidation : ComponentBase
             // Create validation record first
             await CreateValidationRecord();
 
+            await PublishValidationLockReleasedAsync("DecisionMade");
+
                                                
             var navigationTask = _selectedValidationDecision switch
             {
@@ -301,6 +364,12 @@ public partial class ReportValidation : ComponentBase
             _isProcessing = false;
             StateHasChanged();
         }
+    }
+
+    private async Task BackToProcessingQueue()
+    {
+        await PublishValidationLockReleasedAsync("Cancel");
+        _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
     }
 
     private RiskAssessment CreateRiskAssessmentEntity()

@@ -1,8 +1,8 @@
 PDXSMS Functional Requirements Document
-Version: 1.0
-Date: September 2025
+Version: 1.1
+Date: October 2026
 Prepared By: PDXSMS Development Team
-Architecture: Clean Architecture | Domain-Driven Design | .NET 8
+Architecture: Clean Architecture | Domain-Driven Design | .NET 10
 Scope: Safety Management System for Part 139 Airport Operators (PDX)
 
 Abstract
@@ -73,9 +73,19 @@ PDXSMS is implemented using Clean Architecture principles with Domain-Driven Des
 
 
 2.2 Technology Stack
-* .NET 8 / C#
-* SQL Server
-* Mediator (CQRS)
+* .NET 10 / C# 14
+* Blazor Server (Presentation UI) + ASP.NET Core API Endpoints
+* SQL Server (stored-procedure-first data access)
+* CQRS with custom IMediator abstraction
+* Radzen Blazor component library
+
+2.3 Current Binary Build Version Baseline (Workspace)
+* Presentation (SMS3): Version 1.2.1 | AssemblyVersion 1.2.1.0 | FileVersion 1.2.1.0
+* Application: Version 1.2.1 | AssemblyVersion 1.2.1.0 | FileVersion 1.2.1.0
+* Domain: Version 1.2.1 | AssemblyVersion 1.2.1.0 | FileVersion 1.2.1.0
+* Infrastructure: Version 1.2.1 | AssemblyVersion 1.2.1.0 | FileVersion 1.2.1.0
+* Shared: Version 1.1.4 | AssemblyVersion 1.1.4.0 | FileVersion 1.1.4.0
+* UnitTests: net10.0 test project (no explicit assembly/file version declared in project file)
 
 
 
@@ -878,6 +888,13 @@ Multi-channel delivery
 Monitoring
 Application Insights / Prometheus
 Health checks, performance metrics
+
+Current Build Version Snapshot
+Presentation (SMS3): 1.2.1 / 1.2.1.0 / 1.2.1.0
+Application: 1.2.1 / 1.2.1.0 / 1.2.1.0
+Domain: 1.2.1 / 1.2.1.0 / 1.2.1.0
+Infrastructure: 1.2.1 / 1.2.1.0 / 1.2.1.0
+Shared: 1.1.4 / 1.1.4.0 / 1.1.4.0
 
 
 

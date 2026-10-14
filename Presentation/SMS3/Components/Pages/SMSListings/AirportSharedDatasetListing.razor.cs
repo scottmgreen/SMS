@@ -33,6 +33,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<AirportSharedDatasetListing> Logger { get; set; } = default!;
     [Inject] private IBaseEventBus EventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
 
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
@@ -335,17 +336,17 @@ public partial class AirportSharedDatasetListing : ComponentBase
     #region Notification Methods (EventBus-Driven)
     private async Task ShowSuccessAsyncNotification(string message)
     {
-        await EventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
+        await _notificationHelper.ShowSuccessAsync(message);
     }
 
     private async Task ShowErrorAsyncNotification(string message)
     {
-        await EventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
+        await _notificationHelper.ShowErrorAsync(message);
     }
 
     private async Task ShowInfoAsyncNotification(string message)
     {
-        await EventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
+        await _notificationHelper.ShowInfoAsync(message);
     }
     #endregion
 }

@@ -30,6 +30,7 @@ using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration;
 using SMS3.Configuration.Extensions;
+using SMS3.Hubs.Contracts;
 
 namespace SMS3.Components.Pages.SMSListings;
 
@@ -50,6 +51,8 @@ public partial class ReportListing : ComponentBase
 
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
 
     // NEW: EventBus Integration
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
@@ -210,7 +213,7 @@ public partial class ReportListing : ComponentBase
 
             if (!reportToUpdateResult.IsSuccess || reportToUpdateResult.Value is null)
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Unable to load report {_reportForDescriptionEdit.Code} for update."));
+                await _notificationHelper.ShowErrorAsync( $"Unable to load report {_reportForDescriptionEdit.Code} for update.");
                 return;
             }
 
@@ -225,7 +228,7 @@ public partial class ReportListing : ComponentBase
 
             if (!updateResult.IsSuccess)
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", updateResult.Error?.Message ?? "Failed to update report description."));
+                await _notificationHelper.ShowErrorAsync( updateResult.Error?.Message ?? "Failed to update report description.");
                 return;
             }
 
@@ -256,13 +259,13 @@ public partial class ReportListing : ComponentBase
 
             _selectedDescription = updatedDescription;
 
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Report {_reportForDescriptionEdit.Code} description updated."));
+            await _notificationHelper.ShowSuccessAsync( $"Report {_reportForDescriptionEdit.Code} description updated.");
             CloseEditDescriptionModal();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating description for report {ReportCode}", _reportForDescriptionEdit.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error updating report description."));
+            await _notificationHelper.ShowErrorAsync( "Error updating report description.");
         }
         finally
         {
@@ -295,18 +298,18 @@ public partial class ReportListing : ComponentBase
                 _totalCount = _allReports.Count();
                 _logger.LogInformation("Loaded {Count} reports for listing", _totalCount);
 
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {_totalCount} reports"));
+                await _notificationHelper.ShowSuccessAsync( $"Successfully loaded {_totalCount} reports");
             }
             else
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load reports"));
+                await _notificationHelper.ShowErrorAsync( "Failed to load reports");
                 _logger.LogError("Failed to load reports: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading reports");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error loading reports"));
+            await _notificationHelper.ShowErrorAsync( "Error loading reports");
         }
         finally
         {
@@ -396,7 +399,7 @@ public partial class ReportListing : ComponentBase
 
         if (!exportableReports.Any())
         {
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Select at least one report that is not REPORT_NEEDS_VALIDATION to export."));
+            await _notificationHelper.ShowWarningAsync( "Select at least one report that is not REPORT_NEEDS_VALIDATION to export.");
             return;
         }
 
@@ -405,7 +408,7 @@ public partial class ReportListing : ComponentBase
             var excludedCount = _selectedReports.Count - exportableReports.Count;
             if (excludedCount > 0)
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", $"{excludedCount} selected report(s) were skipped because status is REPORT_NEEDS_VALIDATION."));
+                await _notificationHelper.ShowWarningAsync( $"{excludedCount} selected report(s) were skipped because status is REPORT_NEEDS_VALIDATION.");
             }
 
             var zipBytes = await BuildExportPackagePdfAsync(exportableReports);
@@ -413,13 +416,13 @@ public partial class ReportListing : ComponentBase
             var fileName = $"reports-export-package-pdf-{DateTime.Now:yyyyMMdd-HHmmss}.zip";
 
             await _jsRuntime.InvokeVoidAsync("downloadFile", fileName, "application/zip", base64);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Exported {exportableReports.Count} report package(s) in PDF format"));
+            await _notificationHelper.ShowSuccessAsync( $"Exported {exportableReports.Count} report package(s) in PDF format");
             _logger.LogInformation("Exported PDF package for {Count} selected reports", exportableReports.Count);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to export selected reports PDF package");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to export selected reports PDF package"));
+            await _notificationHelper.ShowErrorAsync( "Failed to export selected reports PDF package");
         }
     }
 
@@ -488,7 +491,7 @@ public partial class ReportListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in LoadData");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error loading data"));
+            await _notificationHelper.ShowErrorAsync( "Error loading data");
         }
         finally
         {
@@ -755,7 +758,7 @@ public partial class ReportListing : ComponentBase
 
         if (!exportableReports.Any())
         {
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Select at least one report that is not REPORT_NEEDS_VALIDATION to export."));
+            await _notificationHelper.ShowWarningAsync( "Select at least one report that is not REPORT_NEEDS_VALIDATION to export.");
             return;
         }
 
@@ -764,7 +767,7 @@ public partial class ReportListing : ComponentBase
             var excludedCount = _selectedReports.Count - exportableReports.Count;
             if (excludedCount > 0)
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", $"{excludedCount} selected report(s) were skipped because status is REPORT_NEEDS_VALIDATION."));
+                await _notificationHelper.ShowWarningAsync( $"{excludedCount} selected report(s) were skipped because status is REPORT_NEEDS_VALIDATION.");
             }
 
             var zipBytes = await BuildExportPackageAsync(exportableReports);
@@ -772,13 +775,13 @@ public partial class ReportListing : ComponentBase
             var fileName = $"reports-export-package-{DateTime.Now:yyyyMMdd-HHmmss}.zip";
 
             await _jsRuntime.InvokeVoidAsync("downloadFile", fileName, "application/zip", base64);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Exported {exportableReports.Count} report package(s)"));
+            await _notificationHelper.ShowSuccessAsync( $"Exported {exportableReports.Count} report package(s)");
             _logger.LogInformation("Exported package for {Count} selected reports", exportableReports.Count);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to export selected reports package");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to export selected reports package"));
+            await _notificationHelper.ShowErrorAsync( "Failed to export selected reports package");
         }
     }
 
@@ -1882,14 +1885,14 @@ public partial class ReportListing : ComponentBase
 
             _logger.LogInformation("Displaying details for report: {ReportCode} with {HazardCount} hazards",
                 report.Code, AssociatedHazards.Count);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"Displaying comprehensive details for {report.Code}"));
+            await _notificationHelper.ShowInfoAsync( $"Displaying comprehensive details for {report.Code}");
             
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading report details for {ReportCode}", report.Code);
 
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load report details"));
+            await _notificationHelper.ShowErrorAsync( "Failed to load report details");
         }
         finally
         {
@@ -1928,19 +1931,19 @@ public partial class ReportListing : ComponentBase
                 {
                     _navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting/{initialHazard.Code}?returnTo=report-listing");
                     _logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Navigation", $"Opening {report.Code} for editing..."));
+                    await _notificationHelper.ShowInfoAsync( $"Opening {report.Code} for editing...");
                 }
                 else
                 {
                     _logger.LogWarning("No initial hazard found for report: {ReportCode}", report.Code);
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Navigation", $"No initial hazard found for {report.Code}."));
+                    await _notificationHelper.ShowWarningAsync( $"No initial hazard found for {report.Code}.");
                 }
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error navigating to edit report {ReportCode}", report.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Navigation Error", "Failed to navigate to edit form"));
+            await _notificationHelper.ShowErrorAsync( "Failed to navigate to edit form");
         }
     }
 
@@ -2001,7 +2004,7 @@ public partial class ReportListing : ComponentBase
 
                     // Reload the grid data
                     await LoadInitialData();
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Report {report.Code} has been successfully deleted."));
+                    await _notificationHelper.ShowSuccessAsync( $"Report {report.Code} has been successfully deleted.");
                     
                 }
                 else
@@ -2013,7 +2016,7 @@ public partial class ReportListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting report: {ReportCode}", report.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to delete the report"));
+            await _notificationHelper.ShowErrorAsync( "Failed to delete the report");
         }
     }
     #endregion
@@ -2322,7 +2325,7 @@ public partial class ReportListing : ComponentBase
         var getupdateResult = await _mediator.SendAsync(updatestatuscmd, CancellationToken.None);
         if (!getupdateResult.IsSuccess)
         {
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Report{reportcode} Status Was not Updated"));
+            await _notificationHelper.ShowErrorAsync( $"Report{reportcode} Status Was not Updated");
             return false;
         }
         return true;
@@ -2334,7 +2337,7 @@ public async Task OnResetReportAsync(Report report)
         if (report is null)
         {
             _logger.LogWarning("OnResetReportAsync called with null report");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Invalid report selected"));
+            await _notificationHelper.ShowErrorAsync( "Invalid report selected");
             return;
         }
 
@@ -2358,7 +2361,7 @@ public async Task OnResetReportAsync(Report report)
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error preparing reset confirmation for report {ReportCode}", report.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Error preparing reset confirmation: {ex.Message}"));
+            await _notificationHelper.ShowErrorAsync( $"Error preparing reset confirmation: {ex.Message}");
         }
         finally
         {
@@ -2389,8 +2392,10 @@ public async Task OnResetReportAsync(Report report)
             {
                 _logger.LogInformation("Successfully reset report validation for {ReportCode}", _reportToReset.Code);
 
+                await PublishReportReturnedToValidationLiveUpdateAsync(_reportToReset.Code, "ReportListing.ReportReset");
+
                 // Show success notification
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Report '{_reportToReset.Code}' validation has been successfully reset"));
+                await _notificationHelper.ShowSuccessAsync( $"Report '{_reportToReset.Code}' validation has been successfully reset");
 
                 // Refresh the data grid to reflect changes
                 await LoadInitialData();
@@ -2403,13 +2408,13 @@ public async Task OnResetReportAsync(Report report)
                 var errorMessage = result.Error?.Message ?? "Unknown error occurred during reset";
                 _logger.LogError("Failed to reset report validation for {ReportCode}: {Error}", _reportToReset.Code, errorMessage);
 
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Failed to reset report validation: {errorMessage}"));
+                await _notificationHelper.ShowErrorAsync( $"Failed to reset report validation: {errorMessage}");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error during reset operation for report {ReportCode}", _reportToReset?.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"An unexpected error occurred while resetting the report: {ex.Message}"));
+            await _notificationHelper.ShowErrorAsync( $"An unexpected error occurred while resetting the report: {ex.Message}");
         }
         finally
         {
@@ -2461,6 +2466,25 @@ public async Task OnResetReportAsync(Report report)
         return "THIS ACTION CANNOT BE UNDONE!";
     }
 
+    private async Task PublishReportReturnedToValidationLiveUpdateAsync(string reportCode, string sourceModule)
+    {
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            return;
+        }
+
+        await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
+        {
+            EventName = LiveUpdateEventNames.ReportReturnedToValidation,
+            SourceModule = sourceModule,
+            OccurredOn = DateTime.Now,
+            ActorUserCode = _currentUserService?.UserCode,
+            Message = $"Report returned to validation and ready for processing. ReportId={reportCode}",
+            EntityType = nameof(Report),
+            EntityCode = reportCode
+        });
+    }
+
     #endregion
 
     #region Map Functionality (Added to match HazardLocationListing)
@@ -2473,7 +2497,7 @@ public async Task OnResetReportAsync(Report report)
     {
         if (hazard?.HazardLocation is null || !HasValidCoordinates(hazard.HazardLocation))
         {
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "No valid location coordinates available for this hazard"));
+            await _notificationHelper.ShowWarningAsync( "No valid location coordinates available for this hazard");
             return;
         }
 
@@ -2567,12 +2591,12 @@ public async Task OnResetReportAsync(Report report)
                 CloseDialogOnOverlayClick = false
             });
 
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"Opened location map for {hazard.Code}"));
+            await _notificationHelper.ShowInfoAsync( $"Opened location map for {hazard.Code}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error opening location map for hazard {HazardCode}", hazard.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error opening location map"));
+            await _notificationHelper.ShowErrorAsync( "Error opening location map");
         }
     }
 
@@ -2661,7 +2685,7 @@ public async Task OnResetReportAsync(Report report)
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error showing description modal for report {ReportId}", report.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error showing description details"));
+            await _notificationHelper.ShowErrorAsync( "Error showing description details");
         }
     }
 
@@ -2689,7 +2713,7 @@ public async Task OnResetReportAsync(Report report)
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error showing initial hazard description modal for report {ReportId}", report.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error showing initial hazard description details"));
+            await _notificationHelper.ShowErrorAsync( "Error showing initial hazard description details");
         }
     }
 
@@ -2707,5 +2731,6 @@ public async Task OnResetReportAsync(Report report)
 
     #endregion
 }
+
 
 

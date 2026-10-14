@@ -11,6 +11,7 @@ public partial class InterviewsManager : ComponentBase
     #region Injected Services
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private IBaseEventBus EventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private ILogger<InterviewsManager> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
 
@@ -379,12 +380,12 @@ public partial class InterviewsManager : ComponentBase
     #region Notifications (EventBus-Driven)
     private async Task ShowSuccessAsyncNotification(string message)
     {
-        await EventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
+        await _notificationHelper.ShowSuccessAsync(message);
     }
 
     private async Task ShowErrorAsyncNotification(string message)
     {
-        await EventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
+        await _notificationHelper.ShowErrorAsync(message);
     }
     #endregion
 }

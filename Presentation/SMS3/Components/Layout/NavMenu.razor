@@ -30,7 +30,7 @@
 
         <!-- Navigation Links -->
         <div class="collapse navbar-collapse" id="navbarNav">
-            @if (_currentUserService?.IsFullyAuthenticated == true)
+            @if (_isFullyAuthenticated)
             {
                 <div class="navbar-nav d-flex flex-row align-items-center me-auto">
                     
@@ -267,7 +267,7 @@
                     <div class="nav-item me-2">
                         <SessionTimer OnSessionExpired="@OnSessionTimerExpired"
                                       OnSessionWarning="@OnSessionWarning"
-                                      ShowTimer="true" />
+                                      ShowTimer='@(_configuration.GetValue<bool>("FeatureManagement:ShowSessionTimerInNav", true))' />
                     </div>
 
 
@@ -361,9 +361,9 @@
     </div>
 </nav>
 
-<!-- Session Timeout Modal -->
-<SessionTimeoutModal OnLogout="@OnLogoutRequested" 
-                    OnContinue="@OnSessionContinued" />
+<!-- Session Timeout Dialog -->
+<SessionTimeoutDialog OnLogout="@OnLogoutRequested" 
+                     OnContinue="@OnSessionContinued" />
 
 <script>
 window.smsSessionActivity = window.smsSessionActivity || {

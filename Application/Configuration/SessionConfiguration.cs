@@ -30,6 +30,12 @@ public class SessionConfiguration
     public int TimeoutMinutes { get; set; } = 30;
 
     /// <summary>
+    /// Minutes before expiry when timeout warning should be triggered (default: 2 minutes)
+    /// </summary>
+    [Range(1, 60, ErrorMessage = "TimeoutThresholdMinutes must be between 1 and 60")]
+    public int TimeoutThresholdMinutes { get; set; } = 2;
+
+    /// <summary>
     /// Enable sliding expiration (extends session on activity)
     /// </summary>
     public bool SlidingExpiration { get; set; } = true;
@@ -119,6 +125,11 @@ public class SessionConfiguration
         if (TimeoutMinutes < 5 || TimeoutMinutes > 1440)
         {
             errors.Add("TimeoutMinutes must be between 5 and 1440 (24 hours)");
+        }
+
+        if (TimeoutThresholdMinutes < 1 || TimeoutThresholdMinutes > 60)
+        {
+            errors.Add("TimeoutThresholdMinutes must be between 1 and 60");
         }
 
         if (string.IsNullOrWhiteSpace(CookieName))

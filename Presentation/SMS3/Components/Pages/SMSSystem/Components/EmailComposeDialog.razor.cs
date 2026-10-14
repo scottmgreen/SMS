@@ -8,14 +8,15 @@ using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
+using SMS3.Components.Shared.UIHelpers;
 
 
 public class EmailComposeDialogBase : ComponentBase
 {
-    [Inject] protected NotificationService NotificationService { get; set; } = default!;
     [Inject] protected DialogService DialogService { get; set; } = default!;
     [Inject] protected IEmailSender EmailSender { get; set; } = default!;
     [Inject] protected ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] protected INotificationHelper NotificationHelper { get; set; } = default!;
 
     [Parameter] public EmailNotification? InitialModel { get; set; }
     [Parameter] public bool PreviewOnly { get; set; }
@@ -194,12 +195,7 @@ public class EmailComposeDialogBase : ComponentBase
         var errors = ValidateModel(Model);
         if (errors.Any())
         {
-            NotificationService.Notify(new Radzen.NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Cannot send",
-                Detail = string.Join(Environment.NewLine, errors)
-            });
+            await NotificationHelper.ShowErrorAsync($"Cannot send: {string.Join(Environment.NewLine, errors)}");
             return;
         }
 
@@ -212,23 +208,13 @@ public class EmailComposeDialogBase : ComponentBase
             Model.BodyHtml ??= string.Empty;
             await EmailSender.SendAsync(Model);
 
-            NotificationService.Notify(new Radzen.NotificationMessage
-            {
-                Severity = NotificationSeverity.Success,
-                Summary = "Message sent",
-                Detail = "Your email has been sent."
-            });
+            await NotificationHelper.ShowSuccessAsync("Message sent. Your email has been sent.");
 
             DialogService.Close(true);
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(new Radzen.NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Send failed",
-                Detail = ex.Message
-            });
+            await NotificationHelper.ShowErrorAsync($"Send failed: {ex.Message}");
         }
         finally
         {
@@ -270,12 +256,7 @@ public class EmailComposeDialogBase : ComponentBase
             }
             catch (Exception ex)
             {
-                NotificationService.Notify(new Radzen.NotificationMessage
-                {
-                    Severity = NotificationSeverity.Warning,
-                    Summary = "Attachment skipped",
-                    Detail = $"{file.Name}: {ex.Message}"
-                });
+                await NotificationHelper.ShowWarningAsync($"Attachment skipped: {file.Name}: {ex.Message}");
             }
         }
     }

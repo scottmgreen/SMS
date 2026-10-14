@@ -24,6 +24,7 @@ public partial class AuditDetail : ComponentBase
     [Inject] private ILogger<AuditDetail> _logger { get; set; } = default!;
 
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
@@ -829,12 +830,12 @@ public partial class AuditDetail : ComponentBase
     #region Notification Methods (EventBus-Driven)
     private async Task ShowSuccessAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
+        await _notificationHelper.ShowSuccessAsync(message);
     }
 
     private async Task ShowErrorAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
+        await _notificationHelper.ShowErrorAsync(message);
     }
     #endregion
 

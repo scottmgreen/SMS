@@ -130,6 +130,7 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
                 removeCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompanyCode, companyCode));
                 removeCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmGroupCode, groupCode));
                 removeCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRemovedBy, updatedBy ?? string.Empty));
+                removeCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRowsAffected, 0, null));
                 await removeCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
             }
 
@@ -284,7 +285,9 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetByCodeAsync(group.Code).ConfigureAwait(false);
+            string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
+
+            return await GetByCodeAsync(newCodeValue).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

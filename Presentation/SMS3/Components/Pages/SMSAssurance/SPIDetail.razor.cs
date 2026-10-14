@@ -19,6 +19,7 @@ public partial class SPIDetail : ComponentBase
     [Inject] private ILogger<SPIDetail> _logger { get; set; } = default!;
 
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
@@ -103,7 +104,7 @@ public partial class SPIDetail : ComponentBase
     private async Task RefreshDataAsync()
     {
         await LoadSPIDataAsync();
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", "SPI data refreshed successfully"));
+        await _notificationHelper.ShowSuccessAsync("SPI data refreshed successfully");
     }
     #endregion
 
@@ -233,18 +234,18 @@ public partial class SPIDetail : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", "Data point deleted successfully"));
+                    await _notificationHelper.ShowSuccessAsync("Data point deleted successfully");
                     await RefreshDataAsync();
                 }
                 else
                 {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Delete Failed", result.Error?.Message ?? "Failed to delete data point"));
+                    await _notificationHelper.ShowErrorAsync($"Delete Failed: {result.Error?.Message ?? "Failed to delete data point"}");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting data point");
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to delete data point"));
+                await _notificationHelper.ShowErrorAsync("Failed to delete data point");
             }
         }
     }
@@ -267,12 +268,12 @@ public partial class SPIDetail : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", "Data point updated successfully"));
+                    await _notificationHelper.ShowSuccessAsync("Data point updated successfully");
                     await RefreshDataAsync();
                 }
                 else
                 {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Update Failed", result.Error?.Message ?? "Failed to update data point"));
+                    await _notificationHelper.ShowErrorAsync($"Update Failed: {result.Error?.Message ?? "Failed to update data point"}");
                 }
             }
             else
@@ -291,19 +292,19 @@ public partial class SPIDetail : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", "Data point added successfully"));
+                    await _notificationHelper.ShowSuccessAsync("Data point added successfully");
                     await RefreshDataAsync();
                 }
                 else
                 {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Save Failed", result.Error?.Message ?? "Failed to save data point"));
+                    await _notificationHelper.ShowErrorAsync($"Save Failed: {result.Error?.Message ?? "Failed to save data point"}");
                 }
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving data point");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "An error occurred while saving the data point"));
+            await _notificationHelper.ShowErrorAsync("An error occurred while saving the data point");
         }
     }
 

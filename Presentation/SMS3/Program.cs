@@ -11,6 +11,7 @@ using SMS3.Api.Extensions;
 using SMS3.Components;
 using SMS3.Configuration;
 using SMS3.EventHandlers;
+using SMS3.Hubs;
 using SMS_Domain.Events;
 using SMS_Application.Interfaces;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -35,6 +36,7 @@ public class Program
 
         // Add services to the container.
         builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+        builder.Services.AddSignalR();
         builder.Services.AddRadzenComponents();
         builder.Services.AddHttpClient();
         // Register mock email sender for development/testing
@@ -259,6 +261,7 @@ public class Program
 
         // BLAZOR UI
         app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+        app.MapHub<LiveUpdatesHub>("/hubs/live-updates");
 
         // EVENTBUS SUBSCRIPTIONS 
         app.InitializeEventBus(); // Application layer handlers (Domain + Integration events)

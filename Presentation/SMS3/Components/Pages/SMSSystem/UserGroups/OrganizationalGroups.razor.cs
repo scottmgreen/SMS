@@ -348,6 +348,18 @@ public partial class OrganizationalGroups : ComponentBase
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(_newGroupType))
+        {
+            await ShowErrorAsyncNotification("Group type is required.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_newContactEmail))
+        {
+            await ShowErrorAsyncNotification("Contact Email is required.");
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_newAuthorityLevel))
         {
             await ShowErrorAsyncNotification("Authority level is required.");
@@ -414,6 +426,18 @@ public partial class OrganizationalGroups : ComponentBase
         if (_currentGroup is null || string.IsNullOrWhiteSpace(_editGroupName))
         {
             await ShowErrorAsyncNotification("Group name is required.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_editGroupType))
+        {
+            await ShowErrorAsyncNotification("Group type is required.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_editContactEmail))
+        {
+            await ShowErrorAsyncNotification("Contact Email is required.");
             return;
         }
 

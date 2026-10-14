@@ -12,6 +12,7 @@ public partial class ReportCalendar : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ReportCalendar> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private INotificationsScanService _notificationsScanService { get; set; } = default!;
@@ -57,7 +58,7 @@ public partial class ReportCalendar : ComponentBase
             else
             {
                 _logger.LogError("Failed to load reports: {Error}", result.Error?.Message);
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load reports for calendar"));
+                await _notificationHelper.ShowErrorAsync("Failed to load reports for calendar");
                 _reports = new List<Report>();
                 _schedulerData = new List<ReportSchedulerItem>();
             }
@@ -65,7 +66,7 @@ public partial class ReportCalendar : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading reports for calendar");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error loading reports"));
+            await _notificationHelper.ShowErrorAsync("Error loading reports");
         }
         finally
         {
@@ -78,7 +79,7 @@ public partial class ReportCalendar : ComponentBase
     {
         await LoadReportsAsync();
         await CheckReportStatusEscalationNotificationsAsync();
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", "Calendar data refreshed"));
+        await _notificationHelper.ShowSuccessAsync("Calendar data refreshed");
     }
 
     private async Task CheckReportStatusEscalationNotificationsAsync()
@@ -186,7 +187,7 @@ public partial class ReportCalendar : ComponentBase
 
             if (!hazardsResult.IsSuccess || hazardsResult.Value is null || !hazardsResult.Value.Any())
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"No hazards found for report {reportCode}"));
+                await _notificationHelper.ShowErrorAsync($"No hazards found for report {reportCode}");
                 return;
             }
 
@@ -195,7 +196,7 @@ public partial class ReportCalendar : ComponentBase
 
             if (initialHazard is null)
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Unable to determine initial hazard for report {reportCode}"));
+                await _notificationHelper.ShowErrorAsync($"Unable to determine initial hazard for report {reportCode}");
                 return;
             }
 
@@ -205,7 +206,7 @@ public partial class ReportCalendar : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error navigating to initial hazard for report {ReportCode}", reportCode);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to open hazard report"));
+            await _notificationHelper.ShowErrorAsync("Failed to open hazard report");
         }
     }
 

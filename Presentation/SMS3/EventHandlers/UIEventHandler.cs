@@ -1,11 +1,6 @@
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
-using Radzen;
-using SMS_Application.Interfaces;
-using SMS_Domain.Common;
 using SMS_Domain.Events;
+
 using SMS3.Components.Shared;
-using SMS_Application.Interfaces;
 
 namespace SMS3.EventHandlers;
 

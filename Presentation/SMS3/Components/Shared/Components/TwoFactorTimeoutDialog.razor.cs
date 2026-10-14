@@ -8,7 +8,7 @@ using SMS_Application.Services;
 using SMS_Application.Interfaces;
 namespace SMS3.Components.Shared.Components;
 
-public partial class TwoFactorTimeoutModal
+public partial class TwoFactorTimeoutDialog
 {
 
 [Parameter] public EventCallback OnStartOver { get; set; }

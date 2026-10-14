@@ -23,6 +23,7 @@ public partial class HazardReportSearch : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<HazardReportSearch> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     
 
@@ -240,7 +241,7 @@ public partial class HazardReportSearch : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(TrackingIdSearch))
         {
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please enter a tracking ID to search"));
+            await _notificationHelper.ShowWarningAsync("Please enter a tracking ID to search");
             return;
         }
 
@@ -293,14 +294,14 @@ public partial class HazardReportSearch : ComponentBase
                 var message = SearchResults.Count == 1
                     ? $"Found hazard report for tracking ID: {TrackingIdSearch}"
                     : $"Found {SearchResults.Count} similar tracking IDs for: {TrackingIdSearch}";
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
+                await _notificationHelper.ShowSuccessAsync(message);
                 _logger.LogInformation("Found {Count} result(s) for tracking ID: {TrackingId}", SearchResults.Count, TrackingIdSearch);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error searching by tracking ID: {TrackingId}", TrackingIdSearch);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error occurred while searching. Please try again."));
+            await _notificationHelper.ShowErrorAsync("Error occurred while searching. Please try again.");
         }
         finally
         {
@@ -511,7 +512,7 @@ public partial class HazardReportSearch : ComponentBase
                       "• Contact support if you need assistance";
         }
 
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
+        await _notificationHelper.ShowInfoAsync(message);
     }
 
     /// <summary>
@@ -556,7 +557,7 @@ public partial class HazardReportSearch : ComponentBase
     {
         if (!HasAdvancedSearchCriteria)
         {
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please enter at least one search criteria"));
+            await _notificationHelper.ShowWarningAsync("Please enter at least one search criteria");
             return;
         }
 
@@ -593,17 +594,17 @@ public partial class HazardReportSearch : ComponentBase
 
             if (SearchResults?.Any() != true)
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "No hazard reports found matching your search criteria"));
+                await _notificationHelper.ShowInfoAsync("No hazard reports found matching your search criteria");
             }
             else
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Found {SearchResults.Count} hazard report(s) matching your criteria"));
+                await _notificationHelper.ShowSuccessAsync($"Found {SearchResults.Count} hazard report(s) matching your criteria");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in advanced search");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error occurred while searching. Please try again."));
+            await _notificationHelper.ShowErrorAsync("Error occurred while searching. Please try again.");
         }
         finally
         {

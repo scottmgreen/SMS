@@ -241,7 +241,8 @@ public partial class StakeholderUsers : ComponentBase
 
     private bool _isCreateFormValid =>
         !string.IsNullOrWhiteSpace(_newFirstName) &&
-        !string.IsNullOrWhiteSpace(_newLastName);
+        !string.IsNullOrWhiteSpace(_newLastName) &&
+        !string.IsNullOrWhiteSpace(_newUserRoleCode);
 
     // Transform stakeholder types for dropdown
     private List<LookupOption> StakeholderTypesForDropdown => StakeholderTypes
@@ -500,7 +501,7 @@ public partial class StakeholderUsers : ComponentBase
     private bool _isEditFormValid =>
         !string.IsNullOrWhiteSpace(_editFirstName) &&
         !string.IsNullOrWhiteSpace(_editLastName) &&
-        !string.IsNullOrWhiteSpace(_editUser.Title);
+        !string.IsNullOrWhiteSpace(_editUserRoleCode);
 
     private static SMSStakeholderUser CreateEmptyStakeholderUser()
     {

@@ -10,6 +10,7 @@ public partial class RiskAnalysisListing : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<RiskAnalysisListing> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     private RadzenDataGrid<RiskAnalysis>? _analysisGrid;
@@ -36,14 +37,14 @@ public partial class RiskAnalysisListing : ComponentBase
             }
             else
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load risk analysis results"));
+                await _notificationHelper.ShowErrorAsync("Failed to load risk analysis results");
                 _logger.LogError("Failed to load risk analysis: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading risk analysis");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error loading risk analysis"));
+            await _notificationHelper.ShowErrorAsync("Error loading risk analysis");
         }
     }
 
@@ -81,7 +82,7 @@ public partial class RiskAnalysisListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in LoadData");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error loading data"));
+            await _notificationHelper.ShowErrorAsync("Error loading data");
         }
     }
 

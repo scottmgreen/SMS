@@ -53,10 +53,11 @@
                 
                 <!-- Modal Body -->
                 <RadzenStack Gap="1rem">
-                    <RadzenFormField Text="Group Name *" Variant="Variant.Outlined">
+                    <RadzenFormField Text="Group Name *" Variant="Variant.Outlined" class="@(string.IsNullOrWhiteSpace(_newGroupName) ? "validation-error-field" : string.Empty)">
                         <RadzenTextBox @bind-Value="@_newGroupName" 
                                        Placeholder="Enter group name (e.g., Airlines, Ground Handlers)" 
-                                       Style="width: 100%;" />
+                                       Style="width: 100%;"
+                                       class="@(string.IsNullOrWhiteSpace(_newGroupName) ? "default-validation-textbox" : string.Empty)" />
                     </RadzenFormField>
                     
                     <RadzenFormField Text="Description" Variant="Variant.Outlined">
@@ -127,10 +128,11 @@
                         <RadzenColumn Size="12" SizeMD="12">
                             <RadzenStack Gap="1rem">             
 
-                                    <RadzenFormField Text="Group Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                    <RadzenFormField Text="Group Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_editGroupName) ? "validation-error-field" : string.Empty)">
                                         <RadzenTextBox @bind-Value="@_editGroupName" 
                                                        Placeholder="Enter group name" 
-                                                       Style="width: 100%;" />
+                                                       Style="width: 100%;"
+                                                       class="@(string.IsNullOrWhiteSpace(_editGroupName) ? "default-validation-textbox" : string.Empty)" />
                                     </RadzenFormField>
                             </RadzenStack>
                             <RadzenStack Gap="1rem">
@@ -566,6 +568,25 @@
 
 .modal-header {
     border-radius: 6px 6px 0 0;
+}
+
+.validation-error-field .rz-dropdown,
+.validation-error-field .rz-dropdown:focus-within,
+.default-validation-dropdown,
+.validation-error-field .rz-textbox,
+.validation-error-field .rz-password,
+.validation-error-field .rz-password input,
+.default-validation-textbox {
+    border: 2px solid #dc3545 !important;
+    background-color: #fff5f5 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.validation-error-field .rz-dropdown-label,
+.validation-error-field .rz-inputtext,
+.validation-error-field .rz-password input,
+.default-validation-textbox {
+    background-color: #fff5f5 !important;
 }
 </style>
 

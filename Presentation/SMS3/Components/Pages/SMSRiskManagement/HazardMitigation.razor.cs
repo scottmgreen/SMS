@@ -262,14 +262,14 @@ public partial class HazardMitigation : ComponentBase
 
         if (result.IsSuccess)
         {
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Hazard mitigation {CurrentMitigation.Code} updated successfully!"));
+            await _notificationHelper.ShowSuccessAsync($"Hazard mitigation {CurrentMitigation.Code} updated successfully!");
             _logger.LogInformation("Updated hazard mitigation: {Code} by user: {UserId}",
                 CurrentMitigation.Code, GetCurrentUserId());
             _navigation.NavigateToSecure("/SMSListings/Mitigations");
         }
         else
         {
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Failed to update hazard mitigation: {result.Error?.Message}"));
+            await _notificationHelper.ShowErrorAsync($"Failed to update hazard mitigation: {result.Error?.Message}");
             _logger.LogError("Failed to update hazard mitigation {Code}: {Error} by user: {UserId}",
                 CurrentMitigation.Code, result.Error?.Message, GetCurrentUserId());
         }

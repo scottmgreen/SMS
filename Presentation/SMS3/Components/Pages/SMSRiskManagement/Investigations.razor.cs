@@ -8,6 +8,7 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using SMS3.Hubs.Contracts;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -22,6 +23,8 @@ public partial class Investigations : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
 
     [Inject] private ILogger<Investigations> _logger { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -100,7 +103,7 @@ public partial class Investigations : ComponentBase
 
             if (string.IsNullOrWhiteSpace(InvestigationId))
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Investigation ID is required"));
+                await _notificationHelper.ShowErrorAsync("Investigation ID is required");
                 _logger.LogError("Investigation ID is null or empty");
                 _navigation.NavigateToSecure("/Listings/Investigations");
                 return;
@@ -134,14 +137,14 @@ public partial class Investigations : ComponentBase
             else
             {
                 _logger.LogError("Investigation {InvestigationId} not found: {Error}",InvestigationId, investigationResult.Error?.Message);
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Investigation not found: {investigationResult.Error?.Message}"));
+                await _notificationHelper.ShowErrorAsync($"Investigation not found: {investigationResult.Error?.Message}");
                 _navigation.NavigateToSecure("/Listings/Investigations");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading investigation data");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error loading investigation data"));
+            await _notificationHelper.ShowErrorAsync("Error loading investigation data");
         }
         finally
         {
@@ -267,7 +270,7 @@ public partial class Investigations : ComponentBase
 
             if (result.IsSuccess)
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", "Investigation updated successfully"));
+                await _notificationHelper.ShowSuccessAsync("Investigation updated successfully");
                 _logger.LogInformation("Investigation {Code} updated successfully", InvestigationEntity.Code);
 
                 // Refresh the investigation data
@@ -275,7 +278,7 @@ public partial class Investigations : ComponentBase
             }
             else
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Failed to update investigation: {result.Error?.Message}"));
+                await _notificationHelper.ShowErrorAsync($"Failed to update investigation: {result.Error?.Message}");
                 _logger.LogError("Failed to update investigation {Code}: {Error}",
                     InvestigationEntity.Code, result.Error?.Message);
             }
@@ -283,7 +286,7 @@ public partial class Investigations : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving investigation");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error saving investigation"));
+            await _notificationHelper.ShowErrorAsync("Error saving investigation");
         }
         finally
         {
@@ -301,7 +304,7 @@ public partial class Investigations : ComponentBase
             // Validate that decision is recorded
             if (!InvestigationEntity.HasDecision)
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Investigation decision must be recorded before completion"));
+                await _notificationHelper.ShowErrorAsync("Investigation decision must be recorded before completion");
                 return;
             }
 
@@ -312,7 +315,7 @@ public partial class Investigations : ComponentBase
                 var incompleteCount = incompleteInterviews.Count;
                 var incompleteList = string.Join(", ", incompleteInterviews.Select(i => $"{i.Code} ({i.Status.Name})"));
                 
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Cannot complete investigation. {incompleteCount} interview(s) are still incomplete: {incompleteList}. Please complete or close all interviews first."));
+                await _notificationHelper.ShowErrorAsync($"Cannot complete investigation. {incompleteCount} interview(s) are still incomplete: {incompleteList}. Please complete or close all interviews first.");
                 
                 // Switch to interviews tab to show the incomplete interviews
                 selectedTabIndex = 1; // Assuming interviews tab is index 1
@@ -329,7 +332,7 @@ public partial class Investigations : ComponentBase
             {
                 InvestigationEntity.Status = InvestigationStatus.InvestigationComplete;
                 await SaveInvestigation();
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", "Investigation completed successfully"));
+                await _notificationHelper.ShowSuccessAsync("Investigation completed successfully");
 
                 // Navigate based on decision type
                 await HandleInvestigationCompletion();
@@ -338,7 +341,7 @@ public partial class Investigations : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error completing investigation");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Error completing investigation: {ex.Message}"));
+            await _notificationHelper.ShowErrorAsync($"Error completing investigation: {ex.Message}");
         }
     }
 
@@ -379,7 +382,7 @@ public partial class Investigations : ComponentBase
             InvestigationEntity.DecisionDate = DateTime.Now;
             if (string.IsNullOrWhiteSpace(InvestigationEntity.DecisionType) )
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Decision type, rationale, and decision maker are required"));
+                await _notificationHelper.ShowErrorAsync("Decision type, rationale, and decision maker are required");
                 return;
             }
                         
@@ -396,7 +399,7 @@ public partial class Investigations : ComponentBase
                     var incompleteCount = incompleteInterviews.Count;
                     var incompleteList = string.Join(", ", incompleteInterviews.Select(i => $"{i.Code} ({i.Status.Name})"));
                     
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Cannot set investigation status to Complete. {incompleteCount} interview(s) are still incomplete: {incompleteList}. Please complete or close all interviews first."));
+                    await _notificationHelper.ShowErrorAsync($"Cannot set investigation status to Complete. {incompleteCount} interview(s) are still incomplete: {incompleteList}. Please complete or close all interviews first.");
                     
                     // Reset the status back to previous value
                     InvestigationStatusId = InvestigationEntity.Status.Value;
@@ -427,13 +430,13 @@ public partial class Investigations : ComponentBase
                 // For other decisions, just save normally
                 await SaveInvestigation();
                 showDecisionForm = false;
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", "Investigation decision recorded"));
+                await _notificationHelper.ShowSuccessAsync("Investigation decision recorded");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error recording investigation decision");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Error recording decision: {ex.Message}"));
+            await _notificationHelper.ShowErrorAsync($"Error recording decision: {ex.Message}");
         }
     }
 
@@ -450,7 +453,7 @@ public partial class Investigations : ComponentBase
                 var incompleteCount = incompleteInterviews.Count;
                 var incompleteList = string.Join(", ", incompleteInterviews.Select(i => $"{i.Code} ({i.Status.Name})"));
                 
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Cannot complete investigation and return to validation. {incompleteCount} interview(s) are still incomplete: {incompleteList}. Please complete or close all interviews first."));
+                await _notificationHelper.ShowErrorAsync($"Cannot complete investigation and return to validation. {incompleteCount} interview(s) are still incomplete: {incompleteList}. Please complete or close all interviews first.");
                 
                 // Switch to interviews tab to show the incomplete interviews
                 selectedTabIndex = 1; // Assuming interviews tab is index 1
@@ -488,7 +491,7 @@ public partial class Investigations : ComponentBase
                     {
                         _logger.LogError("Could not find ReportCode for Investigation {Code} with HazardCode {HazardCode}",
                             InvestigationEntity.Code, InvestigationEntity.HazardCode);
-                        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error: Could not find associated report for validation reset. Please contact administrator."));
+                        await _notificationHelper.ShowErrorAsync("Error: Could not find associated report for validation reset. Please contact administrator.");
                         return;
                     }
                 }
@@ -496,18 +499,19 @@ public partial class Investigations : ComponentBase
                 {
                     _logger.LogError("Could not load hazards for Investigation {Code} with HazardCode {HazardCode}",
                         InvestigationEntity.Code, InvestigationEntity.HazardCode);
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error: Could not find associated report for validation reset. Please contact administrator."));
+                    await _notificationHelper.ShowErrorAsync("Error: Could not find associated report for validation reset. Please contact administrator.");
                     return;
                 }
             }
             else
             {
                 _logger.LogError("Cannot reset ReportValidation: Investigation {Code} has no ReportCode or HazardCode", InvestigationEntity.Code);
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Warning: Investigation has no associated report code or hazard code. Manual validation reset may be required."));
+                await _notificationHelper.ShowErrorAsync("Warning: Investigation has no associated report code or hazard code. Manual validation reset may be required.");
             }
 
             showDecisionForm = false;
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", "Investigation completed and returned to validation workflow"));
+            await PublishReportReturnedToValidationLiveUpdateAsync(InvestigationEntity.ReportCode, "Investigations.ReturnToValidation");
+            await _notificationHelper.ShowSuccessAsync("Investigation completed and returned to validation workflow");
 
             // Show completion dialog with next steps
             var message = "Investigation has been completed and the report has been returned to the validation workflow.\n\n";
@@ -521,7 +525,7 @@ public partial class Investigations : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in Return to Validation workflow for Investigation: {Code}", InvestigationEntity.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Error processing return to validation: {ex.Message}"));
+            await _notificationHelper.ShowErrorAsync($"Error processing return to validation: {ex.Message}");
         }
     }
     private async Task ResetReportValidation(string reportCode)
@@ -654,7 +658,7 @@ public partial class Investigations : ComponentBase
         var getupdateResult = await _mediator.SendAsync(updatestatuscmd, CancellationToken.None);
         if (!getupdateResult.IsSuccess)
         {
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Report{reportcode} Status Was not Updated"));
+            await _notificationHelper.ShowErrorAsync($"Report{reportcode} Status Was not Updated");
             return false;
         }
         return true;
@@ -711,7 +715,7 @@ public partial class Investigations : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error during return to validation for investigation {Code}", InvestigationEntity?.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"An unexpected error occurred: {ex.Message}"));
+            await _notificationHelper.ShowErrorAsync($"An unexpected error occurred: {ex.Message}");
         }
         finally
         {
@@ -740,6 +744,25 @@ public partial class Investigations : ComponentBase
         return "THIS ACTION CANNOT BE UNDONE!";
     }
 
+    private async Task PublishReportReturnedToValidationLiveUpdateAsync(string? reportCode, string sourceModule)
+    {
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            return;
+        }
+
+        await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
+        {
+            EventName = LiveUpdateEventNames.ReportReturnedToValidation,
+            SourceModule = sourceModule,
+            OccurredOn = DateTime.Now,
+            ActorUserCode = _currentUserService?.UserCode,
+            Message = $"Report returned to validation and ready for processing. ReportId={reportCode}",
+            EntityType = nameof(Report),
+            EntityCode = reportCode
+        });
+    }
+
     #region Decision Editing
     private async Task OnInterviewsChanged()
     {
@@ -760,7 +783,7 @@ public partial class Investigations : ComponentBase
         InvestigationEntity.DecisionDate = null;
         StateHasChanged();
 
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", "Decision opened for editing. Make your changes and click 'Record Decision' to save."));
+        await _notificationHelper.ShowSuccessAsync("Decision opened for editing. Make your changes and click 'Record Decision' to save.");
     }
     #endregion
 
@@ -798,7 +821,7 @@ public partial class Investigations : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating interview completeness for investigation {Code}", InvestigationEntity?.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error checking interview status. Please try again."));
+            await _notificationHelper.ShowErrorAsync("Error checking interview status. Please try again.");
             return new List<Interview>(); // Return empty list to allow operation but log the error
         }
     }
@@ -981,4 +1004,5 @@ public partial class Investigations : ComponentBase
         string? InvestigationNotes);
     #endregion
 }
+
 

@@ -13,6 +13,8 @@ using SMS_Infrastructure.Security;
 using SMS3.Api.Extensions;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.EventHandlers;
+using SMS3.Hubs;
+using SMS3.Hubs.Contracts;
 
 using SMS3.Api.Endpoints;
 using Microsoft.AspNetCore.Builder;
@@ -105,6 +107,7 @@ public static class DependencyInjection
         // Notification system with feature management integration
         services.AddScoped<INotificationHelper, NotificationHelper>();
         services.AddScoped<INotificationBellRefreshService, NotificationBellRefreshService>();
+        services.AddScoped<ILiveUpdatesPublisher, LiveUpdatesPublisher>();
 
         // EventBus UI Event Handlers
         services.AddScoped<UIEventHandler>();

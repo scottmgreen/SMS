@@ -247,14 +247,18 @@ public partial class OrganizationalUsers : ComponentBase
         !string.IsNullOrWhiteSpace(_newUserName) &&
         !string.IsNullOrWhiteSpace(_newPassword) &&
         _newPassword == _confirmPassword &&
+        !string.IsNullOrWhiteSpace(_newUser.Company) &&
         IsValidOrganization(_newUser.Organization) &&
+        !string.IsNullOrWhiteSpace(_newUser.Title) &&
         IsValidOrganizationLevel(_newOrganizationLevelId) &&
         !string.IsNullOrWhiteSpace(_newUserRoleCode);
 
     private bool _isEditFormValid =>
         !string.IsNullOrWhiteSpace(_editFirstName) &&
         !string.IsNullOrWhiteSpace(_editLastName) &&
+        !string.IsNullOrWhiteSpace(_editUser.Company) &&
         IsValidOrganization(_editUser.Organization) &&
+        !string.IsNullOrWhiteSpace(_editUser.Title) &&
         IsValidOrganizationLevel(_editOrganizationLevelId) &&
         !string.IsNullOrWhiteSpace(_editUserRoleCode);
 
@@ -262,14 +266,14 @@ public partial class OrganizationalUsers : ComponentBase
     // Helper method to validate organization level
     private bool IsValidOrganizationLevel(string organizationLevel)
     {
-        if (string.IsNullOrWhiteSpace(organizationLevel)) return true; // Optional field
+        if (string.IsNullOrWhiteSpace(organizationLevel)) return false;
 
         return SMSOrganizationalLevel.GetAllValues()
             .Any(level => level.Name.Equals(organizationLevel, StringComparison.OrdinalIgnoreCase));
     }
     private bool IsValidOrganization(string organization)
     {
-        if (string.IsNullOrWhiteSpace(organization)) return true; // Optional field
+        if (string.IsNullOrWhiteSpace(organization)) return false;
 
         return SMSOrganization.GetAllValues()
             .Any(level => level.Value.Equals(organization, StringComparison.OrdinalIgnoreCase));

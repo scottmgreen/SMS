@@ -11,6 +11,7 @@ public partial class EditInterviewDialog : ComponentBase
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     [Inject] private IBaseEventBus EventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private ILogger<EditInterviewDialog> Logger { get; set; } = default!;
     [Inject] public DialogService DialogService { get; set; } = default!;
     #endregion
@@ -376,12 +377,12 @@ public partial class EditInterviewDialog : ComponentBase
     #region Notification Methods (EventBus-Driven)
     private async Task ShowSuccessAsyncNotification(string message)
     {
-        await EventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
+        await _notificationHelper.ShowSuccessAsync(message);
     }
 
     private async Task ShowErrorAsyncNotification(string message)
     {
-        await EventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
+        await _notificationHelper.ShowErrorAsync(message);
     }
     #endregion
 

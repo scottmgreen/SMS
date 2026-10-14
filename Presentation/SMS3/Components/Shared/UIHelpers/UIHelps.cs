@@ -1,7 +1,9 @@
 using SMS_Domain.Enums;
 using Radzen;
-using Microsoft.FeatureManagement;
 using System.Text.RegularExpressions;
+using SMS_Application.Interfaces;
+using SMS_Domain.Events;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace SMS3.Components.Shared.UIHelpers;
 
@@ -111,23 +113,7 @@ public class SPIDropdowns
 
 public static class DropdownHelper
 {
-    public static List<DropdownOption> GroupTypeOptions = new()
-    {
-        new() { Text = "Organization", Value = "Organization" },
-        new() { Text = "SMS Role", Value = "SMS Role" },
-        new() { Text = "Committee", Value = "Committee" },
-        new() { Text = "Work Group", Value = "Work Group" },
-        new() { Text = "Management Team", Value = "Management Team" }
-    };
-
-    public static List<DropdownOption> AuthorityLevelOptions = new()
-    {
-        new() { Text = "Strategic", Value = "Strategic" },
-        new() { Text = "Executive", Value = "Executive" },
-        new() { Text = "Operational", Value = "Operational" },
-        new() { Text = "Process", Value = "Process" },
-        new() { Text = "Support", Value = "Support" }
-    };
+       
 
     public static List<DropdownOption> GetHazardCategoryOptions()
     {
@@ -423,92 +409,95 @@ public interface INotificationHelper
 }
 
 /// <summary>
-/// Notification helper service with FeatureManagement integration
+/// Notification helper service that routes all toasts through the EventBus UI notification pipeline
 /// </summary>
 public sealed class NotificationHelper : INotificationHelper
 {
-    private readonly IFeatureManager _featureManager;
-    private readonly NotificationService _notificationService;
+    private readonly IBaseEventBus _eventBus;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ILogger<NotificationHelper> _logger;
 
-    // Feature flag names
-    private static class NotificationFeatures
+    public NotificationHelper(
+        IBaseEventBus eventBus,
+        ICurrentUserService currentUserService,
+        IHttpContextAccessor httpContextAccessor,
+        ILogger<NotificationHelper> logger)
     {
-        public const string ErrorNotifications = "ErrorNotifications";
-        public const string SuccessNotifications = "SuccessNotifications";
-        public const string WarningNotifications = "WarningNotifications";
-        public const string InfoNotifications = "InfoNotifications";
-    }
-
-    public NotificationHelper(IFeatureManager featureManager, NotificationService notificationService)
-    {
-        _featureManager = featureManager ?? throw new ArgumentNullException(nameof(featureManager));
-        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+        _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task ShowSuccessAsync(string message, int duration = 4000)
     {
-        Console.WriteLine($"NotificationHelper.ShowSuccessAsync called with message: '{message}'");
-
-        if (await _featureManager.IsEnabledAsync(NotificationFeatures.SuccessNotifications))
-        {
-            Console.WriteLine("Feature flag SuccessNotifications is enabled, calling NotificationService.Notify");
-
-            _notificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Success,
-                Summary = "Success",
-                Detail = message,
-                Duration = duration
-            });
-
-            Console.WriteLine("NotificationService.Notify completed");
-        }
-        else
-        {
-            Console.WriteLine("Feature flag SuccessNotifications is DISABLED, notification suppressed");
-        }
+        await PublishNotificationAsync(UINotificationSeverity.Success, "Success", message, duration);
     }
 
     public async Task ShowErrorAsync(string message, int duration = 6000)
     {
-        if (await _featureManager.IsEnabledAsync(NotificationFeatures.ErrorNotifications))
-        {
-            _notificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Error",
-                Detail = message,
-                Duration = duration
-            });
-        }
+        await PublishNotificationAsync(UINotificationSeverity.Error, "Error", message, duration);
     }
 
     public async Task ShowInfoAsync(string message, int duration = 4000)
     {
-        if (await _featureManager.IsEnabledAsync(NotificationFeatures.InfoNotifications))
-        {
-            _notificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Info,
-                Summary = "Information",
-                Detail = message,
-                Duration = duration
-            });
-        }
+        await PublishNotificationAsync(UINotificationSeverity.Info, "Information", message, duration);
     }
 
     public async Task ShowWarningAsync(string message, int duration = 5000)
     {
-        if (await _featureManager.IsEnabledAsync(NotificationFeatures.WarningNotifications))
+        await PublishNotificationAsync(UINotificationSeverity.Warning, "Warning", message, duration);
+    }
+
+    private async Task PublishNotificationAsync(UINotificationSeverity severity, string title, string message, int duration)
+    {
+        var targetUserCode = _currentUserService?.UserCode;
+        var targetSessionKey = BuildCurrentSessionKey();
+
+        var metadata = new Dictionary<string, object>();
+
+        if (!string.IsNullOrWhiteSpace(targetUserCode))
         {
-            _notificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Warning,
-                Summary = "Warning",
-                Detail = message,
-                Duration = duration
-            });
+            metadata["TargetUserCode"] = targetUserCode;
         }
+
+        if (!string.IsNullOrWhiteSpace(targetSessionKey))
+        {
+            metadata["TargetSessionKey"] = targetSessionKey;
+        }
+
+        var uiEvent = new UINotificationEvent(
+            severity,
+            title,
+            message,
+            duration,
+            category: "UserAction",
+            sourceLayer: "Presentation",
+            metadata: metadata);
+
+        var result = await _eventBus.PublishUIEventAsync(uiEvent);
+        if (!result.IsSuccess)
+        {
+            _logger.LogWarning("Failed to publish UI notification event: {ErrorMessage}", result.Error?.Message);
+        }
+    }
+
+    private string BuildCurrentSessionKey()
+    {
+        var context = _httpContextAccessor.HttpContext;
+        var sessionId = context?.Features.Get<ISessionFeature>()?.Session?.Id;
+
+        if (!string.IsNullOrWhiteSpace(sessionId))
+        {
+            return $"session:{sessionId}";
+        }
+
+        var userCode = _currentUserService?.UserCode ?? "unknown";
+        var remoteIp = context?.Connection?.RemoteIpAddress?.ToString() ?? "unknown";
+        var userAgent = context?.Request?.Headers["User-Agent"].FirstOrDefault() ?? "unknown";
+
+        return $"fallback:{userCode}:{remoteIp}:{userAgent.GetHashCode()}";
     }
 }
 

@@ -207,10 +207,11 @@
                 <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="12">
                         <RadzenStack Gap="1rem">
-                            <RadzenFormField Text="Group Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenFormField Text="Group Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_newGroupName) ? "validation-error-field" : string.Empty)">
                                 <RadzenTextBox @bind-Value="@_newGroupName"
                                                Placeholder="Enter group name (e.g., Executive Leadership, SMS Core Team)"
-                                               Style="width: 100%;" />
+                                               Style="width: 100%;"
+                                               class="@(string.IsNullOrWhiteSpace(_newGroupName) ? "default-validation-textbox" : string.Empty)" />
                             </RadzenFormField>
                         </RadzenStack>
                         <RadzenStack Gap="1rem">
@@ -221,10 +222,11 @@
                             </RadzenFormField>
                         </RadzenStack>
                         <RadzenStack Gap="1rem">
-                            <RadzenFormField Text="Contact Email" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenFormField Text="Contact Email *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_newContactEmail) ? "validation-error-field" : string.Empty)">
                                 <RadzenTextBox @bind-Value="@_newContactEmail"
-                                               Placeholder="Optional group email (e.g., sms.ops@flypdx.com)"
-                                               Style="width: 100%;" />
+                                               Placeholder="Enter group email (e.g., sms.ops@flypdx.com)"
+                                               Style="width: 100%;"
+                                               class="@(string.IsNullOrWhiteSpace(_newContactEmail) ? "default-validation-textbox" : string.Empty)" />
                             </RadzenFormField>
                         </RadzenStack>
 
@@ -257,19 +259,21 @@
                 <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenStack Gap="1rem">
-                            <RadzenFormField Text="Group Type" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenFormField Text="Group Type *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_newGroupType) ? "validation-error-field" : string.Empty)">
                                 <RadzenDropDown @bind-Value="@_newGroupType" Data="@GroupTypeOptions"
                                                 TextProperty="Text" ValueProperty="Value"
-                                                Style="width: 100%;" />
+                                                Style="width: 100%;"
+                                                class="@(string.IsNullOrWhiteSpace(_newGroupType) ? "default-validation-dropdown" : string.Empty)" />
                             </RadzenFormField>
                         </RadzenStack>
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenStack Gap="1rem">
-                            <RadzenFormField Text="Authority Level" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenFormField Text="Authority Level *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_newAuthorityLevel) ? "validation-error-field" : string.Empty)">
                                 <RadzenDropDown @bind-Value="@_newAuthorityLevel" Data="@AuthorityLevelOptions"
                                                 TextProperty="Text" ValueProperty="Value"
-                                                Style="width: 100%;" />
+                                                Style="width: 100%;"
+                                                class="@(string.IsNullOrWhiteSpace(_newAuthorityLevel) ? "default-validation-dropdown" : string.Empty)" />
                             </RadzenFormField>
                         </RadzenStack>
                     </RadzenColumn>
@@ -279,7 +283,7 @@
                 <div class="d-flex justify-content-end gap-2 mt-3">
                     <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseCreateModal" />
                     <RadzenButton Text="Create Group" Icon="save" ButtonStyle="ButtonStyle.Primary" 
-                                  Click="@CreateGroup" Disabled="@(string.IsNullOrWhiteSpace(_newGroupName) || _isSaving)"
+                                  Click="@CreateGroup" Disabled="@(string.IsNullOrWhiteSpace(_newGroupName) || string.IsNullOrWhiteSpace(_newGroupType) || string.IsNullOrWhiteSpace(_newContactEmail) || string.IsNullOrWhiteSpace(_newAuthorityLevel) || _isSaving)"
                                   Style="background-color: #212e61; border-color: #212e61;" />
                 </div>
             </RadzenCard>
@@ -306,10 +310,11 @@
                     <RadzenColumn Size="12" SizeMD="12">
                         <RadzenStack Gap="1rem">             
 
-                                <RadzenFormField Text="Group Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenFormField Text="Group Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_editGroupName) ? "validation-error-field" : string.Empty)">
                                     <RadzenTextBox @bind-Value="@_editGroupName" 
                                                    Placeholder="Enter group name" 
-                                                   Style="width: 100%;" />
+                                                   Style="width: 100%;"
+                                                   class="@(string.IsNullOrWhiteSpace(_editGroupName) ? "default-validation-textbox" : string.Empty)" />
                                 </RadzenFormField>
                         </RadzenStack>
                         <RadzenStack Gap="1rem">
@@ -320,10 +325,11 @@
                             </RadzenFormField>
                         </RadzenStack>
                         <RadzenStack Gap="1rem">
-                            <RadzenFormField Text="Contact Email" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenFormField Text="Contact Email *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_editContactEmail) ? "validation-error-field" : string.Empty)">
                                 <RadzenTextBox @bind-Value="@_editContactEmail"
-                                               Placeholder="Optional group email (e.g., sms.ops@flypdx.com)"
-                                               Style="width: 100%;" />
+                                               Placeholder="Enter group email (e.g., sms.ops@flypdx.com)"
+                                               Style="width: 100%;"
+                                               class="@(string.IsNullOrWhiteSpace(_editContactEmail) ? "default-validation-textbox" : string.Empty)" />
                             </RadzenFormField>
                         </RadzenStack>
 
@@ -356,19 +362,21 @@
                 <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenStack Gap="1rem">
-                            <RadzenFormField Text="Group Type" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenFormField Text="Group Type *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_editGroupType) ? "validation-error-field" : string.Empty)">
                                 <RadzenDropDown @bind-Value="@_editGroupType" Data="@GroupTypeOptions" 
                                                 TextProperty="Text" ValueProperty="Value" 
-                                                Style="width: 100%;" />
+                                                Style="width: 100%;"
+                                                class="@(string.IsNullOrWhiteSpace(_editGroupType) ? "default-validation-dropdown" : string.Empty)" />
                             </RadzenFormField>
                         </RadzenStack>
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenStack Gap="1rem">
-                            <RadzenFormField Text="Authority Level" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenFormField Text="Authority Level *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_editAuthorityLevel) ? "validation-error-field" : string.Empty)">
                                 <RadzenDropDown @bind-Value="@_editAuthorityLevel" Data="@AuthorityLevelOptions" 
                                                 TextProperty="Text" ValueProperty="Value" 
-                                                Style="width: 100%;" />
+                                                Style="width: 100%;"
+                                                class="@(string.IsNullOrWhiteSpace(_editAuthorityLevel) ? "default-validation-dropdown" : string.Empty)" />
                             </RadzenFormField>
                         </RadzenStack>
                     </RadzenColumn>
@@ -389,7 +397,7 @@
                 <div class="d-flex justify-content-end gap-2 mt-3">
                     <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseEditModal" />
                     <RadzenButton Text="Update Group" Icon="save" ButtonStyle="ButtonStyle.Primary" 
-                                  Click="@UpdateGroup" Disabled="@(string.IsNullOrWhiteSpace(_editGroupName) || _isSaving)"
+                                  Click="@UpdateGroup" Disabled="@(string.IsNullOrWhiteSpace(_editGroupName) || string.IsNullOrWhiteSpace(_editGroupType) || string.IsNullOrWhiteSpace(_editContactEmail) || string.IsNullOrWhiteSpace(_editAuthorityLevel) || _isSaving)"
                                   Style="background-color: #212e61; border-color: #212e61;" />
                 </div>
             </RadzenCard>
@@ -608,6 +616,25 @@
 
 .modal-header {
     border-radius: 6px 6px 0 0;
+}
+
+.validation-error-field .rz-dropdown,
+.validation-error-field .rz-dropdown:focus-within,
+.default-validation-dropdown,
+.validation-error-field .rz-textbox,
+.validation-error-field .rz-password,
+.validation-error-field .rz-password input,
+.default-validation-textbox {
+    border: 2px solid #dc3545 !important;
+    background-color: #fff5f5 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.validation-error-field .rz-dropdown-label,
+.validation-error-field .rz-inputtext,
+.validation-error-field .rz-password input,
+.default-validation-textbox {
+    background-color: #fff5f5 !important;
 }
 </style>
 

@@ -6,6 +6,7 @@ using SMS_Application.Queries;
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS3.Components.Pages.SMSSystem.Services;
+using SMS3.Components.Shared.UIHelpers;
 using System.Text.Json;
 
 namespace SMS3.Components.Pages.SMSSystem.EventBus;
@@ -13,7 +14,7 @@ namespace SMS3.Components.Pages.SMSSystem.EventBus;
 public class EmailNotificationSettingsDialogBase : ComponentBase
 {
     [Inject] protected DialogService DialogService { get; set; } = default!;
-    [Inject] protected NotificationService NotificationService { get; set; } = default!;
+    [Inject] protected INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] protected IEmailNotificationSettingsService EmailNotificationSettingsService { get; set; } = default!;
     [Inject] protected IBaseMediator Mediator { get; set; } = default!;
 
@@ -80,15 +81,18 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
                     "EMAIL_NOTIFICATION_SETTINGS_SECTION_NOT_FOUND",
                     StringComparison.OrdinalIgnoreCase);
 
-                NotificationService.Notify(new NotificationMessage
+                var detail = isMissingSectionError
+                    ? "NotificationEvents channel settings were not found in appsettings.json. Verify each notification has Channels:<ChannelName>:ExecutionMode configured, then try again."
+                    : saveResult.Error?.Message ?? "Unable to save notification settings.";
+
+                if (isMissingSectionError)
                 {
-                    Severity = isMissingSectionError ? NotificationSeverity.Warning : NotificationSeverity.Error,
-                    Summary = isMissingSectionError ? "Configuration Section Missing" : "Save Failed",
-                    Detail = isMissingSectionError
-                        ? "NotificationEvents channel settings were not found in appsettings.json. Verify each notification has Channels:<ChannelName>:ExecutionMode configured, then try again."
-                        : saveResult.Error?.Message ?? "Unable to save notification settings.",
-                    Duration = isMissingSectionError ? 8000 : 5000
-                });
+                    await NotificationHelper.ShowWarningAsync($"Configuration Section Missing: {detail}", 8000);
+                }
+                else
+                {
+                    await NotificationHelper.ShowErrorAsync($"Save Failed: {detail}", 5000);
+                }
                 return;
             }
 
@@ -97,13 +101,7 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
                 await ExecutePendingEventsAsync(executionPlan);
             }
 
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Success,
-                Summary = "Saved",
-                Detail = "Notification execution settings were updated.",
-                Duration = 3000
-            });
+            await NotificationHelper.ShowSuccessAsync("Saved. Notification execution settings were updated.", 3000);
 
             DialogService.Close(true);
         }
@@ -253,13 +251,7 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
 
         if (totalExecuted > 0)
         {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Info,
-                Summary = "Manual Queue Executed",
-                Detail = $"Executed {totalExecuted} existing pending manual event(s) after settings update.",
-                Duration = 5000
-            });
+            await NotificationHelper.ShowInfoAsync($"Manual Queue Executed: Executed {totalExecuted} existing pending manual event(s) after settings update.", 5000);
         }
     }
 

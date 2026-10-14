@@ -23,6 +23,7 @@ public partial class SPIDataPointDialog : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<SPIDataPointDialog> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
@@ -163,10 +164,7 @@ public partial class SPIDataPointDialog : ComponentBase
         catch (Exception ex)
         {
             // EventBus-driven error notification
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error(
-                "Save Failed", 
-                "Failed to save data point. Please try again."
-            ));
+            await _notificationHelper.ShowErrorAsync("Save Failed: Failed to save data point. Please try again.");
 
             _logger.LogError(ex, "Failed to save SPI data point in dialog");
         }

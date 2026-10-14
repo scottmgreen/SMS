@@ -103,6 +103,15 @@ public abstract class HazardType : BaseEnum<HazardType>
     /// <summary>Poor lighting conditions</summary>
     public static readonly HazardType PoorLighting = new PoorLightingType();
 
+    /// <summary>Slip hazard</summary>
+    public static readonly HazardType Slip = new SlipType();
+
+    /// <summary>Trip hazard</summary>
+    public static readonly HazardType Trip = new TripType();
+
+    /// <summary>Fall hazard</summary>
+    public static readonly HazardType Fall = new FallType();
+
     /// <summary>Other physical hazard</summary>
     public static readonly HazardType PhysicalOther = new PhysicalOtherType();
 
@@ -396,48 +405,63 @@ public abstract class HazardType : BaseEnum<HazardType>
 
     private sealed class NoiseType : HazardType
     {
-        public NoiseType() : base("NOISE", "Noise",
-            "Excessive noise exposure", "PHYSICAL")
+        public NoiseType() : base("NOISE", "Noise","Excessive noise exposure", "PHYSICAL")
         {
         }
     }
 
     private sealed class VibrationType : HazardType
     {
-        public VibrationType() : base("VIBRATION", "Vibration",
-            "Harmful vibration", "PHYSICAL")
+        public VibrationType() : base("VIBRATION", "Vibration","Harmful vibration", "PHYSICAL")
         {
         }
     }
 
     private sealed class RadiationType : HazardType
     {
-        public RadiationType() : base("RADIATION", "Radiation",
-            "Radiation exposure", "PHYSICAL")
+        public RadiationType() : base("RADIATION", "Radiation","Radiation exposure", "PHYSICAL")
         {
         }
     }
 
     private sealed class ExtremeTemperaturesType : HazardType
     {
-        public ExtremeTemperaturesType() : base("EXTREME_TEMPERATURES", "Extreme temperatures",
-            "Extreme temperature conditions", "PHYSICAL")
+        public ExtremeTemperaturesType() : base("EXTREME_TEMPERATURES", "Extreme temperatures", "Extreme temperature conditions", "PHYSICAL")
         {
         }
     }
 
     private sealed class PoorLightingType : HazardType
     {
-        public PoorLightingType() : base("POOR_LIGHTING", "Poor lighting",
-            "Poor lighting conditions", "PHYSICAL")
+        public PoorLightingType() : base("POOR_LIGHTING", "Poor lighting", "Poor lighting conditions", "PHYSICAL")
+        {
+        }
+    }
+
+    private sealed class SlipType : HazardType
+    {
+        public SlipType() : base("SLIP", "Slip", "Slip hazard", "PHYSICAL")
+        {
+        }
+    }
+
+    private sealed class TripType : HazardType
+    {
+        public TripType() : base("TRIP", "Trip", "Trip hazard", "PHYSICAL")
+        {
+        }
+    }
+
+    private sealed class FallType : HazardType
+    {
+        public FallType() : base("FALL", "Fall", "Fall hazard", "PHYSICAL")
         {
         }
     }
 
     private sealed class PhysicalOtherType : HazardType
     {
-        public PhysicalOtherType() : base("PHYSICAL_OTHER", "Other",
-            "Other physical hazard", "PHYSICAL")
+        public PhysicalOtherType() : base("PHYSICAL_OTHER", "Other","Other physical hazard", "PHYSICAL")
         {
         }
     }

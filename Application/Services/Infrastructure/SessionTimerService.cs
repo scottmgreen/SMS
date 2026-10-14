@@ -135,7 +135,7 @@ public class SessionTimerService : IDisposable
     public bool IsNearExpiry()
     {
         var remaining = GetRemainingTime();
-        return remaining <= TimeSpan.FromMinutes(2) && remaining > TimeSpan.Zero;
+        return remaining <= TimeSpan.FromMinutes(_sessionConfig.TimeoutThresholdMinutes) && remaining > TimeSpan.Zero;
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public class SessionTimerService : IDisposable
             return "session-expired";
         else if (remaining <= TimeSpan.FromMinutes(1))
             return "session-critical";
-        else if (remaining <= TimeSpan.FromMinutes(2))
+        else if (remaining <= TimeSpan.FromMinutes(_sessionConfig.TimeoutThresholdMinutes))
             return "session-warning";
         else
             return "session-normal";
@@ -189,8 +189,10 @@ public class SessionTimerService : IDisposable
             // Notify subscribers of remaining time
             OnTimeRemaining?.Invoke(remaining);
 
-            // Check for warning threshold (2 minutes)
-            if (remaining <= TimeSpan.FromMinutes(2) && remaining > TimeSpan.FromMinutes(1.5))
+            var warningThreshold = TimeSpan.FromMinutes(_sessionConfig.TimeoutThresholdMinutes);
+
+            // Check for warning threshold
+            if (remaining <= warningThreshold && remaining > warningThreshold.Subtract(TimeSpan.FromSeconds(30)))
             {
                 _logger.LogApplicationWarning("Session approaching timeout for user {UserId} - {RemainingMinutes} minutes remaining",
                     ApplicationEventIds.Warning,

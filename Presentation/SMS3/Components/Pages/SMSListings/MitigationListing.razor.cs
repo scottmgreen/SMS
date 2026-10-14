@@ -39,6 +39,7 @@ public partial class MitigationListing : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<MitigationListing> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
 
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
@@ -169,7 +170,7 @@ public partial class MitigationListing : ComponentBase
                 else
                 {
                     _allMitigations = new List<Mitigation>();
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load mitigations"));
+                    await _notificationHelper.ShowErrorAsync("Failed to load mitigations");
                     _logger.LogError("Failed to load mitigations");
                 }
             }
@@ -184,18 +185,18 @@ public partial class MitigationListing : ComponentBase
             // Show success/info notification based on loaded row count
             if (_totalCount > 0)
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {_totalCount} mitigations"));
+                    await _notificationHelper.ShowSuccessAsync($"Successfully loaded {_totalCount} mitigations");
             }
             else
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "No mitigations found"));
+                    await _notificationHelper.ShowInfoAsync("No mitigations found");
                 _logger.LogInformation("No mitigations found for current listing context");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading mitigations");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Error loading mitigations: {ex.Message}"));
+            await _notificationHelper.ShowErrorAsync($"Error loading mitigations: {ex.Message}");
         }
         finally
         {
@@ -270,7 +271,7 @@ public partial class MitigationListing : ComponentBase
         {
             _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filters={FiltersCount}", 
                 args.Skip, args.Top, args.OrderBy, args.Filters?.Count() ?? 0);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Error loading data: {ex.Message}"));
+            await _notificationHelper.ShowErrorAsync($"Error loading data: {ex.Message}");
             
             // Fallback to show all data without filtering/sorting
             try
@@ -555,12 +556,12 @@ public partial class MitigationListing : ComponentBase
             _selectedMitigation = mitigation;
             _showViewDialog = true;
             StateHasChanged();
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"Viewing details for mitigation {mitigation.Code}"));
+            await _notificationHelper.ShowInfoAsync($"Viewing details for mitigation {mitigation.Code}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error viewing mitigation {Code}", mitigation.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error viewing mitigation"));
+            await _notificationHelper.ShowErrorAsync("Error viewing mitigation");
         }
     }
 
@@ -570,12 +571,12 @@ public partial class MitigationListing : ComponentBase
         {
             _logger.LogInformation("Editing mitigation: {Code}", mitigation.Code);
             _navigation.NavigateToSecure($"/SMSRiskManagement/HazardMitigation/Edit/{mitigation.Code}");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"Opening mitigation editor for {mitigation.Code}"));
+            await _notificationHelper.ShowInfoAsync($"Opening mitigation editor for {mitigation.Code}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error editing mitigation {Code}", mitigation.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error opening mitigation editor"));
+            await _notificationHelper.ShowErrorAsync("Error opening mitigation editor");
         }
     }
 
@@ -593,19 +594,19 @@ public partial class MitigationListing : ComponentBase
 
             if (result.IsSuccess)
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Mitigation {mitigation.Code} approved successfully"));
+                    await _notificationHelper.ShowSuccessAsync($"Mitigation {mitigation.Code} approved successfully");
                 await LoadInitialData();
                 StateHasChanged();
             }
             else
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Failed to approve mitigation: {result.Error?.Message}"));
+                    await _notificationHelper.ShowErrorAsync($"Failed to approve mitigation: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error quick approving mitigation {Code}", mitigation.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error approving mitigation"));
+            await _notificationHelper.ShowErrorAsync("Error approving mitigation");
         }
     }
 
@@ -617,7 +618,7 @@ public partial class MitigationListing : ComponentBase
 
             if (!approvableMitigations.Any())
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "All mitigations are already approved"));
+                await _notificationHelper.ShowInfoAsync("All mitigations are already approved");
                 return;
             }
 
@@ -630,7 +631,7 @@ public partial class MitigationListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error opening bulk approval dialog");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error opening bulk approval dialog"));
+            await _notificationHelper.ShowErrorAsync("Error opening bulk approval dialog");
         }
     }
 
@@ -686,12 +687,12 @@ public partial class MitigationListing : ComponentBase
 
             if (successCount > 0)
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully approved {successCount} mitigation(s)"));
+                await _notificationHelper.ShowSuccessAsync($"Successfully approved {successCount} mitigation(s)");
             }
 
             if (errorCount > 0)
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Failed to approve {errorCount} mitigation(s)"));
+                await _notificationHelper.ShowErrorAsync($"Failed to approve {errorCount} mitigation(s)");
             }
 
             await LoadInitialData();
@@ -703,7 +704,7 @@ public partial class MitigationListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing bulk approval");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error processing bulk approval"));
+            await _notificationHelper.ShowErrorAsync("Error processing bulk approval");
         }
         finally
         {
@@ -717,12 +718,12 @@ public partial class MitigationListing : ComponentBase
         try
         {
             _logger.LogInformation("Viewing mitigation history: {Code}", mitigation.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"History functionality for mitigation {mitigation.Code} needs to be implemented"));
+            await _notificationHelper.ShowInfoAsync($"History functionality for mitigation {mitigation.Code} needs to be implemented");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error viewing mitigation history {Code}", mitigation.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error viewing mitigation history"));
+            await _notificationHelper.ShowErrorAsync("Error viewing mitigation history");
         }
     }
 
@@ -749,20 +750,20 @@ public partial class MitigationListing : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Mitigation '{mitigation.Name}' deleted successfully"));
+                    await _notificationHelper.ShowSuccessAsync($"Mitigation '{mitigation.Name}' deleted successfully");
                     await LoadInitialData();
                     StateHasChanged();
                 }
                 else
                 {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Failed to delete mitigation: {result.Error?.Message}"));
+                    await _notificationHelper.ShowErrorAsync($"Failed to delete mitigation: {result.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting mitigation {Code}", mitigation.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error deleting mitigation"));
+            await _notificationHelper.ShowErrorAsync("Error deleting mitigation");
         }
     }
     #endregion

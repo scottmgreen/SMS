@@ -33,6 +33,7 @@ public partial class NavMenu
     private Task? _notificationPollingTask;
     private DotNetObjectReference<NavMenu>? _dotNetRef;
     private List<ActiveUserSessionInfo> _activeUserSessions = new();
+    private bool _isFullyAuthenticated;
 
     // Environment Detection - Always production appearance
     private string BrandCssClass => "";
@@ -98,9 +99,10 @@ public partial class NavMenu
         try
         {
             _logger.LogDebug("NavMenu OnInitializedAsync - Checking authentication state");
+            _isFullyAuthenticated = await ResolveAuthenticationStateAsync();
             
             // Single check - no loops
-            if (_currentUserService?.IsFullyAuthenticated == true)
+            if (_isFullyAuthenticated)
             {
                 _sessionTimerService.StartTimer();
                 RefreshActiveUserSessions();
@@ -123,7 +125,12 @@ public partial class NavMenu
         {
             await RegisterActivityTrackingAsync();
 
-            if (_currentUserService?.IsFullyAuthenticated == true)
+            if (!_isFullyAuthenticated)
+            {
+                await RefreshAuthenticationStateAsync();
+            }
+
+            if (_isFullyAuthenticated)
             {
                 _sessionTimerService.StartTimer();
                 RefreshActiveUserSessions();
@@ -165,8 +172,9 @@ public partial class NavMenu
 
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
-        _ = InvokeAsync(() =>
+        _ = InvokeAsync(async () =>
         {
+            await RefreshAuthenticationStateAsync();
             RefreshActiveUserSessions();
             _ = LoadPendingIntegrationEventCountAsync();
             StateHasChanged();
@@ -175,8 +183,10 @@ public partial class NavMenu
     
     protected override async Task OnParametersSetAsync()
     {
+        await RefreshAuthenticationStateAsync();
+
         // Update session activity when parameters change - only for fully authenticated users
-        if (_currentUserService.IsFullyAuthenticated)
+        if (_isFullyAuthenticated)
         {
             _sessionTimerService.UpdateActivity();
             RegisterCurrentUserActivity();
@@ -222,7 +232,7 @@ public partial class NavMenu
             while (await timer.WaitForNextTickAsync(cancellationToken))
             {
                 RefreshActiveUserSessions();
-                if (_currentUserService?.IsFullyAuthenticated == true)
+                if (_isFullyAuthenticated)
                 {
                     RegisterCurrentUserActivity();
                     await LoadPendingIntegrationEventCountAsync();
@@ -243,7 +253,7 @@ public partial class NavMenu
 
     private void NavigateToNotificationManagement()
     {
-        if (_currentUserService.IsFullyAuthenticated)
+        if (_isFullyAuthenticated)
         {
             _sessionTimerService.UpdateActivity();
         }
@@ -365,6 +375,7 @@ public partial class NavMenu
     {
         // Stop session timer before logout
         _sessionTimerService.StopTimer();
+        _isFullyAuthenticated = false;
         RemoveCurrentUserSession();
         
         await OnLogoutRequested.InvokeAsync();
@@ -373,7 +384,7 @@ public partial class NavMenu
 
     private void RegisterCurrentUserActivity()
     {
-        if (_currentUserService?.IsFullyAuthenticated != true)
+        if (!_isFullyAuthenticated)
         {
             return;
         }
@@ -394,7 +405,7 @@ public partial class NavMenu
 
     private void RemoveCurrentUserSession()
     {
-        if (_currentUserService?.IsFullyAuthenticated != true)
+        if (!_isFullyAuthenticated)
         {
             return;
         }
@@ -439,7 +450,7 @@ public partial class NavMenu
     private void NavigateToAbout()
     {
         // Update session activity - only for fully authenticated users
-        if (_currentUserService.IsFullyAuthenticated)
+        if (_isFullyAuthenticated)
         {
             _sessionTimerService.UpdateActivity();
         }
@@ -451,7 +462,7 @@ public partial class NavMenu
     
     private async Task ShowUserProfileModal()
     {
-        if (_currentUserService?.IsFullyAuthenticated != true) return;
+        if (!_isFullyAuthenticated) return;
 
         // Update session activity
         _sessionTimerService.UpdateActivity();
@@ -500,6 +511,58 @@ public partial class NavMenu
 
             return configuredUrl.Trim();
         }
+    }
+
+    private async Task RefreshAuthenticationStateAsync()
+    {
+        var resolvedState = await ResolveAuthenticationStateAsync();
+        if (resolvedState == _isFullyAuthenticated)
+        {
+            return;
+        }
+
+        _isFullyAuthenticated = resolvedState;
+
+        if (_isFullyAuthenticated)
+        {
+            _sessionTimerService.StartTimer();
+            RegisterCurrentUserActivity();
+            RefreshActiveUserSessions();
+            await LoadPendingIntegrationEventCountAsync();
+        }
+        else
+        {
+            _pendingIntegrationEventCount = 0;
+            _activeUserSessions = [];
+        }
+    }
+
+    private async Task<bool> ResolveAuthenticationStateAsync()
+    {
+        if (_currentUserService?.IsFullyAuthenticated == true)
+        {
+            return true;
+        }
+
+        if (IsOnRestrictedPage)
+        {
+            return false;
+        }
+
+        const int attempts = 8;
+        const int delayMs = 125;
+
+        for (var attempt = 0; attempt < attempts; attempt++)
+        {
+            await Task.Delay(delayMs);
+
+            if (_currentUserService?.IsFullyAuthenticated == true)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 

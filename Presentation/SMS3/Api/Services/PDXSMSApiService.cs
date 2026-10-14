@@ -26,6 +26,7 @@ using SMS_Shared.Common;
 using SMS3.Api.Models;
 using SMS3.Api.Services;
 using SMS3.Configuration;
+using SMS3.Hubs.Contracts;
 
 
 namespace SMS3.Api.Services
@@ -37,6 +38,7 @@ namespace SMS3.Api.Services
     {
         private readonly IBaseMediator _mediator;
         private readonly IBaseEventBus _eventBus;
+        private readonly ILiveUpdatesPublisher _liveUpdatesPublisher;
         private readonly WorkflowStatusSyncService _workflowStatusSyncService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<PDXSMSApiService> _logger;
@@ -44,12 +46,14 @@ namespace SMS3.Api.Services
         public PDXSMSApiService(
             IBaseMediator mediator,
             IBaseEventBus eventBus,
+            ILiveUpdatesPublisher liveUpdatesPublisher,
             WorkflowStatusSyncService workflowStatusSyncService,
             IConfiguration configuration,
             ILogger<PDXSMSApiService> logger)
         {
             _mediator = mediator;
             _eventBus = eventBus;
+            _liveUpdatesPublisher = liveUpdatesPublisher;
             _workflowStatusSyncService = workflowStatusSyncService;
             _configuration = configuration;
             _logger = logger;
@@ -327,6 +331,8 @@ namespace SMS3.Api.Services
                     request.LocationDescription,
                     httpContext);
 
+                await PublishReportSubmittedLiveUpdateAsync(createdHazard, actualTrackingCode);
+
                 // Step 7: Build success response
                 var response = new PDXSMSReportApiResponse
                 {
@@ -461,6 +467,8 @@ namespace SMS3.Api.Services
                     request.LocationLongitude,
                     request.LocationDescription,
                     httpContext);
+
+                await PublishReportSubmittedLiveUpdateAsync(createdHazard, actualTrackingCode);
 
                 // Step 7: Build success response
                 var response = new PDXSMSReportApiResponse
@@ -772,6 +780,37 @@ namespace SMS3.Api.Services
                 geoLocation,
                 normalizedLocationDescription,
                 validRecipientGroups);
+        }
+
+        private async Task PublishReportSubmittedLiveUpdateAsync(Hazard createdHazard, string trackingCode)
+        {
+            try
+            {
+                var envelope = new LiveUpdateEnvelope
+                {
+                    EventName = LiveUpdateEventNames.ReportSubmitted,
+                    SourceModule = "API",
+                    OccurredOn = DateTime.Now,
+                    ActorUserCode = SystemConstants.FlyPdxApiSource,
+                    Severity = "Info",
+                    Message = $"New API report submitted: {createdHazard.ReportCode}",
+                    EntityType = "Report",
+                    EntityCode = createdHazard.ReportCode
+                };
+
+                await _liveUpdatesPublisher.PublishToApplicationUsersAsync(envelope);
+
+                _logger.LogInformation(
+                    "Published live update {EventName} for Report {ReportCode} / Hazard {HazardCode} / Tracking {TrackingCode}",
+                    LiveUpdateEventNames.ReportSubmitted,
+                    createdHazard.ReportCode,
+                    createdHazard.Code,
+                    trackingCode);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to publish API live update for report {ReportCode}", createdHazard.ReportCode);
+            }
         }
 
         private async Task QueueHazardStatusEscalationNotificationAsync(

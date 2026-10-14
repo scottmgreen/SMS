@@ -17,6 +17,7 @@ public partial class FileViewerDialog : ComponentBase
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     [Inject] private ILogger<FileViewerDialog> Logger { get; set; } = default!;
     [Inject] private IBaseEventBus EventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     #endregion
 
     #region Parameters
@@ -288,12 +289,12 @@ public partial class FileViewerDialog : ComponentBase
     #region Notification Methods (EventBus-Driven)
     private async Task ShowSuccessAsyncNotification(string message)
     {
-        await EventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message, duration: 3000));
+        await _notificationHelper.ShowSuccessAsync(message, 3000);
     }
 
     private async Task ShowErrorAsyncNotification(string message)
     {
-        await EventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message, duration: 5000));
+        await _notificationHelper.ShowErrorAsync(message, 5000);
     }
     #endregion
 }

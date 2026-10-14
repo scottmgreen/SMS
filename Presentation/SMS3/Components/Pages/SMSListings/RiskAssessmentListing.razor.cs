@@ -42,6 +42,7 @@ public partial class RiskAssessmentListing : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<RiskAssessmentListing> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
  
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
@@ -110,12 +111,12 @@ public partial class RiskAssessmentListing : ComponentBase
                 // Only show success notification if we have data
                 if (_totalCount > 0)
                 {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {_totalCount} risk assessments"));
+                    await _notificationHelper.ShowSuccessAsync($"Successfully loaded {_totalCount} risk assessments");
                 }
 
                 else
                 {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "No risk assessments found"));
+                    await _notificationHelper.ShowInfoAsync("No risk assessments found");
                 }
             }
             else
@@ -126,7 +127,7 @@ public partial class RiskAssessmentListing : ComponentBase
                 _assessmentValidationStatus.Clear();
                 _totalCount = 0;
                 
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load risk assessments"));
+                await _notificationHelper.ShowErrorAsync("Failed to load risk assessments");
                 _logger.LogError("Failed to load risk assessments: {Error}", result.Error?.Message);
             }
         }
@@ -139,7 +140,7 @@ public partial class RiskAssessmentListing : ComponentBase
             _totalCount = 0;
             
             _logger.LogError(ex, "Error loading risk assessments");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Error loading risk assessments: {ex.Message}"));
+            await _notificationHelper.ShowErrorAsync($"Error loading risk assessments: {ex.Message}");
         }
         finally
         {
@@ -575,7 +576,7 @@ public partial class RiskAssessmentListing : ComponentBase
         {
             _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filters={FiltersCount}", 
                 args.Skip, args.Top, args.OrderBy, args.Filters?.Count() ?? 0);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Error loading data: {ex.Message}"));
+            await _notificationHelper.ShowErrorAsync($"Error loading data: {ex.Message}");
             
             // Fallback to show all data without filtering/sorting
             try
@@ -845,12 +846,12 @@ public partial class RiskAssessmentListing : ComponentBase
             _selectedAssessment = assessment;
             _showViewDialog = true;
             StateHasChanged();
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"Viewing details for assessment {assessment.Code}"));
+            await _notificationHelper.ShowInfoAsync($"Viewing details for assessment {assessment.Code}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error viewing risk assessment {Code}", assessment.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error viewing risk assessment"));
+            await _notificationHelper.ShowErrorAsync("Error viewing risk assessment");
         }
     }
 
@@ -864,7 +865,7 @@ public partial class RiskAssessmentListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error editing risk assessment {Code}", assessment.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error opening risk assessment editor"));
+            await _notificationHelper.ShowErrorAsync("Error opening risk assessment editor");
         }
     }
 
@@ -889,7 +890,7 @@ public partial class RiskAssessmentListing : ComponentBase
             if (string.IsNullOrEmpty(reportCode))
             {
                 _logger.LogWarning("Could not determine ReportCode for assessment {AssessmentCode}", assessment.Code);
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Could not determine report code for this assessment"));
+                await _notificationHelper.ShowErrorAsync("Could not determine report code for this assessment");
                 return;
             }
 
@@ -900,12 +901,12 @@ public partial class RiskAssessmentListing : ComponentBase
 
             _logger.LogInformation("Navigating to Technical Assessment: {Url}", navigationUrl);
             _navigation.NavigateToSecure(navigationUrl);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"Opening technical assessment for {assessment.Code}"));
+            await _notificationHelper.ShowInfoAsync($"Opening technical assessment for {assessment.Code}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error navigating to Technical Assessment for {AssessmentCode}", assessment.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to navigate to Technical Assessment"));
+            await _notificationHelper.ShowErrorAsync("Failed to navigate to Technical Assessment");
         }
     }
 
@@ -983,7 +984,7 @@ public partial class RiskAssessmentListing : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Risk assessment '{assessment.Name}' deleted successfully"));
+                    await _notificationHelper.ShowSuccessAsync($"Risk assessment '{assessment.Name}' deleted successfully");
                     _logger.LogInformation("Successfully deleted risk assessment: {Code}", assessment.Code);
 
                     // Refresh the data grid by reloading initial data
@@ -992,7 +993,7 @@ public partial class RiskAssessmentListing : ComponentBase
                 }
                 else
                 {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Failed to delete risk assessment: {result.Error?.Message}"));
+                    await _notificationHelper.ShowErrorAsync($"Failed to delete risk assessment: {result.Error?.Message}");
                     _logger.LogError("Failed to delete risk assessment {Code}: {Error}", assessment.Code, result.Error?.Message);
                 }
             }
@@ -1000,7 +1001,7 @@ public partial class RiskAssessmentListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting risk assessment {Code}", assessment.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error deleting risk assessment"));
+            await _notificationHelper.ShowErrorAsync("Error deleting risk assessment");
         }
     }
     #endregion

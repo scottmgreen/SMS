@@ -10,6 +10,7 @@ public partial class ScoringPanelListing : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ScoringPanelListing> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     
 
@@ -37,14 +38,14 @@ public partial class ScoringPanelListing : ComponentBase
             }
             else
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load scoring panels"));
+                await _notificationHelper.ShowErrorAsync("Failed to load scoring panels");
                 _logger.LogError("Failed to load scoring panels: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading scoring panels");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error loading scoring panels"));
+            await _notificationHelper.ShowErrorAsync("Error loading scoring panels");
         }
     }
 
@@ -82,7 +83,7 @@ public partial class ScoringPanelListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in LoadData");
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error loading data"));
+            await _notificationHelper.ShowErrorAsync("Error loading data");
         }
     }
 
