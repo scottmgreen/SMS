@@ -127,19 +127,21 @@
                
                     <RadzenDataGridColumn TItem="SMSOrganizationalUser" Title="Actions" Width="200px" Sortable="false" Filterable="false">
                         <Template Context="user">
+                            @{ var isLocked = IsActionLocked(user.Code); }
                             <div class="d-flex gap-1">
                             @* SMS_System_UserManagement_Organization *@
 
                             @if (_currentUserService.CanUpdate("SMS_System_UserManagement_Organization"))
                             {
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
-                                              Click="@(() => EditUser(user.Code))" title="Edit User" />
+                                              Click="@(() => EditUser(user.Code))" title="Edit User" Disabled="@isLocked" />
                                 
                             }
                             @if (_currentUserService.CanUpdate("SMS_System_UserManagement_Organization"))
                             {
                                 <RadzenButton Icon="admin_panel_settings" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                                               Click="@(() => OpenRoleAssignmentModal(user.Code, user.DisplayName, user.UserRole?.Code))"
+                                              Disabled="@isLocked"
                                               title="Assign Role" />
                                 
                             }
@@ -147,6 +149,7 @@
                             {
                                 <RadzenButton Icon="vpn_key" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
                                               Click="@(() => OpenPasswordModal(user.Code, user.DisplayName))" 
+                                              Disabled="@isLocked"
                                               title="Change Password" />
                                 
                             }
@@ -154,6 +157,7 @@
                             {
                                 <RadzenButton Icon="group" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small"
                                               Click="@(() => ManageGroups(user.Code, user.DisplayName))" 
+                                              Disabled="@isLocked"
                                               title="Manage Groups" />
                                 
                             }
@@ -161,6 +165,7 @@
                             {
                                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
                                               Click="@(() => ConfirmDelete(user.Code, user.DisplayName))" 
+                                              Disabled="@isLocked"
                                               title="Delete User" />
                                 
                             }

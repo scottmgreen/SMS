@@ -788,7 +788,7 @@ namespace SMS3.Api.Services
             {
                 var envelope = new LiveUpdateEnvelope
                 {
-                    EventName = LiveUpdateEventNames.ReportSubmitted,
+                    EventName = LiveUpdateEventNames.RecordCreated,
                     SourceModule = "API",
                     OccurredOn = DateTime.Now,
                     ActorUserCode = SystemConstants.FlyPdxApiSource,
@@ -802,7 +802,7 @@ namespace SMS3.Api.Services
 
                 _logger.LogInformation(
                     "Published live update {EventName} for Report {ReportCode} / Hazard {HazardCode} / Tracking {TrackingCode}",
-                    LiveUpdateEventNames.ReportSubmitted,
+                    LiveUpdateEventNames.RecordCreated,
                     createdHazard.ReportCode,
                     createdHazard.Code,
                     trackingCode);

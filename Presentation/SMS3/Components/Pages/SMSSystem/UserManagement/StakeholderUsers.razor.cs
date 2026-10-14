@@ -5,6 +5,8 @@ using SMS_Shared.Configuration;
 using System.Net.Mail;
 
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Components.Shared;
+using SMS3.Hubs.Contracts;
 using SMS_Domain.Enums;
 
 namespace SMS3.Components.Pages.SMSSystem.UserManagement;
@@ -14,7 +16,7 @@ namespace SMS3.Components.Pages.SMSSystem.UserManagement;
 /// Handles external stakeholder user management
 /// ? FIXED: Removed manual audit field assignments - pipeline handles automatically
 /// </summary>
-public partial class StakeholderUsers : ComponentBase
+public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposable
 {
     private sealed class LookupOption
     {
@@ -29,6 +31,7 @@ public partial class StakeholderUsers : ComponentBase
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private ISMSJobTitleRepository _jobTitleRepository { get; set; } = default!;
+    [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
 
     // Data Properties
     private List<SMSStakeholderUser> StakeholderUsersList { get; set; } = new();
@@ -82,10 +85,53 @@ public partial class StakeholderUsers : ComponentBase
             .OrderBy(module => module);
     // Component References
     private RadzenDataGrid<SMSStakeholderUser>? _usersGrid;
+    private readonly HashSet<string> _lockedRecordKeys = new(StringComparer.OrdinalIgnoreCase);
+    private string _activeEditLockKey = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
+        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
         await LoadDataAsync();
+    }
+
+    public void Dispose()
+    {
+        EventBusDispatcher.Unregister(this);
+    }
+
+    public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
+    {
+        if (!title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
+            && !title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var lockKey = LiveUpdateRecordLockMessage.TryExtractLockKey(message);
+        if (string.IsNullOrWhiteSpace(lockKey)
+            || !lockKey.StartsWith("StakeholderUser:", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        await InvokeAsync(async () =>
+        {
+            if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
+            {
+                _lockedRecordKeys.Add(lockKey);
+            }
+            else
+            {
+                _lockedRecordKeys.Remove(lockKey);
+                await LoadDataAsync();
+                if (_usersGrid is not null)
+                {
+                    await _usersGrid.Reload();
+                }
+            }
+
+            StateHasChanged();
+        });
     }
 
     #region Data Loading
@@ -316,6 +362,13 @@ public partial class StakeholderUsers : ComponentBase
 
     private async Task ShowEditDialog(SMSStakeholderUser user)
     {
+        var lockKey = BuildRecordLockKey(user.Code);
+        if (!await TryAcquireRecordLockAsync(lockKey, "EditStart").ConfigureAwait(false))
+        {
+            await ShowInfoAsyncNotification("This user is currently being edited by another session.").ConfigureAwait(false);
+            return;
+        }
+
         _isSaving = false;
 
         var normalizedTitle = NormalizeTitleSelection(
@@ -466,7 +519,7 @@ public partial class StakeholderUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                CloseEditModal();
+                await CloseEditModal();
                 await LoadDataAsync();
                 await ShowSuccessAsyncNotification($"Stakeholder user '{_editFirstName} {_editLastName}' updated successfully.");
             }
@@ -487,8 +540,9 @@ public partial class StakeholderUsers : ComponentBase
         }
     }
 
-    private void CloseEditModal()
+    private async Task CloseEditModal()
     {
+        await ReleaseActiveRecordLockAsync("EditClosed");
         _showEditModal = false;
         _currentEditUser = null;
         _editUser = CreateEmptyStakeholderUser();
@@ -1050,6 +1104,72 @@ public partial class StakeholderUsers : ComponentBase
     private async Task ShowInfoAsyncNotification(string message)
     {
         await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
+    }
+
+    private static string BuildRecordLockKey(string userCode)
+    {
+        return $"StakeholderUser:{userCode?.Trim()}";
+    }
+
+    private bool IsActionLocked(string? userCode)
+    {
+        if (string.IsNullOrWhiteSpace(userCode))
+        {
+            return false;
+        }
+
+        return _lockedRecordKeys.Contains(BuildRecordLockKey(userCode));
+    }
+
+    private async Task<bool> TryAcquireRecordLockAsync(string lockKey, string action)
+    {
+        if (_lockedRecordKeys.Contains(lockKey))
+        {
+            return false;
+        }
+
+        _activeEditLockKey = lockKey;
+        await PublishRecordLockAsync(lockKey, true, action);
+        _lockedRecordKeys.Add(lockKey);
+        return true;
+    }
+
+    private async Task ReleaseActiveRecordLockAsync(string action)
+    {
+        var lockKey = _activeEditLockKey;
+        if (string.IsNullOrWhiteSpace(lockKey))
+        {
+            var fallbackUserCode = _currentEditUser?.Code;
+            if (string.IsNullOrWhiteSpace(fallbackUserCode))
+            {
+                return;
+            }
+
+            lockKey = BuildRecordLockKey(fallbackUserCode);
+        }
+
+        _activeEditLockKey = string.Empty;
+        await PublishRecordLockAsync(lockKey, false, action);
+        _lockedRecordKeys.Remove(lockKey);
+    }
+
+    private async Task PublishRecordLockAsync(string lockKey, bool isLocked, string action)
+    {
+        await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
+        {
+            EventName = isLocked ? LiveUpdateEventNames.RecordEditLocked : LiveUpdateEventNames.RecordEditReleased,
+            SourceModule = nameof(StakeholderUsers),
+            OccurredOn = DateTime.Now,
+            ActorUserCode = _currentUserService?.UserCode,
+            Message = LiveUpdateRecordLockMessage.Build(lockKey, action),
+            EntityType = nameof(SMSStakeholderUser),
+            EntityCode = lockKey
+        });
+    }
+
+    private string BuildCurrentSessionKey()
+    {
+        return $"stakeholder-users:{_currentUserService?.UserCode}:{GetHashCode()}";
     }
 
     #endregion

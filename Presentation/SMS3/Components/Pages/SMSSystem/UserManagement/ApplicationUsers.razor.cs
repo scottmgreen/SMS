@@ -10,7 +10,9 @@ using SMS_Shared.Configuration;
 using System.Net.Mail;
 
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Components.Shared;
 using SMS3.Configuration.Extensions;
+using SMS3.Hubs.Contracts;
 using SMS_Infrastructure.Interfaces;
 
 namespace SMS3.Components.Pages.SMSSystem.UserManagement;
@@ -20,7 +22,7 @@ namespace SMS3.Components.Pages.SMSSystem.UserManagement;
 /// Provides comprehensive user management capabilities for SMS Application Users
 /// ? FIXED: Removed manual audit field assignments - pipeline handles automatically
 /// </summary>
-public partial class ApplicationUsers : ComponentBase
+public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposable
 {
     private sealed class LookupOption
     {
@@ -82,6 +84,7 @@ public partial class ApplicationUsers : ComponentBase
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
     [Inject] private ISMSCompanyRepository _companyRepository { get; set; } = default!;
     [Inject] private ISMSOrganizationRepository _organizationRepository { get; set; } = default!;
     [Inject] private ISMSJobTitleRepository _jobTitleRepository { get; set; } = default!;
@@ -148,9 +151,12 @@ public partial class ApplicationUsers : ComponentBase
 
     // Component References
     private RadzenDataGrid<SMSApplicationUser>? _usersGrid;
+    private readonly HashSet<string> _lockedRecordKeys = new(StringComparer.OrdinalIgnoreCase);
+    private string _activeEditLockKey = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
+        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
         _logger.LogInformation("OnInitializedAsync called with Id: {Id}", Id ?? "NULL");
         
         await LoadDataAsync();
@@ -180,8 +186,48 @@ public partial class ApplicationUsers : ComponentBase
         else if (string.IsNullOrWhiteSpace(Id) && _isEditMode)
         {
             _logger.LogInformation("Cancelling edit mode from OnParametersSetAsync");
-            CancelEdit();
+            await CancelEdit();
         }
+    }
+
+    public void Dispose()
+    {
+        EventBusDispatcher.Unregister(this);
+    }
+
+    public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
+    {
+        if (!title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
+            && !title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var lockKey = LiveUpdateRecordLockMessage.TryExtractLockKey(message);
+        if (string.IsNullOrWhiteSpace(lockKey)
+            || !lockKey.StartsWith("ApplicationUser:", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        await InvokeAsync(async () =>
+        {
+            if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
+            {
+                _lockedRecordKeys.Add(lockKey);
+            }
+            else
+            {
+                _lockedRecordKeys.Remove(lockKey);
+                await LoadDataAsync();
+                if (_usersGrid is not null)
+                {
+                    await _usersGrid.Reload();
+                }
+            }
+
+            StateHasChanged();
+        });
     }
 
     #region Data Loading
@@ -562,10 +608,17 @@ public partial class ApplicationUsers : ComponentBase
         _newPassword == _confirmPassword &&
         !string.IsNullOrWhiteSpace(_newUserRoleCode);
 
-    private void EditUser(string userId)
+    private async Task EditUser(string userId)
     {
         try
         {
+            var lockKey = BuildRecordLockKey(userId);
+            if (!await TryAcquireRecordLockAsync(lockKey, "EditStart").ConfigureAwait(false))
+            {
+                await ShowInfoAsyncNotification("This user is currently being edited by another session.").ConfigureAwait(false);
+                return;
+            }
+
             _logger.LogInformation("Editing user: {UserId}", userId);
             
             // Use regular navigation for edit routes since secure navigation has issues with route parameters
@@ -574,6 +627,7 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
+            await ReleaseActiveRecordLockAsync("EditOpenFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error navigating to edit user: {UserId}", userId);
             _ = ShowErrorAsyncNotification("Error opening user editor");
         }
@@ -645,6 +699,7 @@ public partial class ApplicationUsers : ComponentBase
 
             if (result.IsSuccess)
             {
+                await ReleaseActiveRecordLockAsync("EditSaved");
                 await ShowSuccessAsyncNotification($"User '{_currentUser.UserName.Value}' has been updated successfully!");
                 
                 // Reset form state
@@ -749,8 +804,9 @@ public partial class ApplicationUsers : ComponentBase
 
     #region _navigation & UI
 
-    private void CancelEdit()
+    private async Task CancelEdit()
     {
+        await ReleaseActiveRecordLockAsync("EditCanceled");
         _isEditMode = false;
         _currentUser = null;
         _editUserRoleCode = string.Empty;
@@ -788,6 +844,77 @@ public partial class ApplicationUsers : ComponentBase
     private async Task ShowInfoAsyncNotification(String message)
     {
         await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
+    }
+
+    private static string BuildRecordLockKey(string userCode)
+    {
+        return $"ApplicationUser:{userCode?.Trim()}";
+    }
+
+    private bool IsActionLocked(string? userCode)
+    {
+        if (string.IsNullOrWhiteSpace(userCode))
+        {
+            return false;
+        }
+
+        return _lockedRecordKeys.Contains(BuildRecordLockKey(userCode));
+    }
+
+    private async Task<bool> TryAcquireRecordLockAsync(string lockKey, string action)
+    {
+        if (_lockedRecordKeys.Contains(lockKey))
+        {
+            return false;
+        }
+
+        _activeEditLockKey = lockKey;
+        await PublishRecordLockAsync(lockKey, true, action);
+        _lockedRecordKeys.Add(lockKey);
+        return true;
+    }
+
+    private async Task ReleaseActiveRecordLockAsync(string action)
+    {
+        var lockKey = _activeEditLockKey;
+        if (string.IsNullOrWhiteSpace(lockKey))
+        {
+            var fallbackUserCode = _currentUser?.Code;
+            if (string.IsNullOrWhiteSpace(fallbackUserCode) && !string.IsNullOrWhiteSpace(Id))
+            {
+                fallbackUserCode = Id;
+            }
+
+            if (string.IsNullOrWhiteSpace(fallbackUserCode))
+            {
+                return;
+            }
+
+            lockKey = BuildRecordLockKey(fallbackUserCode);
+        }
+
+        _activeEditLockKey = string.Empty;
+        await PublishRecordLockAsync(lockKey, false, action);
+        _lockedRecordKeys.Remove(lockKey);
+    }
+
+    private async Task PublishRecordLockAsync(string lockKey, bool isLocked, string action)
+    {
+        await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
+        {
+            EventName = isLocked ? LiveUpdateEventNames.RecordEditLocked : LiveUpdateEventNames.RecordEditReleased,
+            SourceModule = nameof(ApplicationUsers),
+            OccurredOn = DateTime.Now,
+            ActorUserCode = _currentUserService?.UserCode,
+            Message = LiveUpdateRecordLockMessage.Build(lockKey, action),
+            EntityType = nameof(SMSApplicationUser),
+            EntityCode = lockKey
+        });
+    }
+
+    private string BuildCurrentSessionKey()
+    {
+        return $"application-users:{_currentUserService?.UserCode}:{GetHashCode()}";
     }
 
     #endregion

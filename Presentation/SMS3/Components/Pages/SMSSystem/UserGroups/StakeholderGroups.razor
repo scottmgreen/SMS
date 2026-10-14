@@ -447,6 +447,7 @@
 
                     <RadzenDataGridColumn TItem="SMSStakeholderGroup" Title="Actions" Width="300px" Sortable="false" Filterable="false">
                         <Template Context="group">
+                            @{ var isLocked = IsActionLocked(group.Code); }
                             <div class="d-flex gap-1">
 
                             @* SMS_System_UserGroups_Organization *@
@@ -454,30 +455,30 @@
                             {
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
                                               Click="@(() => EditGroup(group.Code))"
-                                              title="Edit Group" />
+                                              title="Edit Group" Disabled="@isLocked" />
                             }
                             @if (_currentUserService.CanUpdate("SMS_System_UserGroups_Organization"))
                             {
                                 <RadzenButton Icon="people" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.ExtraSmall"
                                               Click="@(() => ManageMembers(group.Code))" 
-                                              title="Manage Members" />                                
+                                              title="Manage Members" Disabled="@isLocked" />                                
                             }
                             @if (_currentUserService.CanRead("SMS_System_UserGroups_Organization"))
                             {
                                 <RadzenButton Text="@(GetAssignedUsersCount(group.Code).ToString())" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
                                               Click="@(() => ManageMembers(group.Code))" 
-                                              title="View Assigned Users" />                                
+                                              title="View Assigned Users" Disabled="@isLocked" />                                
                             }
                             @if (_currentUserService.CanUpdate("SMS_System_UserGroups_Organization"))
                             {
                                 <RadzenButton Text="@(GetAllowedCompaniesCount(group).ToString())" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
                                               Click="@(() => ShowAllowedCompanies(group))" 
-                                              title="View Allowed Companies" />                                
+                                              title="View Allowed Companies" Disabled="@isLocked" />                                
                             }
                             @if (_currentUserService.CanDelete("SMS_System_UserGroups_Organization"))
                             {
                                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
-                                              Disabled="@IsGroupDeleteDisabled(group.Code)"
+                                              Disabled="@(isLocked || IsGroupDeleteDisabled(group.Code))"
                                               Click="@(() => ConfirmDelete(group.Code, group.Name))" 
                                               title="@GetDeleteTooltip(group.Code)" />                                
                             }

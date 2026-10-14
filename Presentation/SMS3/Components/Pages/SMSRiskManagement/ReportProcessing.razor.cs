@@ -140,7 +140,7 @@ public async Task HandleEventAsync(NotificationSeverity severity, string title, 
         return;
     }
 
-    if (!title.Contains(LiveUpdateEventNames.ReportSubmitted, StringComparison.OrdinalIgnoreCase)
+    if (!title.Contains(LiveUpdateEventNames.RecordCreated, StringComparison.OrdinalIgnoreCase)
         && !title.Contains(LiveUpdateEventNames.ReportReturnedToValidation, StringComparison.OrdinalIgnoreCase)
         && !message.Contains("New API report submitted", StringComparison.OrdinalIgnoreCase))
     {

@@ -10,13 +10,15 @@ using SMS_Shared.Common;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Components.Shared;
 using SMS3.Configuration.Extensions;
+using SMS3.Hubs.Contracts;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mail;
 
 namespace SMS3.Components.Pages.SMSSystem.UserGroups;
 
-public partial class ApplicationGroups : ComponentBase
+public partial class ApplicationGroups : ComponentBase, IEventReceiver, IDisposable
 {
     #region Dependency Injection
 
@@ -27,6 +29,7 @@ public partial class ApplicationGroups : ComponentBase
     [Inject] private DialogService _dialogService { get; set; } = default!;
 
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
 
     #endregion
 
@@ -77,6 +80,8 @@ public partial class ApplicationGroups : ComponentBase
     private string _successMessage { get; set; } = string.Empty;
     private string _errorMessage { get; set; } = string.Empty;
     private bool _isSaving { get; set; } = false;
+    private readonly HashSet<string> _lockedRecordKeys = new(StringComparer.OrdinalIgnoreCase);
+    private string _activeEditLockKey = string.Empty;
 
     #endregion
 
@@ -110,7 +115,48 @@ public partial class ApplicationGroups : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
         await LoadDataAsync();
+    }
+
+    public void Dispose()
+    {
+        EventBusDispatcher.Unregister(this);
+    }
+
+    public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
+    {
+        if (!title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
+            && !title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var lockKey = LiveUpdateRecordLockMessage.TryExtractLockKey(message);
+        if (string.IsNullOrWhiteSpace(lockKey)
+            || !lockKey.StartsWith("ApplicationGroup:", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        await InvokeAsync(async () =>
+        {
+            if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
+            {
+                _lockedRecordKeys.Add(lockKey);
+            }
+            else
+            {
+                _lockedRecordKeys.Remove(lockKey);
+                await LoadDataAsync();
+                if (_groupsGrid is not null)
+                {
+                    await _groupsGrid.Reload();
+                }
+            }
+
+            StateHasChanged();
+        });
     }
 
     protected override async Task OnParametersSetAsync()
@@ -238,6 +284,16 @@ public partial class ApplicationGroups : ComponentBase
             : "Delete Group";
     }
 
+    private bool IsActionLocked(string? groupCode)
+    {
+        if (string.IsNullOrWhiteSpace(groupCode))
+        {
+            return false;
+        }
+
+        return _lockedRecordKeys.Contains(BuildRecordLockKey(groupCode));
+    }
+
     #region Edit Operations
 
     private async Task EditGroup(string groupCode)
@@ -245,6 +301,13 @@ public partial class ApplicationGroups : ComponentBase
         if (string.IsNullOrWhiteSpace(groupCode))
         {
             await ShowErrorAsyncNotification("Group code is required.");
+            return;
+        }
+
+        var lockKey = BuildRecordLockKey(groupCode);
+        if (!await TryAcquireRecordLockAsync(lockKey, "EditStart").ConfigureAwait(false))
+        {
+            await ShowInfoAsyncNotification("This group is currently being edited by another session.").ConfigureAwait(false);
             return;
         }
 
@@ -275,6 +338,7 @@ public partial class ApplicationGroups : ComponentBase
         }
         catch (Exception ex)
         {
+            await ReleaseActiveRecordLockAsync("EditOpenFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error loading group for edit: {GroupCode}", groupCode);
             await ShowErrorAsyncNotification("Error loading group. Please try again.");
         }
@@ -292,8 +356,9 @@ public partial class ApplicationGroups : ComponentBase
         _navigation.NavigateToSecure("/System/UserGroups/ApplicationGroups");
     }
 
-    private void CloseEditModal()
+    private async Task CloseEditModal()
     {
+        await ReleaseActiveRecordLockAsync("EditClosed");
         _showEditModal = false;
         _currentGroup = null;
         _editGroupName = string.Empty;
@@ -401,7 +466,7 @@ public partial class ApplicationGroups : ComponentBase
             {
                 await ShowSuccessAsyncNotification($"Application group '{_editGroupName}' updated successfully.");
                 var updatedGroupCode = _currentGroup.Code;
-                CloseEditModal();
+                await CloseEditModal();
                 await LoadDataAsync();
                 await RefreshMembersAfterCompanyAssignmentSaveAsync(updatedGroupCode);
                 if (_groupsGrid != null)
@@ -589,6 +654,67 @@ public partial class ApplicationGroups : ComponentBase
     private async Task ShowSuccessAsyncNotification(string message)
     {
         await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
+    }
+
+    private async Task ShowInfoAsyncNotification(string message)
+    {
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
+    }
+
+    private static string BuildRecordLockKey(string groupCode)
+    {
+        return $"ApplicationGroup:{groupCode?.Trim()}";
+    }
+
+    private async Task<bool> TryAcquireRecordLockAsync(string lockKey, string action)
+    {
+        if (_lockedRecordKeys.Contains(lockKey))
+        {
+            return false;
+        }
+
+        _activeEditLockKey = lockKey;
+        await PublishRecordLockAsync(lockKey, true, action);
+        _lockedRecordKeys.Add(lockKey);
+        return true;
+    }
+
+    private async Task ReleaseActiveRecordLockAsync(string action)
+    {
+        var lockKey = _activeEditLockKey;
+        if (string.IsNullOrWhiteSpace(lockKey))
+        {
+            var fallbackGroupCode = _currentGroup?.Code ?? _currentGroupCode;
+            if (string.IsNullOrWhiteSpace(fallbackGroupCode))
+            {
+                return;
+            }
+
+            lockKey = BuildRecordLockKey(fallbackGroupCode);
+        }
+
+        _activeEditLockKey = string.Empty;
+        await PublishRecordLockAsync(lockKey, false, action);
+        _lockedRecordKeys.Remove(lockKey);
+    }
+
+    private async Task PublishRecordLockAsync(string lockKey, bool isLocked, string action)
+    {
+        await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
+        {
+            EventName = isLocked ? LiveUpdateEventNames.RecordEditLocked : LiveUpdateEventNames.RecordEditReleased,
+            SourceModule = nameof(ApplicationGroups),
+            OccurredOn = DateTime.Now,
+            ActorUserCode = _currentUserService?.UserCode,
+            Message = LiveUpdateRecordLockMessage.Build(lockKey, action),
+            EntityType = nameof(SMSApplicationGroup),
+            EntityCode = lockKey
+        });
+    }
+
+    private string BuildCurrentSessionKey()
+    {
+        return $"application-groups:{_currentUserService?.UserCode}:{GetHashCode()}";
     }
 
     #endregion
