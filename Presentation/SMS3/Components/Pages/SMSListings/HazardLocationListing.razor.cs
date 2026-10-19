@@ -19,6 +19,7 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Hubs.Contracts;
 
 namespace SMS3.Components.Pages.SMSListings;
 
@@ -26,7 +27,7 @@ namespace SMS3.Components.Pages.SMSListings;
 /// Hazard Location Listing Component - Enhanced with full CRUD operations and advanced filtering
 /// Provides comprehensive data grid listing with view details, edit navigation, and delete functionality
 /// </summary>
-public partial class HazardLocationListing : ComponentBase
+public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDisposable
 {
     private string _basicTextStyle = "font-size:smaller;font-weight: 600";
 
@@ -38,6 +39,7 @@ public partial class HazardLocationListing : ComponentBase
  
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -47,12 +49,137 @@ public partial class HazardLocationListing : ComponentBase
     private readonly Dictionary<string, string> _hazardCodeToReportCodeMap = new(StringComparer.OrdinalIgnoreCase);
     private int _totalCount;
     private bool _isLoading = false;
+    private readonly HashSet<string> _lockedReportGraphKeys = new(StringComparer.OrdinalIgnoreCase);
+    private string _activeReportGraphLockKey = string.Empty;
+    private string _activeReportCode = string.Empty;
     #endregion
     
     #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
+        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
+        HydrateLockedReportGraphKeys();
         await LoadInitialData();
+    }
+
+    private void HydrateLockedReportGraphKeys()
+    {
+        _lockedReportGraphKeys.Clear();
+        foreach (var lockKey in ReportGraphLockStateStore.GetLockedKeys())
+        {
+            _lockedReportGraphKeys.Add(lockKey);
+        }
+    }
+
+    public void Dispose()
+    {
+        EventBusDispatcher.Unregister(this);
+        _ = InvokeAsync(() => ReleaseActiveReportGraphLockAsync("NavigationAway"));
+    }
+
+    public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
+    {
+        if (!title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
+            && !title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var lockKey = LiveUpdateRecordLockMessage.TryExtractLockKey(message);
+        if (!LiveUpdateReportGraphLock.TryGetReportCode(lockKey, out _))
+        {
+            return;
+        }
+
+        await InvokeAsync(async () =>
+        {
+            if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
+            {
+                _lockedReportGraphKeys.Add(lockKey!);
+            }
+            else
+            {
+                _lockedReportGraphKeys.Remove(lockKey!);
+                await LoadInitialData();
+                if (_locationsGrid is not null)
+                {
+                    await _locationsGrid.Reload();
+                }
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private string BuildCurrentSessionKey()
+    {
+        return $"hazard-location-listing:{_currentUserService?.UserCode}:{GetHashCode()}";
+    }
+
+    private bool IsReportGraphLocked(string? reportCode)
+    {
+        if (string.IsNullOrWhiteSpace(reportCode) || string.Equals(reportCode, "N/A", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
+        return _lockedReportGraphKeys.Contains(lockKey) || ReportGraphLockStateStore.IsLockKeyLocked(lockKey);
+    }
+
+    private async Task<bool> TryAcquireReportGraphLockAsync(string? reportCode, string action)
+    {
+        if (string.IsNullOrWhiteSpace(reportCode) || string.Equals(reportCode, "N/A", StringComparison.OrdinalIgnoreCase))
+        {
+            await _notificationHelper.ShowWarningAsync("Unable to lock record graph because report code is missing for this location.");
+            return false;
+        }
+
+        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
+        if (_lockedReportGraphKeys.Contains(lockKey))
+        {
+            await _notificationHelper.ShowWarningAsync($"Report {reportCode} and related records are locked by another session.");
+            return false;
+        }
+
+        _activeReportGraphLockKey = lockKey;
+        _activeReportCode = reportCode;
+        _lockedReportGraphKeys.Add(lockKey);
+        await PublishReportGraphLockAsync(lockKey, true, action);
+        return true;
+    }
+
+    private async Task ReleaseActiveReportGraphLockAsync(string action)
+    {
+        var lockKey = _activeReportGraphLockKey;
+        if (string.IsNullOrWhiteSpace(lockKey) && !string.IsNullOrWhiteSpace(_activeReportCode))
+        {
+            lockKey = LiveUpdateReportGraphLock.BuildKey(_activeReportCode);
+        }
+
+        if (string.IsNullOrWhiteSpace(lockKey))
+        {
+            return;
+        }
+
+        _activeReportGraphLockKey = string.Empty;
+        _activeReportCode = string.Empty;
+        _lockedReportGraphKeys.Remove(lockKey);
+        await PublishReportGraphLockAsync(lockKey, false, action);
+    }
+
+    private async Task PublishReportGraphLockAsync(string lockKey, bool isLocked, string action)
+    {
+        await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
+        {
+            EventName = isLocked ? LiveUpdateEventNames.RecordEditLocked : LiveUpdateEventNames.RecordEditReleased,
+            SourceModule = nameof(HazardLocationListing),
+            OccurredOn = DateTime.Now,
+            ActorUserCode = _currentUserService?.UserCode,
+            Message = LiveUpdateRecordLockMessage.Build(lockKey, action),
+            EntityType = nameof(HazardLocation),
+            EntityCode = lockKey
+        });
     }
     #endregion
 
@@ -542,6 +669,12 @@ public partial class HazardLocationListing : ComponentBase
     /// </summary>
     private async Task ViewLocationMap(HazardLocation location)
     {
+        var reportCode = GetReportCodeForLocation(location);
+        if (!await TryAcquireReportGraphLockAsync(reportCode, "ViewMapOpen").ConfigureAwait(false))
+        {
+            return;
+        }
+
         try
         {
             _logger.LogInformation("Opening location map for hazard location: {LocationCode}", location.Code);
@@ -647,10 +780,12 @@ public partial class HazardLocationListing : ComponentBase
                     CloseDialogOnOverlayClick = false
                 });
 
+            await ReleaseActiveReportGraphLockAsync("ViewMapClosed").ConfigureAwait(false);
             await ShowInfoAsyncNotification($"Opened location map for {location.Code}");
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("ViewMapFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error opening location map for {LocationCode}", location.Code);
             await ShowErrorAsyncNotification("Error opening location map");
         }
@@ -691,6 +826,12 @@ public partial class HazardLocationListing : ComponentBase
 
     private async Task ValidateLocation(HazardLocation location)
     {
+        var reportCode = GetReportCodeForLocation(location);
+        if (!await TryAcquireReportGraphLockAsync(reportCode, "ValidateStart").ConfigureAwait(false))
+        {
+            return;
+        }
+
         try
         {
             if (location is null || string.IsNullOrWhiteSpace(location.Code))
@@ -716,6 +857,7 @@ public partial class HazardLocationListing : ComponentBase
 
             if (confirmResult != true)
             {
+                await ReleaseActiveReportGraphLockAsync("ValidateCancelled").ConfigureAwait(false);
                 return;
             }
 
@@ -737,8 +879,13 @@ public partial class HazardLocationListing : ComponentBase
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("ValidateFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error validating location {LocationCode}", location?.Code);
             await ShowErrorAsyncNotification("Error validating location.");
+        }
+        finally
+        {
+            await ReleaseActiveReportGraphLockAsync("ValidateCompleted").ConfigureAwait(false);
         }
     }
     #endregion

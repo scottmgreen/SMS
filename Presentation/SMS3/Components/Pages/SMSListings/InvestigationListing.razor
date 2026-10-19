@@ -32,6 +32,7 @@
         <RadzenDataGridColumn TItem="Investigation" Property="Code" Title="Investigation ID" Width="150px" />
         <RadzenDataGridColumn TItem="Investigation" Property="InvestigationNotes" Title="Investigation Notes" Width="110px" Sortable="false" Filterable="false">
             <Template Context="investigation">
+                @{ var isLocked = IsReportGraphLocked(investigation.ReportCode); }
                 <RadzenButton Text="Notes"
                               Icon="description"
                               ButtonStyle="ButtonStyle.Base"
@@ -39,7 +40,8 @@
                               Size="ButtonSize.ExtraSmall"
                               Title="Click to view full notes"
                               Class="description-button"
-                              Click="@(() => ShowInvestigationNotesDialog(investigation))" />
+                              Click="@(() => ShowInvestigationNotesDialog(investigation))"
+                              Disabled="@isLocked" />
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Investigation" Property="Status" Title="Status" Width="190px">
@@ -70,17 +72,20 @@
 
         <RadzenDataGridColumn TItem="Investigation" Title="Actions" Width="120px" Sortable="false" Filterable="false">
             <Template Context="investigation">
+                @{ var isLocked = IsReportGraphLocked(investigation.ReportCode); }
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
                     <RadzenButton ButtonStyle="ButtonStyle.Base"
                                   Size="ButtonSize.Small"
                                   Click="@(() => ViewInvestigation(investigation))"
                                   Icon="visibility"
-                                  title="View Investigation" />
+                                  title="View Investigation"
+                                  Disabled="@isLocked" />
                     <RadzenButton ButtonStyle="ButtonStyle.Primary"
                                   Size="ButtonSize.Small"
                                   Click="@(() => EditInvestigation(investigation))"
                                   Icon="edit"
-                                  title="Edit Investigation" />
+                                  title="Edit Investigation"
+                                  Disabled="@isLocked" />
                 </RadzenStack>
             </Template>
         </RadzenDataGridColumn>

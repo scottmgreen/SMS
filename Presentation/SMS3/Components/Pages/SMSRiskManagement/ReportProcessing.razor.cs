@@ -75,7 +75,10 @@ public partial class ReportProcessing : ComponentBase, IEventReceiver, IDisposab
     private bool _showDescriptionModal { get; set; } = false;
     private string _selectedDescription { get; set; } = string.Empty;
     private string _selectedReportId { get; set; } = string.Empty;
-    private readonly HashSet<string> _validationLockReportIds = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _lockedReportGraphKeys = new(StringComparer.OrdinalIgnoreCase);
+    private string _activeReportGraphLockKey = string.Empty;
+    private string _activeReportCode = string.Empty;
+    private bool _holdReportGraphLockAcrossNavigation = false;
 
     private string _basicTextStyle = "font-size:smaller;font-weight: 600";
 
@@ -87,7 +90,17 @@ public partial class ReportProcessing : ComponentBase, IEventReceiver, IDisposab
     protected override async Task OnInitializedAsync()
     {
         EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
+        HydrateLockedReportGraphKeys();
         await LoadDataAsync();
+    }
+
+    private void HydrateLockedReportGraphKeys()
+    {
+        _lockedReportGraphKeys.Clear();
+        foreach (var lockKey in ReportGraphLockStateStore.GetLockedKeys())
+        {
+            _lockedReportGraphKeys.Add(lockKey);
+        }
     }
 
     private static int ResolveTabIndex(string? tab)
@@ -105,34 +118,32 @@ public partial class ReportProcessing : ComponentBase, IEventReceiver, IDisposab
 public void Dispose()
 {
     EventBusDispatcher.Unregister(this);
+    if (!_holdReportGraphLockAcrossNavigation)
+    {
+        _ = InvokeAsync(() => ReleaseActiveReportGraphLockAsync("NavigationAway"));
+    }
 }
 
 public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
 {
-    if (title.Contains(LiveUpdateEventNames.ReportProcessingValidationLocked, StringComparison.OrdinalIgnoreCase))
+    if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
+        || title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
     {
-        var reportId = ExtractReportIdFromValidationLockMessage(message);
-        if (!string.IsNullOrWhiteSpace(reportId))
-        {
-            await InvokeAsync(() =>
-            {
-                _validationLockReportIds.Add(reportId);
-                StateHasChanged();
-            });
-        }
-
-        return;
-    }
-
-    if (title.Contains(LiveUpdateEventNames.ReportProcessingValidationReleased, StringComparison.OrdinalIgnoreCase))
-    {
-        var reportId = ExtractReportIdFromValidationLockMessage(message);
-        if (!string.IsNullOrWhiteSpace(reportId))
+        var lockKey = LiveUpdateRecordLockMessage.TryExtractLockKey(message);
+        if (LiveUpdateReportGraphLock.TryGetReportCode(lockKey, out _))
         {
             await InvokeAsync(async () =>
             {
-                _validationLockReportIds.Remove(reportId);
-                await LoadDataAsync();
+                if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
+                {
+                    _lockedReportGraphKeys.Add(lockKey!);
+                }
+                else
+                {
+                    _lockedReportGraphKeys.Remove(lockKey!);
+                    await LoadDataAsync();
+                }
+
                 StateHasChanged();
             });
         }
@@ -155,61 +166,97 @@ public async Task HandleEventAsync(NotificationSeverity severity, string title, 
     });
 }
 
-private static string? ExtractReportIdFromValidationLockMessage(string? message)
+private bool IsReportGraphLocked(string? reportCode)
 {
-    if (string.IsNullOrWhiteSpace(message))
+    if (string.IsNullOrWhiteSpace(reportCode))
     {
-        return null;
+        return false;
     }
 
-    const string marker = "ReportId=";
-    var index = message.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
-    if (index < 0)
+    var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
+    return _lockedReportGraphKeys.Contains(lockKey) || ReportGraphLockStateStore.IsLockKeyLocked(lockKey);
+}
+
+private async Task<bool> TryAcquireReportGraphLockAsync(string? reportCode, string action)
+{
+    if (string.IsNullOrWhiteSpace(reportCode))
     {
-        return null;
+        await _notificationHelper.ShowWarningAsync("Unable to lock record graph because report code is missing.");
+        return false;
     }
 
-    var value = message[(index + marker.Length)..].Trim();
-    return string.IsNullOrWhiteSpace(value) ? null : value;
-}
-
-private bool IsValidationLocked(ReportProcessingSummary report)
-{
-    var reportId = report?.ReportId;
-    return !string.IsNullOrWhiteSpace(reportId) && _validationLockReportIds.Contains(reportId);
-}
-
-private async Task OnValidationActionClicked(ReportProcessingSummary report, string navigationUrl)
-{
-    if (report is null || string.IsNullOrWhiteSpace(report.ReportId))
+    var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
+    if (_lockedReportGraphKeys.Contains(lockKey))
     {
-        _navigation.NavigateToSecure(navigationUrl);
+        await _notificationHelper.ShowWarningAsync($"Report {reportCode} and related records are locked by another session.");
+        return false;
+    }
+
+    _activeReportGraphLockKey = lockKey;
+    _activeReportCode = reportCode;
+    _lockedReportGraphKeys.Add(lockKey);
+    ReportGraphLockStateStore.SetLocked(lockKey);
+    await PublishReportGraphLockAsync(lockKey, true, action);
+    return true;
+}
+
+private async Task ReleaseActiveReportGraphLockAsync(string action)
+{
+    var lockKey = _activeReportGraphLockKey;
+    if (string.IsNullOrWhiteSpace(lockKey) && !string.IsNullOrWhiteSpace(_activeReportCode))
+    {
+        lockKey = LiveUpdateReportGraphLock.BuildKey(_activeReportCode);
+    }
+
+    if (string.IsNullOrWhiteSpace(lockKey))
+    {
         return;
     }
 
-    _validationLockReportIds.Add(report.ReportId);
-    StateHasChanged();
+    _activeReportGraphLockKey = string.Empty;
+    _activeReportCode = string.Empty;
+    _holdReportGraphLockAcrossNavigation = false;
+    _lockedReportGraphKeys.Remove(lockKey);
+    ReportGraphLockStateStore.SetReleased(lockKey);
+    await PublishReportGraphLockAsync(lockKey, false, action);
+}
 
-    var envelope = new LiveUpdateEnvelope
+private async Task PublishReportGraphLockAsync(string lockKey, bool isLocked, string action)
+{
+    await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
     {
-        EventName = LiveUpdateEventNames.ReportProcessingValidationLocked,
-        SourceModule = "ReportProcessing",
+        EventName = isLocked ? LiveUpdateEventNames.RecordEditLocked : LiveUpdateEventNames.RecordEditReleased,
+        SourceModule = nameof(ReportProcessing),
         OccurredOn = DateTime.Now,
-        ActorUserCode = _currentUserService.UserCode,
-        Severity = "Info",
-        Message = $"Validation lock acquired. ReportId={report.ReportId}",
-        EntityType = "Report",
-        EntityCode = report.ReportId
-    };
+        ActorUserCode = _currentUserService?.UserCode,
+        Message = LiveUpdateRecordLockMessage.Build(lockKey, action),
+        EntityType = nameof(Report),
+        EntityCode = lockKey
+    });
+}
 
-    await _liveUpdatesPublisher.PublishToApplicationUsersAsync(envelope);
+private async Task OnReportActionClicked(string? reportId, string navigationUrl, string action)
+{
+    if (!await TryAcquireReportGraphLockAsync(reportId, action))
+    {
+        return;
+    }
+
+    if (string.IsNullOrWhiteSpace(navigationUrl))
+    {
+        await ReleaseActiveReportGraphLockAsync($"{action}InvalidNavigation");
+        await _notificationHelper.ShowWarningAsync("Unable to navigate because target URL is missing.");
+        return;
+    }
+
+    _holdReportGraphLockAcrossNavigation = true;
     _navigation.NavigateToSecure(navigationUrl);
 }
 
 private string BuildCurrentSessionKey()
 {
     var userCode = _currentUserService?.UserCode ?? "unknown";
-    return $"report-processing:{userCode}";
+    return $"report-processing:{userCode}:{GetHashCode()}";
 }
 
     #region Data Loading
@@ -1287,8 +1334,9 @@ private string BuildCurrentSessionKey()
                                     rightBuilder.AddAttribute(2, "Icon", "verified");
                                     rightBuilder.AddAttribute(3, "ButtonStyle", ButtonStyle.Success);
                                     rightBuilder.AddAttribute(4, "Size", ButtonSize.Medium);
-                                    rightBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,(args) => ShowBulkApprovalConfirmation(report)));
-                                    rightBuilder.AddAttribute(6, "Disabled", _isProcessingApproval || GetApprovableMitigationCount(report) == 0);
+                                    rightBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                                        async (args) => await ShowBulkApprovalConfirmation(report)));
+                                    rightBuilder.AddAttribute(6, "Disabled", IsReportGraphLocked(report.ReportId) || _isProcessingApproval || GetApprovableMitigationCount(report) == 0);
                                     rightBuilder.CloseComponent(); // ? Close RadzenButton
                             rightBuilder.CloseElement();
                         }
@@ -1455,7 +1503,8 @@ private string BuildCurrentSessionKey()
                     actionBuilder.AddAttribute(3, "ButtonStyle", ButtonStyle.Primary);
                     actionBuilder.AddAttribute(4, "Size", ButtonSize.Small);
                     actionBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                        (args) => NavigateToMitigationEdit(mitigation)));
+                        async (args) => await NavigateToMitigationEdit(mitigation, report.ReportId)));
+                    actionBuilder.AddAttribute(6, "Disabled", IsReportGraphLocked(report.ReportId));
                     actionBuilder.CloseComponent(); // ? Close RadzenButton
 
                    
@@ -1467,6 +1516,7 @@ private string BuildCurrentSessionKey()
                     actionBuilder.AddAttribute(14, "Size", ButtonSize.Small);
                     actionBuilder.AddAttribute(15, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
                         (args) => ViewMitigationDetails(mitigation)));
+                    actionBuilder.AddAttribute(16, "Disabled", IsReportGraphLocked(report.ReportId));
                     actionBuilder.CloseComponent(); // ? Close RadzenButton
 
                     // Approve Button (individual mitigation)
@@ -1476,8 +1526,8 @@ private string BuildCurrentSessionKey()
                     actionBuilder.AddAttribute(23, "ButtonStyle", ButtonStyle.Success);
                     actionBuilder.AddAttribute(24, "Size", ButtonSize.Small);
                     actionBuilder.AddAttribute(25, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                        async (args) => await QuickApproveMitigation(mitigation)));
-                    actionBuilder.AddAttribute(26, "Disabled", _isProcessingApproval || !string.Equals(mitigation.Status, MitigationStatus.PendingApproval.Value, StringComparison.OrdinalIgnoreCase));
+                        async (args) => await QuickApproveMitigation(mitigation, report.ReportId)));
+                    actionBuilder.AddAttribute(26, "Disabled", IsReportGraphLocked(report.ReportId) || _isProcessingApproval || !string.Equals(mitigation.Status, MitigationStatus.PendingApproval.Value, StringComparison.OrdinalIgnoreCase));
                     actionBuilder.CloseComponent(); // ? Close RadzenButton
                 }));
                 templateBuilder.CloseComponent(); // ? Close RadzenStack
@@ -1486,22 +1536,33 @@ private string BuildCurrentSessionKey()
     }
 
     // Helper methods for mitigation actions
-    private void NavigateToMitigationEdit(MitigationSummary mitigation)
+    private async Task NavigateToMitigationEdit(MitigationSummary mitigation, string? reportId)
     {
         try
         {
+            if (!await TryAcquireReportGraphLockAsync(reportId, "MitigationEditStart"))
+            {
+                return;
+            }
+
             _logger.LogInformation("Navigating to edit mitigation: {Code}", mitigation.MitigationCode);
             _navigation.NavigateToSecure($"/SMSRiskManagement/HazardMitigation/Edit/{mitigation.MitigationCode}");
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("MitigationEditFailed");
             _logger.LogError(ex, "Error navigating to mitigation edit for {Code}", mitigation.MitigationCode);
-            _ = ShowErrorAsyncNotification("Error navigating to mitigation editor");
+            await ShowErrorAsyncNotification("Error navigating to mitigation editor");
         }
     }
 
-    private async Task QuickApproveMitigation(MitigationSummary mitigation)
+    private async Task QuickApproveMitigation(MitigationSummary mitigation, string? reportId)
     {
+        if (!await TryAcquireReportGraphLockAsync(reportId, "MitigationApproveStart"))
+        {
+            return;
+        }
+
         try
         {
             _isProcessingApproval = true;
@@ -1546,11 +1607,13 @@ private string BuildCurrentSessionKey()
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("MitigationApproveFailed");
             _logger.LogError(ex, "Error quick approving mitigation {Code}", mitigation.MitigationCode);
             await ShowErrorAsyncNotification("Error approving mitigation");
         }
         finally
         {
+            await ReleaseActiveReportGraphLockAsync("MitigationApproveCompleted");
             _isProcessingApproval = false;
             StateHasChanged();
         }
@@ -1784,8 +1847,8 @@ private string BuildCurrentSessionKey()
                     templateBuilder.AddAttribute(4, "ButtonStyle", buttonStyle);
                     templateBuilder.AddAttribute(5, "Size", ButtonSize.Small);
                     templateBuilder.AddAttribute(6, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                        async (args) => await OnValidationActionClicked(report, navigationUrl)));
-                    templateBuilder.AddAttribute(7, "Disabled", IsValidationLocked(report));
+                        async (args) => await OnReportActionClicked(report.ReportId, navigationUrl, "ValidationStart")));
+                    templateBuilder.AddAttribute(7, "Disabled", IsReportGraphLocked(report.ReportId));
                     templateBuilder.CloseComponent();
                 })));
             builder.CloseComponent();
@@ -2017,7 +2080,8 @@ private string BuildCurrentSessionKey()
                 templateBuilder.AddAttribute(4, "ButtonStyle", GetAssessmentButtonStyle(report));
                 templateBuilder.AddAttribute(5, "Size", ButtonSize.Small);
                 templateBuilder.AddAttribute(6, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                    (args) => _navigation.NavigateToSecure(report.SmartUrl)));
+                    async (args) => await OnReportActionClicked(report.ReportId, report.SmartUrl, "RiskAssessmentStart")));
+                templateBuilder.AddAttribute(7, "Disabled", IsReportGraphLocked(report.ReportId));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
@@ -2119,7 +2183,9 @@ private string BuildCurrentSessionKey()
                 templateBuilder.AddAttribute(2, "Icon", buttonIcon);
                 templateBuilder.AddAttribute(3, "ButtonStyle", buttonStyle);
                 templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
-                templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, (args) => _navigation.NavigateTo(report.SmartUrl)));
+                templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                    async (args) => await OnReportActionClicked(report.ReportId, report.SmartUrl, "InvestigationStart")));
+                templateBuilder.AddAttribute(6, "Disabled", IsReportGraphLocked(report.ReportId));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
@@ -2131,10 +2197,15 @@ private string BuildCurrentSessionKey()
     #region Helper Methods for Rendering
 
 
-    private void ShowBulkApprovalConfirmation(ReportProcessingSummary report)
+    private async Task ShowBulkApprovalConfirmation(ReportProcessingSummary report)
     {
         try
         {
+            if (!await TryAcquireReportGraphLockAsync(report?.ReportId, "BulkApprovalDialogOpen"))
+            {
+                return;
+            }
+
             _selectedReportForApproval = report;
             _showBulkApprovalDialog = true;
             StateHasChanged();
@@ -2144,8 +2215,9 @@ private string BuildCurrentSessionKey()
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("BulkApprovalDialogOpenFailed");
             _logger.LogError(ex, "Error showing bulk approval confirmation for report {ReportId}", report.ReportId);
-            _ = ShowErrorAsyncNotification("Error showing approval confirmation dialog");
+            await ShowErrorAsyncNotification("Error showing approval confirmation dialog");
         }
     }
 
@@ -2496,36 +2568,43 @@ private string BuildCurrentSessionKey()
             return;
         }
 
-        if (string.IsNullOrEmpty(_selectedApprover))
+        try
         {
-            await ShowErrorAsyncNotification("Please select an authorized approver before proceeding.");
-            return;
-        }
-
-        // ?? CRITICAL: Verify approver has authority for the highest risk level using enum
-        var highestRiskLevel = GetHighestRiskLevelAcrossAllHazards(_selectedReportForApproval);
-        var approver = _availableApprovers.FirstOrDefault(a => a.Code == _selectedApprover);
-
-        if (approver is null || !CanApproveRiskLevel(approver, highestRiskLevel))
-        {
-            var riskLevelDisplay = highestRiskLevel switch
+            if (string.IsNullOrEmpty(_selectedApprover))
             {
-                _ when highestRiskLevel == RiskLevel.Critical.Name => RiskLevel.Critical.Name,
-                _ when highestRiskLevel == RiskLevel.High.Name => RiskLevel.High.Name,
-                _ when highestRiskLevel == RiskLevel.Medium.Name => RiskLevel.Medium.Name,
-                _ when highestRiskLevel == RiskLevel.Low.Name => RiskLevel.Low.Name,
-                _ => "Unknown"
-            };
+                await ShowErrorAsyncNotification("Please select an authorized approver before proceeding.");
+                return;
+            }
 
-            await ShowErrorAsyncNotification($"Selected approver does not have sufficient authority to approve {riskLevelDisplay} risk level mitigations.");
-            return;
+            // ?? CRITICAL: Verify approver has authority for the highest risk level using enum
+            var highestRiskLevel = GetHighestRiskLevelAcrossAllHazards(_selectedReportForApproval);
+            var approver = _availableApprovers.FirstOrDefault(a => a.Code == _selectedApprover);
+
+            if (approver is null || !CanApproveRiskLevel(approver, highestRiskLevel))
+            {
+                var riskLevelDisplay = highestRiskLevel switch
+                {
+                    _ when highestRiskLevel == RiskLevel.Critical.Name => RiskLevel.Critical.Name,
+                    _ when highestRiskLevel == RiskLevel.High.Name => RiskLevel.High.Name,
+                    _ when highestRiskLevel == RiskLevel.Medium.Name => RiskLevel.Medium.Name,
+                    _ when highestRiskLevel == RiskLevel.Low.Name => RiskLevel.Low.Name,
+                    _ => "Unknown"
+                };
+
+                await ShowErrorAsyncNotification($"Selected approver does not have sufficient authority to approve {riskLevelDisplay} risk level mitigations.");
+                return;
+            }
+
+            _logger.LogInformation("Bulk approval authorized: {ApproverName} ({ApproverCode}) approving {RiskLevel} risk mitigations for report {ReportId}",
+                $"{approver.FirstName?.Value} {approver.LastName?.Value}", _selectedApprover, highestRiskLevel, _selectedReportForApproval.ReportId);
+
+            await BulkApproveAllMitigationsForReport(_selectedReportForApproval.ReportId, approver.DisplayName); //_selectedApprover);
+            await CloseBulkApprovalConfirmation();
         }
-
-        _logger.LogInformation("Bulk approval authorized: {ApproverName} ({ApproverCode}) approving {RiskLevel} risk mitigations for report {ReportId}",
-            $"{approver.FirstName?.Value} {approver.LastName?.Value}", _selectedApprover, highestRiskLevel, _selectedReportForApproval.ReportId);
-
-        await BulkApproveAllMitigationsForReport(_selectedReportForApproval.ReportId, approver.DisplayName); //_selectedApprover);
-        await CloseBulkApprovalConfirmation();
+        finally
+        {
+            await ReleaseActiveReportGraphLockAsync("BulkApprovalCompleted");
+        }
     }
 
     /// <summary>
@@ -2533,6 +2612,7 @@ private string BuildCurrentSessionKey()
     /// </summary>
     private async Task CloseBulkApprovalConfirmation()
     {
+        await ReleaseActiveReportGraphLockAsync("BulkApprovalDialogClosed");
         _showBulkApprovalDialog = false;
         _selectedReportForApproval = null;
         _selectedApprover = null;
@@ -2550,6 +2630,11 @@ private string BuildCurrentSessionKey()
     {
         try
         {
+            if (!await TryAcquireReportGraphLockAsync(report?.ReportId, "DescriptionOpen"))
+            {
+                return;
+            }
+
             _selectedDescription = report.HazardDescription ?? "No description available";
             _selectedReportId = report.ReportId ?? "Unknown";
             _showDescriptionModal = true;
@@ -2559,6 +2644,7 @@ private string BuildCurrentSessionKey()
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("DescriptionOpenFailed");
             _logger.LogError(ex, "Error showing description modal for report {ReportId}", report.ReportId);
             await _notificationHelper.ShowErrorAsync("Error showing description details");
         }
@@ -2567,8 +2653,9 @@ private string BuildCurrentSessionKey()
     /// <summary>
     /// Close description modal
     /// </summary>
-    private void CloseDescriptionModal()
+    private async Task CloseDescriptionModal()
     {
+        await ReleaseActiveReportGraphLockAsync("DescriptionClosed");
         _showDescriptionModal = false;
         _selectedDescription = string.Empty;
         _selectedReportId = string.Empty;

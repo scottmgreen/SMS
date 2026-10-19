@@ -112,26 +112,30 @@
                
         <RadzenDataGridColumn TItem="RiskAssessment" Title="Actions" Width="250px" Sortable="false" Filterable="false">
             <Template Context="assessment">
+                @{ var isLocked = IsReportGraphLocked(assessment.ReportCode); }
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
                     
                     @if (_currentUserService.CanRead("SMS_Listings_RiskAssessments"))
                     {
                         <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
                                       Tooltip="View Assessment Details"
-                                      Click="@(() => ViewAssessment(assessment))" />
+                                      Click="@(() => ViewAssessment(assessment))"
+                                      Disabled="@isLocked" />
                     }
                     @if (_currentUserService.CanUpdate("SMS_Listings_RiskAssessments"))
                     {
                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
                                       Tooltip="Edit Assessment"
-                                      Click="@(() => EditAssessment(assessment))" />
+                                      Click="@(() => EditAssessment(assessment))"
+                                      Disabled="@isLocked" />
                     }
 
                     @if (_currentUserService.CanDelete("SMS_Listings_RiskAssessments"))
                     {
                         <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
                                       Tooltip="Delete Assessment"
-                                      Click="@(() => DeleteAssessment(assessment))" />
+                                      Click="@(() => DeleteAssessment(assessment))"
+                                      Disabled="@isLocked" />
                     }
 
                     
@@ -164,7 +168,7 @@
                                     Variant="Variant.Text"
                                     Icon="close"
                                     Size="ButtonSize.Small"
-                                    Click="@(() => { _showViewDialog = false; _selectedAssessment = null; })" />
+                                    Click="@CloseAssessmentViewDialogAsync" />
                     </div>
                 </div>
                 <div class="sms-modal-body">

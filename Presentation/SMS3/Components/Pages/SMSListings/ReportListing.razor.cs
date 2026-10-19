@@ -38,7 +38,7 @@ namespace SMS3.Components.Pages.SMSListings;
 /// Report Listing Component - Enhanced with full CRUD operations
 /// Provides comprehensive data grid listing with view details, edit navigation, and delete functionality
 /// </summary>
-public partial class ReportListing : ComponentBase
+public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
 {
     private string _basicTextStyle = "font-size:smaller;font-weight: 600";
 
@@ -115,6 +115,9 @@ public partial class ReportListing : ComponentBase
     private Report? _reportForDescriptionEdit;
     private string _editableReportDescription = string.Empty;
     private bool _isSavingDescription = false;
+    private readonly HashSet<string> _lockedReportGraphKeys = new(StringComparer.OrdinalIgnoreCase);
+    private string _activeReportGraphLockKey = string.Empty;
+    private string _activeReportCode = string.Empty;
 
     private static readonly PropertyInfo[] ReportExportProperties = typeof(Report)
         .GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -175,24 +178,154 @@ public partial class ReportListing : ComponentBase
     #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
+        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
+        HydrateLockedReportGraphKeys();
         await LoadInitialData();
     }
 
-    private void OpenEditDescriptionDialog(Report report)
+    private void HydrateLockedReportGraphKeys()
     {
+        _lockedReportGraphKeys.Clear();
+        foreach (var lockKey in ReportGraphLockStateStore.GetLockedKeys())
+        {
+            _lockedReportGraphKeys.Add(lockKey);
+        }
+    }
+
+    public void Dispose()
+    {
+        EventBusDispatcher.Unregister(this);
+        _ = InvokeAsync(() => ReleaseActiveReportGraphLockAsync("NavigationAway"));
+    }
+
+    public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
+    {
+        if (!title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
+            && !title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var lockKey = LiveUpdateRecordLockMessage.TryExtractLockKey(message);
+        if (!LiveUpdateReportGraphLock.TryGetReportCode(lockKey, out _))
+        {
+            return;
+        }
+
+        await InvokeAsync(async () =>
+        {
+            if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
+            {
+                _lockedReportGraphKeys.Add(lockKey!);
+            }
+            else
+            {
+                _lockedReportGraphKeys.Remove(lockKey!);
+                await LoadInitialData();
+                if (_reportsGrid is not null)
+                {
+                    await _reportsGrid.Reload();
+                }
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private string BuildCurrentSessionKey()
+    {
+        return $"report-listing:{_currentUserService?.UserCode}:{GetHashCode()}";
+    }
+
+    private bool IsReportGraphLocked(string? reportCode)
+    {
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            return false;
+        }
+
+        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
+        return _lockedReportGraphKeys.Contains(lockKey) || ReportGraphLockStateStore.IsLockKeyLocked(lockKey);
+    }
+
+    private async Task<bool> TryAcquireReportGraphLockAsync(string? reportCode, string action)
+    {
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            await _notificationHelper.ShowWarningAsync("Unable to lock record graph because report code is missing.");
+            return false;
+        }
+
+        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
+        if (_lockedReportGraphKeys.Contains(lockKey))
+        {
+            await _notificationHelper.ShowWarningAsync($"Report {reportCode} and related records are locked by another session.");
+            return false;
+        }
+
+        _activeReportGraphLockKey = lockKey;
+        _activeReportCode = reportCode;
+        _lockedReportGraphKeys.Add(lockKey);
+        ReportGraphLockStateStore.SetLocked(lockKey);
+        await PublishReportGraphLockAsync(lockKey, true, action);
+        return true;
+    }
+
+    private async Task ReleaseActiveReportGraphLockAsync(string action)
+    {
+        var lockKey = _activeReportGraphLockKey;
+        if (string.IsNullOrWhiteSpace(lockKey) && !string.IsNullOrWhiteSpace(_activeReportCode))
+        {
+            lockKey = LiveUpdateReportGraphLock.BuildKey(_activeReportCode);
+        }
+
+        if (string.IsNullOrWhiteSpace(lockKey))
+        {
+            return;
+        }
+
+        _activeReportGraphLockKey = string.Empty;
+        _activeReportCode = string.Empty;
+        _lockedReportGraphKeys.Remove(lockKey);
+        ReportGraphLockStateStore.SetReleased(lockKey);
+        await PublishReportGraphLockAsync(lockKey, false, action);
+    }
+
+    private async Task PublishReportGraphLockAsync(string lockKey, bool isLocked, string action)
+    {
+        await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
+        {
+            EventName = isLocked ? LiveUpdateEventNames.RecordEditLocked : LiveUpdateEventNames.RecordEditReleased,
+            SourceModule = nameof(ReportListing),
+            OccurredOn = DateTime.Now,
+            ActorUserCode = _currentUserService?.UserCode,
+            Message = LiveUpdateRecordLockMessage.Build(lockKey, action),
+            EntityType = nameof(Report),
+            EntityCode = lockKey
+        });
+    }
+
+    private async Task OpenEditDescriptionDialog(Report report)
+    {
+        if (!await TryAcquireReportGraphLockAsync(report.Code, "EditDescriptionOpen"))
+        {
+            return;
+        }
+
         _reportForDescriptionEdit = report;
         _editableReportDescription = report.Description ?? string.Empty;
         _showEditDescriptionModal = true;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
-    private void CloseEditDescriptionModal()
+    private async Task CloseEditDescriptionModal()
     {
+        await ReleaseActiveReportGraphLockAsync("EditDescriptionClosed");
         _showEditDescriptionModal = false;
         _reportForDescriptionEdit = null;
         _editableReportDescription = string.Empty;
         _isSavingDescription = false;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task SaveReportDescriptionAsync()
@@ -260,7 +393,7 @@ public partial class ReportListing : ComponentBase
             _selectedDescription = updatedDescription;
 
             await _notificationHelper.ShowSuccessAsync( $"Report {_reportForDescriptionEdit.Code} description updated.");
-            CloseEditDescriptionModal();
+        await CloseEditDescriptionModal();
         }
         catch (Exception ex)
         {
@@ -1859,6 +1992,11 @@ public partial class ReportListing : ComponentBase
     {
         _logger.LogInformation("View report details requested: {ReportCode}", report.Code);
 
+            if (!await TryAcquireReportGraphLockAsync(report.Code, "ViewOpen"))
+        {
+            return;
+        }
+
         try
         {
             _isLoading = true;
@@ -1890,6 +2028,7 @@ public partial class ReportListing : ComponentBase
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("ViewFailed");
             _logger.LogError(ex, "Error loading report details for {ReportCode}", report.Code);
 
             await _notificationHelper.ShowErrorAsync( "Failed to load report details");
@@ -1908,6 +2047,11 @@ public partial class ReportListing : ComponentBase
     public async Task OnEditReportAsync(Report report)
     {
         _logger.LogInformation("Edit report requested: {ReportCode}", report.Code);
+
+            if (!await TryAcquireReportGraphLockAsync(report.Code, "EditStart"))
+        {
+            return;
+        }
 
         try
         {
@@ -1935,13 +2079,19 @@ public partial class ReportListing : ComponentBase
                 }
                 else
                 {
+                await ReleaseActiveReportGraphLockAsync("EditNoInitialHazard");
                     _logger.LogWarning("No initial hazard found for report: {ReportCode}", report.Code);
                     await _notificationHelper.ShowWarningAsync( $"No initial hazard found for {report.Code}.");
                 }
             }
+            else
+            {
+                await ReleaseActiveReportGraphLockAsync("EditCancelled");
+            }
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("EditFailed");
             _logger.LogError(ex, "Error navigating to edit report {ReportCode}", report.Code);
             await _notificationHelper.ShowErrorAsync( "Failed to navigate to edit form");
         }
@@ -1954,6 +2104,11 @@ public partial class ReportListing : ComponentBase
     public async Task OnDeleteReportAsync(Report report)
     {
         _logger.LogInformation("Delete report requested: {ReportCode}", report.Code);
+
+            if (!await TryAcquireReportGraphLockAsync(report.Code, "DeleteStart"))
+        {
+            return;
+        }
 
         try
         {
@@ -2012,11 +2167,20 @@ public partial class ReportListing : ComponentBase
                     throw new InvalidOperationException(result.Error?.Message ?? "Failed to delete report");
                 }
             }
+            else
+            {
+                await ReleaseActiveReportGraphLockAsync("DeleteCancelled");
+            }
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("DeleteFailed");
             _logger.LogError(ex, "Error deleting report: {ReportCode}", report.Code);
             await _notificationHelper.ShowErrorAsync( "Failed to delete the report");
+        }
+        finally
+        {
+            await ReleaseActiveReportGraphLockAsync("DeleteCompleted");
         }
     }
     #endregion
@@ -2026,8 +2190,9 @@ public partial class ReportListing : ComponentBase
     /// <summary>
     /// Close the details modal
     /// </summary>
-    public void CloseDetailsModal()
+    public async Task CloseDetailsModal()
     {
+        await ReleaseActiveReportGraphLockAsync("ViewClosed");
         ShowDetailsModal = false;
         SelectedReport = null;
         AssociatedHazards.Clear();
@@ -2040,7 +2205,7 @@ public partial class ReportListing : ComponentBase
     /// <param name="report">Report to edit</param>
     public async Task EditFromDetailsModal(Report report)
     {
-        CloseDetailsModal();
+        await CloseDetailsModal();
         await OnEditReportAsync(report);
     }
     #endregion
@@ -2343,6 +2508,11 @@ public async Task OnResetReportAsync(Report report)
 
         _logger.LogInformation("Reset Report requested: {ReportCode}", report.Code);
 
+        if (!await TryAcquireReportGraphLockAsync(report.Code, "ResetOpen"))
+        {
+            return;
+        }
+
         try
         {
             _isLoading = true;
@@ -2360,6 +2530,7 @@ public async Task OnResetReportAsync(Report report)
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("ResetOpenFailed");
             _logger.LogError(ex, "Error preparing reset confirmation for report {ReportCode}", report.Code);
             await _notificationHelper.ShowErrorAsync( $"Error preparing reset confirmation: {ex.Message}");
         }
@@ -2405,6 +2576,7 @@ public async Task OnResetReportAsync(Report report)
             }
             else
             {
+                await ReleaseActiveReportGraphLockAsync("ResetFailed");
                 var errorMessage = result.Error?.Message ?? "Unknown error occurred during reset";
                 _logger.LogError("Failed to reset report validation for {ReportCode}: {Error}", _reportToReset.Code, errorMessage);
 
@@ -2413,11 +2585,13 @@ public async Task OnResetReportAsync(Report report)
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("ResetException");
             _logger.LogError(ex, "Unexpected error during reset operation for report {ReportCode}", _reportToReset?.Code);
             await _notificationHelper.ShowErrorAsync( $"An unexpected error occurred while resetting the report: {ex.Message}");
         }
         finally
         {
+            await ReleaseActiveReportGraphLockAsync("ResetCompleted");
             // Clean up
             _reportToReset = null;
             _resetConfirmationMessage = string.Empty;
@@ -2429,8 +2603,9 @@ public async Task OnResetReportAsync(Report report)
     /// <summary>
     /// Cancel the reset operation
     /// </summary>
-    private void CancelResetConfirmation()
+    private async Task CancelResetConfirmation()
     {
+        await ReleaseActiveReportGraphLockAsync("ResetCancelled");
         _showResetConfirmModal = false;
         _reportToReset = null;
         _resetConfirmationMessage = string.Empty;

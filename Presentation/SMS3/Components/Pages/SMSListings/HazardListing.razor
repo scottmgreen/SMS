@@ -2,6 +2,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using SMS3.Components.Shared
+@using SMS3.Components.Shared.Components
 @using SMS_Application.Interfaces
 @using SMS_Application.Queries
 @using SMS_Domain.Entities
@@ -88,6 +89,7 @@
         <!-- Enhanced Actions Column -->
         <RadzenDataGridColumn TItem="Hazard" Title="Actions" Width="150px" Sortable="false" Filterable="false">
             <Template Context="hazard">
+                @{ var isLocked = IsReportGraphLocked(hazard.ReportCode); }
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
                     
                     @if (_currentUserService.CanRead("SMS_Listings_Hazards"))
@@ -96,7 +98,8 @@
                                   Size="ButtonSize.Small"
                                   Click="@(() => OnViewHazardAsync(hazard))"
                                   title="View Hazard"
-                                  Icon="visibility" />
+                                  Icon="visibility"
+                                  Disabled="@isLocked" />
                     }
                     @if (_currentUserService.CanUpdate("SMS_Listings_Hazards"))
                     {
@@ -104,7 +107,8 @@
                         Size="ButtonSize.Small"
                         Click="@(() => OnEditHazardAsync(hazard))"
                         title="Edit Hazard"
-                        Icon="edit" />
+                        Icon="edit"
+                        Disabled="@isLocked" />
                     }
 
                     @if (_currentUserService.CanDelete("SMS_Listings_Hazards"))
@@ -115,7 +119,8 @@
                             Size="ButtonSize.Small"
                             Click="@(() => OnDeleteHazardAsync(hazard))"
                             title="Delete Hazard"
-                            Icon="delete" />
+                            Icon="delete"
+                            Disabled="@isLocked" />
                         }
                     }
 
@@ -124,6 +129,191 @@
         </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
+
+@if (ShowDetailsModal && SelectedReport is not null)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-xxl">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-file-alt"></i> Report Details - @SelectedReport.Code
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Text"
+                                      Icon="close"
+                                      Size="ButtonSize.Small"
+                                      Click="@CloseDetailsModal" />
+                    </div>
+                </div>
+                <div class="sms-modal-body p-4">
+                    @{
+                        var totalHazards = AssociatedHazards.Count;
+                        var mappedLocationCount = AssociatedHazards.Count(h => h.HazardLocation?.Latitude.HasValue == true && h.HazardLocation?.Longitude.HasValue == true);
+                        var locationRecordCount = AssociatedHazards.Count(h => h.HazardLocation is not null);
+                        var validatedLocationCount = AssociatedHazards.Count(h => h.HazardLocation?.IsValidated == true);
+
+                        var areHazardCategoriesValidated = totalHazards > 0 && AssociatedHazards.All(h =>
+                            !string.IsNullOrWhiteSpace(h.HazardCategory) &&
+                            !h.HazardCategory.Equals("default", StringComparison.OrdinalIgnoreCase));
+
+                        var areHazardTypesValidated = totalHazards > 0 && AssociatedHazards.All(h =>
+                            !string.IsNullOrWhiteSpace(h.HazardType) &&
+                            !h.HazardType.Equals("default", StringComparison.OrdinalIgnoreCase));
+
+                        var areHazardLocationsValidated = totalHazards > 0 && AssociatedHazards.All(h => h.HazardLocation?.IsValidated == true);
+
+                        var isReportValidated = !string.IsNullOrWhiteSpace(SelectedReport.Status) &&
+                            !SelectedReport.Status.Equals(ReportStatus.NeedsValidation.Value, StringComparison.OrdinalIgnoreCase);
+                    }
+
+                    <RadzenRow Gap="0.75rem" Class="rz-mb-3 report-details-grid">
+                        <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                            <RadzenCard Variant="Variant.Outlined" Class="h-100">
+                                <RadzenStack Gap="0.35rem" Class="report-details-stack">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">
+                                        <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />Report Information
+                                    </RadzenText>
+                                    <div><strong>Report ID:</strong> @SelectedReport.Code</div>
+                                    <div><strong>Source:</strong> @(SelectedReport.SubmittedBy ?? "Unknown")</div>
+                                    <div><strong>Submitted:</strong> @SelectedReport.SubmittedDate.ToString("MM/dd/yyyy HH:mm")</div>
+
+                                    @if (!string.IsNullOrWhiteSpace(SelectedReport.SubmittingDepartment))
+                                    {
+                                        <div><strong>Organization:</strong> @SelectedReport.SubmittingDepartment</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(SelectedReport.SubmittingDepartmentJobFunction))
+                                    {
+                                        <div><strong>Job Function:</strong> @SelectedReport.SubmittingDepartmentJobFunction</div>
+                                    }
+                                </RadzenStack>
+                            </RadzenCard>
+                        </RadzenColumn>
+
+                        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                            <RadzenCard Variant="Variant.Outlined" Class="h-100">
+                                <RadzenStack Gap="0.35rem" Class="report-details-stack">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">
+                                        <RadzenIcon Icon="verified" Style="margin-right: 0.5rem;" />Validation Status
+                                    </RadzenText>
+                                    <div>
+                                        <RadzenIcon Icon="@(areHazardCategoriesValidated ? "check_circle" : "cancel")" class="@($"me-2 {(areHazardCategoriesValidated ? "text-success" : "text-danger")}")" />
+                                        Hazard Category: @(areHazardCategoriesValidated ? "Validated" : "Default/Invalid")
+                                    </div>
+                                    <div>
+                                        <RadzenIcon Icon="@(areHazardTypesValidated ? "check_circle" : "cancel")" class="@($"me-2 {(areHazardTypesValidated ? "text-success" : "text-danger")}")" />
+                                        Hazard Type: @(areHazardTypesValidated ? "Validated" : "Default/Invalid")
+                                    </div>
+                                    <div>
+                                        <RadzenIcon Icon="@(areHazardLocationsValidated ? "check_circle" : "cancel")" class="@($"me-2 {(areHazardLocationsValidated ? "text-success" : "text-danger")}")" />
+                                        Hazard Location: @validatedLocationCount/@totalHazards validated
+                                    </div>
+                                    <div>
+                                        <RadzenIcon Icon="@(isReportValidated ? "check_circle" : "schedule")" class="@($"me-2 {(isReportValidated ? "text-success" : "text-warning")}")" />
+                                        Report Validation: @(isReportValidated ? "Completed" : "Pending")
+                                    </div>
+                                </RadzenStack>
+                            </RadzenCard>
+                        </RadzenColumn>
+
+                        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                            <RadzenCard Variant="Variant.Outlined" Class="h-100">
+                                <RadzenStack Gap="0.35rem" Class="report-details-stack">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">
+                                        <RadzenIcon Icon="settings" Style="margin-right: 0.5rem;" />Processing Status
+                                    </RadzenText>
+                                    <div>
+                                        <strong>Current Status: &nbsp;</strong>
+                                        @if (!string.IsNullOrWhiteSpace(SelectedReport.Status))
+                                        {
+                                            @SelectedReport.Status
+                                        }
+                                        else
+                                        {
+                                            <span> Unknown</span>
+                                        }
+                                    </div>
+                                    <div><strong>Hazards:</strong> @totalHazards</div>
+                                    <div><strong>Attached Files:</strong> @TotalFilesCount</div>
+                                </RadzenStack>
+                            </RadzenCard>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenCard Variant="Variant.Outlined">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: var(--rz-primary);">
+                            <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />Associated Hazards (@AssociatedHazards.Count)
+                        </RadzenText>
+
+                        @if (AssociatedHazards.Any())
+                        {
+                            <RadzenDataList Data="@AssociatedHazards" WrapItems="false" AllowPaging="false" Class="rz-mt-2">
+                                <Template Context="hazard">
+                                    <RadzenCard Variant="Variant.Text" Class="rz-mb-2">
+                                        <RadzenRow Gap="1rem">
+                                            <RadzenColumn Size="12" SizeLG="7">
+                                                <RadzenStack Gap="0.5rem">
+                                                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">
+                                                        <strong>Hazard ID: </strong> @hazard.Code
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                                        <strong>Category/Type:</strong> @string.Join(" - ", new[] { hazard.HazardCategory, hazard.HazardType }.Where(x => !string.IsNullOrWhiteSpace(x)))
+                                                    </RadzenText>
+                                                    @if (!string.IsNullOrWhiteSpace(hazard.Description))
+                                                    {
+                                                        <div style="line-height: 1.5;">
+                                                            @((MarkupString)hazard.Description)
+                                                        </div>
+                                                    }
+                                                </RadzenStack>
+                                            </RadzenColumn>
+
+                                            <RadzenColumn Size="12" SizeLG="5">
+                                                @if (hazard.HazardLocation is not null && hazard.HazardLocation.Latitude.HasValue && hazard.HazardLocation.Longitude.HasValue)
+                                                {
+                                                    <ReadOnlyLocationMap Latitude="@(hazard.HazardLocation.Latitude.Value)"
+                                                                         Longitude="@(hazard.HazardLocation.Longitude.Value)"
+                                                                         LocationId="@hazard.HazardLocation.Code"
+                                                                         LocationDescription="@(hazard.HazardLocation.Description ?? hazard.Code)"
+                                                                         MapHeight="220px"
+                                                                         ShowZoomControls="false"
+                                                                         ShowLocationDetails="true"
+                                                                         ZoomLevel="16" />
+                                                }
+                                                else
+                                                {
+                                                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="rz-mb-0">
+                                                        No mapped location available.
+                                                    </RadzenAlert>
+                                                }
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                    </RadzenCard>
+                                </Template>
+                            </RadzenDataList>
+                        }
+                        else
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Base" Variant="Variant.Flat" Class="rz-mt-2">
+                                No hazards associated with this report.
+                            </RadzenAlert>
+                        }
+                    </RadzenCard>
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                      Text="Close"
+                                      Icon="close"
+                                      Click="@CloseDetailsModal"
+                                      Size="ButtonSize.Medium" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @if (_showDescriptionModal)
 {
@@ -228,6 +418,19 @@
         padding: 1rem 1.5rem;
         border-top: 1px solid #e9ecef;
         border-radius: 0 0 0.5rem 0.5rem;
+    }
+
+    .report-details-grid .rz-card {
+        padding: 0.75rem;
+    }
+
+    .report-details-stack {
+        line-height: 1.35;
+        font-size: 0.92rem;
+    }
+
+    .report-details-stack .rz-text-subtitle2 {
+        margin-bottom: 0.15rem;
     }
 
     

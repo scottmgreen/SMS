@@ -8,6 +8,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Radzen;
+using SMS3.Hubs.Contracts;
 
 namespace SMS3.Components.Shared;
 
@@ -80,6 +81,15 @@ public static class EventBusDispatcher
     {
         List<(IEventReceiver Receiver, string UserCode, string SessionKey)> currentReceivers;
 
+        if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
+        {
+            ReportGraphLockStateStore.SetLocked(LiveUpdateRecordLockMessage.TryExtractLockKey(message));
+        }
+        else if (title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
+        {
+            ReportGraphLockStateStore.SetReleased(LiveUpdateRecordLockMessage.TryExtractLockKey(message));
+        }
+
         lock (_lock)
         {
             currentReceivers = new List<(IEventReceiver Receiver, string UserCode, string SessionKey)>(_receivers);
@@ -87,9 +97,19 @@ public static class EventBusDispatcher
 
         var tasks = currentReceivers
             .Where(x =>
-                !string.IsNullOrWhiteSpace(targetSessionKey)
-                    ? string.Equals(x.SessionKey, targetSessionKey, StringComparison.Ordinal)
-                    : string.Equals(x.UserCode, targetUserCode, StringComparison.OrdinalIgnoreCase))
+            {
+                if (!string.IsNullOrWhiteSpace(targetSessionKey))
+                {
+                    return string.Equals(x.SessionKey, targetSessionKey, StringComparison.Ordinal);
+                }
+
+                if (!string.IsNullOrWhiteSpace(targetUserCode))
+                {
+                    return string.Equals(x.UserCode, targetUserCode, StringComparison.OrdinalIgnoreCase);
+                }
+
+                return true;
+            })
             .Select(x => x.Receiver.HandleEventAsync(severity, title, message, duration));
 
         await Task.WhenAll(tasks);

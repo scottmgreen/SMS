@@ -10,6 +10,7 @@ using SMS_Domain.Entities;
 
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Pages.SMSSystem.Components;
+using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration;
 using SMS3.Configuration.Extensions;
@@ -253,9 +254,9 @@ public partial class HazardReporting : ComponentBase, IDisposable
             HasGeoLocation && hasLocationDescription && DescriptionCharacterCount <= 3000 && !HasMissingFileDescriptions;
     }
 
-    public void CancelEdit()
+    public async Task CancelEdit()
     {
-        PublishValidationLockReleaseForCurrentReportAsync("Cancel").ConfigureAwait(false);
+        await PublishValidationLockReleaseForCurrentReportAsync("Cancel");
 
         var returnTarget = ReturnTo;
         if (string.IsNullOrWhiteSpace(returnTarget))
@@ -299,29 +300,32 @@ public partial class HazardReporting : ComponentBase, IDisposable
     {
         try
         {
-            var reportId = EditingReport?.Code ?? EditReportCode;
-            if (string.IsNullOrWhiteSpace(reportId))
+            var reportCode = EditingReport?.Code ?? EditReportCode;
+            if (string.IsNullOrWhiteSpace(reportCode))
             {
                 return;
             }
 
+            var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
+            ReportGraphLockStateStore.SetReleased(lockKey);
+
             var envelope = new LiveUpdateEnvelope
             {
-                EventName = LiveUpdateEventNames.ReportProcessingValidationReleased,
+                EventName = LiveUpdateEventNames.RecordEditReleased,
                 SourceModule = "HazardReporting",
                 OccurredOn = DateTime.Now,
                 ActorUserCode = _currentUserService.UserCode,
                 Severity = "Info",
-                Message = $"Validation lock released ({reason}). ReportId={reportId}",
-                EntityType = "Report",
-                EntityCode = reportId
+                Message = LiveUpdateRecordLockMessage.Build(lockKey, $"HazardReporting{reason}"),
+                EntityType = nameof(Report),
+                EntityCode = lockKey
             };
 
             await _liveUpdatesPublisher.PublishToApplicationUsersAsync(envelope);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to publish validation lock release for report {ReportId}", EditingReport?.Code ?? EditReportCode);
+            _logger.LogWarning(ex, "Failed to publish lock release for report {ReportCode}", EditingReport?.Code ?? EditReportCode);
         }
     }
         
@@ -1764,7 +1768,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
         await PublishValidationLockReleaseForCurrentReportAsync("Update");
 
-        CancelEdit();
+        await CancelEdit();
 
         
     }

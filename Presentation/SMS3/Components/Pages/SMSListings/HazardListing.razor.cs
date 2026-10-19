@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 
 using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
 
 using Radzen;
 
@@ -15,6 +16,7 @@ using SMS_Shared.Configuration;
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using SMS3.Hubs.Contracts;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.Rendering;
 
@@ -24,7 +26,7 @@ namespace SMS3.Components.Pages.SMSListings;
 /// Hazard Listing Component - Enhanced with full CRUD operations
 /// Provides comprehensive data grid listing with view details, edit navigation, and delete functionality
 /// </summary>
-public partial class HazardListing : ComponentBase
+public partial class HazardListing : ComponentBase, IEventReceiver, IDisposable
 {
     private string _basicTextStyle = "font-size:smaller;font-weight: 600";
 
@@ -36,6 +38,7 @@ public partial class HazardListing : ComponentBase
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -49,12 +52,145 @@ public partial class HazardListing : ComponentBase
     private bool _showDescriptionModal = false;
     private string _selectedDescription = string.Empty;
     private string _selectedHazardId = string.Empty;
+
+    public bool ShowDetailsModal { get; set; } = false;
+    public Hazard? SelectedHazard { get; set; }
+    public Report? SelectedReport { get; set; }
+    public List<Hazard> AssociatedHazards { get; set; } = new();
+    private readonly HashSet<string> _lockedReportGraphKeys = new(StringComparer.OrdinalIgnoreCase);
+    private string _activeReportGraphLockKey = string.Empty;
+    private string _activeReportCode = string.Empty;
+
+    public int TotalFilesCount => AssociatedHazards
+        .Sum(h => h.HazardFileIds?.Count ?? 0);
     #endregion
     
     #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
+        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
+        HydrateLockedReportGraphKeys();
         await LoadInitialData();
+    }
+
+    private void HydrateLockedReportGraphKeys()
+    {
+        _lockedReportGraphKeys.Clear();
+        foreach (var lockKey in ReportGraphLockStateStore.GetLockedKeys())
+        {
+            _lockedReportGraphKeys.Add(lockKey);
+        }
+    }
+
+    public void Dispose()
+    {
+        EventBusDispatcher.Unregister(this);
+        _ = InvokeAsync(() => ReleaseActiveReportGraphLockAsync("NavigationAway"));
+    }
+
+    public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
+    {
+        if (!title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
+            && !title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var lockKey = LiveUpdateRecordLockMessage.TryExtractLockKey(message);
+        if (!LiveUpdateReportGraphLock.TryGetReportCode(lockKey, out _))
+        {
+            return;
+        }
+
+        await InvokeAsync(async () =>
+        {
+            if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
+            {
+                _lockedReportGraphKeys.Add(lockKey!);
+            }
+            else
+            {
+                _lockedReportGraphKeys.Remove(lockKey!);
+                await LoadInitialData();
+                if (_hazardsGrid is not null)
+                {
+                    await _hazardsGrid.Reload();
+                }
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private string BuildCurrentSessionKey()
+    {
+        return $"hazard-listing:{_currentUserService?.UserCode}:{GetHashCode()}";
+    }
+
+    private bool IsReportGraphLocked(string? reportCode)
+    {
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            return false;
+        }
+
+        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
+        return _lockedReportGraphKeys.Contains(lockKey) || ReportGraphLockStateStore.IsLockKeyLocked(lockKey);
+    }
+
+    private async Task<bool> TryAcquireReportGraphLockAsync(string? reportCode, string action)
+    {
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            await _notificationHelper.ShowWarningAsync("Unable to lock record graph because report code is missing.");
+            return false;
+        }
+
+        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
+        if (_lockedReportGraphKeys.Contains(lockKey))
+        {
+            await _notificationHelper.ShowWarningAsync($"Report {reportCode} and related records are locked by another session.");
+            return false;
+        }
+
+        _activeReportGraphLockKey = lockKey;
+        _activeReportCode = reportCode;
+        _lockedReportGraphKeys.Add(lockKey);
+        await PublishReportGraphLockAsync(lockKey, true, action);
+        return true;
+    }
+
+    private async Task ReleaseActiveReportGraphLockAsync(string action)
+    {
+        var lockKey = _activeReportGraphLockKey;
+        if (string.IsNullOrWhiteSpace(lockKey) && !string.IsNullOrWhiteSpace(_activeReportCode))
+        {
+            lockKey = LiveUpdateReportGraphLock.BuildKey(_activeReportCode);
+        }
+
+        if (string.IsNullOrWhiteSpace(lockKey))
+        {
+            return;
+        }
+
+        _activeReportGraphLockKey = string.Empty;
+        _activeReportCode = string.Empty;
+        _lockedReportGraphKeys.Remove(lockKey);
+        await PublishReportGraphLockAsync(lockKey, false, action);
+    }
+
+    private async Task PublishReportGraphLockAsync(string lockKey, bool isLocked, string action)
+    {
+        await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
+        {
+            EventName = isLocked ? LiveUpdateEventNames.RecordEditLocked : LiveUpdateEventNames.RecordEditReleased,
+            SourceModule = nameof(HazardListing),
+            OccurredOn = DateTime.Now,
+            ActorUserCode = _currentUserService?.UserCode,
+            Message = LiveUpdateRecordLockMessage.Build(lockKey, action),
+            EntityType = nameof(Hazard),
+            EntityCode = lockKey
+        });
     }
     #endregion
 
@@ -420,17 +556,45 @@ public partial class HazardListing : ComponentBase
     {
         _logger.LogInformation("View hazard details requested: {HazardCode}", hazard.Code);
 
+        if (!await TryAcquireReportGraphLockAsync(hazard.ReportCode, "ViewOpen").ConfigureAwait(false))
+        {
+            return;
+        }
+
         try
         {
             _isLoading = true;
             StateHasChanged();
 
-            // TODO: Implement hazard details modal when ready
-            await ShowSuccessAsyncNotification($"View details for hazard {hazard.Code} - Feature coming soon!");
-            
+            SelectedHazard = hazard;
+
+            if (!string.IsNullOrWhiteSpace(hazard.ReportCode))
+            {
+                var reportQuery = new GetReportByCodeQuery(new ReportID(hazard.ReportCode));
+                var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
+                SelectedReport = reportResult.IsSuccess ? reportResult.Value : null;
+
+                await LoadAssociatedHazardsAsync(hazard.ReportCode);
+
+                var hydratedSelectedHazard = AssociatedHazards.FirstOrDefault(h =>
+                    string.Equals(h.Code, hazard.Code, StringComparison.OrdinalIgnoreCase));
+                if (hydratedSelectedHazard is not null)
+                {
+                    SelectedHazard = hydratedSelectedHazard;
+                }
+            }
+            else
+            {
+                SelectedReport = null;
+                AssociatedHazards = new List<Hazard>();
+            }
+
+            ShowDetailsModal = true;
+            await _notificationHelper.ShowInfoAsync($"Displaying comprehensive details for {hazard.Code}");
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("ViewFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error loading hazard details for {HazardCode}", hazard.Code);
             await ShowErrorAsyncNotification("Failed to load hazard details");
         }
@@ -441,6 +605,53 @@ public partial class HazardListing : ComponentBase
         }
     }
 
+    private async Task CloseDetailsModal()
+    {
+        await ReleaseActiveReportGraphLockAsync("ViewClosed").ConfigureAwait(false);
+        ShowDetailsModal = false;
+        SelectedHazard = null;
+        SelectedReport = null;
+        AssociatedHazards.Clear();
+        StateHasChanged();
+    }
+
+    private async Task LoadAssociatedHazardsAsync(string reportCode)
+    {
+        try
+        {
+            var hazardsQuery = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
+            var hazardsResult = await _mediator.SendAsync(hazardsQuery, CancellationToken.None);
+
+            if (!hazardsResult.IsSuccess || hazardsResult.Value is null)
+            {
+                AssociatedHazards = new List<Hazard>();
+                return;
+            }
+
+            AssociatedHazards = hazardsResult.Value.ToList();
+
+            foreach (var associatedHazard in AssociatedHazards)
+            {
+                if (string.IsNullOrWhiteSpace(associatedHazard.Code))
+                {
+                    continue;
+                }
+
+                var locationQuery = new GetHazardLocationsByHazardCodeQuery(associatedHazard.Code);
+                var locationResult = await _mediator.SendAsync(locationQuery, CancellationToken.None);
+                if (locationResult.IsSuccess && locationResult.Value?.Any() == true)
+                {
+                    associatedHazard.HazardLocation = locationResult.Value.FirstOrDefault();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading associated hazards for report {ReportCode}", reportCode);
+            AssociatedHazards = new List<Hazard>();
+        }
+    }
+
     /// <summary>
     /// Handle edit hazard request - Navigate to Hazard page in edit mode
     /// </summary>
@@ -448,6 +659,11 @@ public partial class HazardListing : ComponentBase
     public async Task OnEditHazardAsync(Hazard hazard)
     {
         _logger.LogInformation("Edit hazard requested: {HazardCode}", hazard.Code);
+
+        if (!await TryAcquireReportGraphLockAsync(hazard.ReportCode, "EditStart").ConfigureAwait(false))
+        {
+            return;
+        }
 
         try
         {
@@ -467,9 +683,14 @@ public partial class HazardListing : ComponentBase
                 _navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting/{hazard.Code}?returnTo=hazard-listing");
                 _logger.LogInformation("Navigating to edit hazard: {HazardCode}", hazard.Code);
             }
+            else
+            {
+                await ReleaseActiveReportGraphLockAsync("EditCancelled").ConfigureAwait(false);
+            }
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("EditFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error navigating to edit hazard {HazardCode}", hazard.Code);
             await ShowErrorAsyncNotification("Failed to navigate to edit form");
         }
@@ -482,6 +703,11 @@ public partial class HazardListing : ComponentBase
     public async Task OnDeleteHazardAsync(Hazard hazard)
     {
         _logger.LogInformation("Delete hazard requested: {HazardCode}", hazard.Code);
+
+        if (!await TryAcquireReportGraphLockAsync(hazard.ReportCode, "DeleteStart").ConfigureAwait(false))
+        {
+            return;
+        }
 
         try
         {
@@ -509,11 +735,20 @@ public partial class HazardListing : ComponentBase
                 await ShowSuccessAsyncNotification($"Delete hazard {hazard.Code} - Command coming soon!");
                 _logger.LogInformation("Delete confirmed for hazard: {HazardCode}", hazard.Code);
             }
+            else
+            {
+                await ReleaseActiveReportGraphLockAsync("DeleteCancelled").ConfigureAwait(false);
+            }
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("DeleteFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error deleting hazard: {HazardCode}", hazard.Code);
             await ShowErrorAsyncNotification("Failed to delete the hazard");
+        }
+        finally
+        {
+            await ReleaseActiveReportGraphLockAsync("DeleteCompleted").ConfigureAwait(false);
         }
     }
     #endregion

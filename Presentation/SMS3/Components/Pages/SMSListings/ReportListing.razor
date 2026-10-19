@@ -144,6 +144,7 @@
         <!-- Enhanced Actions Column -->
         <RadzenDataGridColumn TItem="Report" Title="Actions" Width="190px" Sortable="false" Filterable="false">
             <Template Context="report">
+                @{ var isLocked = IsReportGraphLocked(report.Code); }
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
 
                     @if (_currentUserService.CanUpdate("SMS_Listings_Reports"))
@@ -154,7 +155,8 @@
                                           Size="ButtonSize.Small"
                                           Click="@(() => OnResetReportAsync(report))"
                                           title="Revalidate Report"
-                                          Icon="visibility" />
+                                          Icon="visibility"
+                                          Disabled="@isLocked" />
                         }
                     }
 
@@ -164,7 +166,8 @@
                                 Size="ButtonSize.Small"
                                 Click="@(() => OnViewReportAsync(report))"
                                 title="View Details"
-                                Icon="visibility" />
+                                Icon="visibility"
+                                Disabled="@isLocked" />
                   }
 
 
@@ -174,13 +177,15 @@
                                     Size="ButtonSize.Small"
                                     Click="@(() => OpenEditDescriptionDialog(report))"
                                     title="Edit Tracking Comment"
-                                    Icon="edit_note" />
+                                    Icon="edit_note"
+                                    Disabled="@isLocked" />
 
                         <RadzenButton ButtonStyle="ButtonStyle.Primary" 
                                     Size="ButtonSize.Small"
                                     Click="@(() => OnEditReportAsync(report))"
                                     title="Edit Report"
-                                    Icon="edit" />
+                                    Icon="edit"
+                                    Disabled="@isLocked" />
                   }
                   @if (_currentUserService.CanDelete("SMS_Listings_Reports"))
                   {
@@ -189,7 +194,8 @@
                                     Size="ButtonSize.Small"
                                     Click="@(() => OnDeleteReportAsync(report))"
                                     title="Delete Report"
-                                    Icon="delete" />
+                                    Icon="delete"
+                                    Disabled="@isLocked" />
                   }
                 </RadzenStack>
             </Template>
@@ -212,7 +218,7 @@
                                     Variant="Variant.Text"
                                     Icon="close"
                                     Size="ButtonSize.Small"
-                                    Click="CloseDetailsModal" />
+                                    Click="@CloseDetailsModal" />
                     </div>
                 </div>
                 <div class="sms-modal-body p-4">
@@ -411,7 +417,7 @@
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" 
                                     Text="Close" 
                                     Icon="close"
-                                    Click="CloseDetailsModal"
+                                    Click="@CloseDetailsModal"
                                     Size="ButtonSize.Medium" />
                     </div>
                 </div>
@@ -435,7 +441,7 @@
                                     Variant="Variant.Text"
                                     Icon="close"
                                     Size="ButtonSize.Small"
-                                    Click="CancelResetConfirmation" 
+                                    Click="@CancelResetConfirmation" 
                                     Style="color: white;" />
                     </div>
                 </div>
@@ -452,12 +458,12 @@
                         <RadzenButton ButtonStyle="ButtonStyle.Light" 
                                     Text="Cancel" 
                                     Icon="close"
-                                    Click="CancelResetConfirmation"
+                                    Click="@CancelResetConfirmation"
                                     Size="ButtonSize.Medium" />
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" 
                                     Text="Yes, Reset Report" 
                                     Icon="refresh"
-                                    Click="HandleResetConfirmation"
+                                    Click="@HandleResetConfirmation"
                                     Size="ButtonSize.Medium"
                                     Disabled="@_isLoading" />
                     </div>
@@ -559,7 +565,7 @@
 
 <style>
 .sms-modal-xxl {
-    max-width: 1400px;
+    max-width: 1200px;
     width: 95%;
 }
 

@@ -48,6 +48,17 @@
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="ReportValidation" Property="ValidatedDate" Title="Validated Date" Width="180px" FormatString="{0:MM/dd/yyyy hh:mm tt}" />
+        <RadzenDataGridColumn TItem="ReportValidation" Title="Lock" Width="90px" Sortable="false" Filterable="false">
+            <Template Context="validation">
+                @{ var isLocked = IsReportGraphLocked(validation.ReportCode); }
+                <RadzenButton Icon="lock"
+                              ButtonStyle="ButtonStyle.Light"
+                              Size="ButtonSize.Small"
+                              Disabled="@isLocked"
+                              Click="@(() => ShowActions(validation))"
+                              title="Lock status" />
+            </Template>
+        </RadzenDataGridColumn>
         
         @* <RadzenDataGridColumn TItem="ReportValidation" Property="CreatedBy" Title="Created By" Width="150px" />
         <RadzenDataGridColumn TItem="ReportValidation" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" /> *@

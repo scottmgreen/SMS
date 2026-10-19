@@ -104,6 +104,7 @@
         <!-- Mitigation Description -->
         <RadzenDataGridColumn TItem="Mitigation" Title="Mitigation" Width="115px" Sortable="false" Filterable="false">
             <Template Context="mitigation">
+                @{ var isLocked = IsReportGraphLocked(mitigation.ReportCode); }
                 <RadzenButton Text="Description"
                               Icon="description"
                               ButtonStyle="ButtonStyle.Base"
@@ -111,13 +112,15 @@
                               Size="ButtonSize.ExtraSmall"
                               Title="Click to view mitigation description"
                               Class="description-button"
-                              Click="@(() => ShowDescriptionDialog($"Mitigation Description - {mitigation.Code}", mitigation.Description))" />
+                              Click="@(() => ShowDescriptionDialog($"Mitigation Description - {mitigation.Code}", mitigation.Description))"
+                              Disabled="@isLocked" />
             </Template>
         </RadzenDataGridColumn>
 
         <!-- Related Hazard Description -->
         <RadzenDataGridColumn TItem="Mitigation" Title="Hazard" Width="115px" Sortable="false" Filterable="false">
             <Template Context="mitigation">
+                @{ var isLocked = IsReportGraphLocked(mitigation.ReportCode); }
                 <RadzenButton Text="Description"
                               Icon="description"
                               ButtonStyle="ButtonStyle.Base"
@@ -125,7 +128,8 @@
                               Size="ButtonSize.ExtraSmall"
                               Title="Click to view related hazard description"
                               Class="description-button"
-                              Click="@(() => ShowDescriptionDialog($"Hazard Description - {mitigation.HazardCode}", mitigation.HazardDescription))" />
+                              Click="@(() => ShowDescriptionDialog($"Hazard Description - {mitigation.HazardCode}", mitigation.HazardDescription))"
+                              Disabled="@isLocked" />
             </Template>
         </RadzenDataGridColumn>
 
@@ -167,25 +171,30 @@
         <!-- Actions Column -->
         <RadzenDataGridColumn TItem="Mitigation" Title="Actions" Width="200px" Sortable="false" Filterable="false">
             <Template Context="mitigation">
+                @{ var isLocked = IsReportGraphLocked(mitigation.ReportCode); }
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
                     <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
                                   Tooltip="View Mitigation Details"
-                                  Click="@(() => ViewMitigation(mitigation))" />
+                                  Click="@(() => ViewMitigation(mitigation))"
+                                  Disabled="@isLocked" />
 
                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
                                   Tooltip="Edit Mitigation"
-                                  Click="@(() => EditMitigation(mitigation))" />
+                                  Click="@(() => EditMitigation(mitigation))"
+                                  Disabled="@isLocked" />
 
                     @if (mitigation.Status != MitigationStatus.Approved)
                     {
                         <RadzenButton Icon="verified" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                                       Tooltip="Quick Approve"
-                                      Click="@(async () => await QuickApproveMitigation(mitigation))" />
+                                      Click="@(async () => await QuickApproveMitigation(mitigation))"
+                                      Disabled="@isLocked" />
                     }
 
                     <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
                                   Tooltip="Delete Mitigation"
-                                  Click="@(() => DeleteMitigation(mitigation))" />
+                                  Click="@(() => DeleteMitigation(mitigation))"
+                                  Disabled="@isLocked" />
                 </RadzenStack>
             </Template>
         </RadzenDataGridColumn>

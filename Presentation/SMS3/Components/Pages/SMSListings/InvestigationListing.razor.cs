@@ -16,6 +16,7 @@ using SMS3.Configuration;
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using SMS3.Hubs.Contracts;
 using Microsoft.AspNetCore.Components;
 
 namespace SMS3.Components.Pages.SMSListings;
@@ -24,7 +25,7 @@ namespace SMS3.Components.Pages.SMSListings;
 /// Investigation Listing Component - Enhanced with full CRUD operations and advanced filtering
 /// Provides comprehensive data grid listing with view details, edit navigation, and delete functionality
 /// </summary>
-public partial class InvestigationListing : ComponentBase
+public partial class InvestigationListing : ComponentBase, IEventReceiver, IDisposable
 {
     private string _basicTextStyle = "font-size:smaller;font-weight: 600";
 
@@ -36,6 +37,7 @@ public partial class InvestigationListing : ComponentBase
 
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -48,12 +50,137 @@ public partial class InvestigationListing : ComponentBase
     private bool _showInvestigationNotesModal = false;
     private string _selectedInvestigationNotes = string.Empty;
     private string _selectedInvestigationId = string.Empty;
+    private readonly HashSet<string> _lockedReportGraphKeys = new(StringComparer.OrdinalIgnoreCase);
+    private string _activeReportGraphLockKey = string.Empty;
+    private string _activeReportCode = string.Empty;
     #endregion
     
     #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
+        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
+        HydrateLockedReportGraphKeys();
         await LoadInitialData();
+    }
+
+    private void HydrateLockedReportGraphKeys()
+    {
+        _lockedReportGraphKeys.Clear();
+        foreach (var lockKey in ReportGraphLockStateStore.GetLockedKeys())
+        {
+            _lockedReportGraphKeys.Add(lockKey);
+        }
+    }
+
+    public void Dispose()
+    {
+        EventBusDispatcher.Unregister(this);
+        _ = InvokeAsync(() => ReleaseActiveReportGraphLockAsync("NavigationAway"));
+    }
+
+    public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
+    {
+        if (!title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
+            && !title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var lockKey = LiveUpdateRecordLockMessage.TryExtractLockKey(message);
+        if (!LiveUpdateReportGraphLock.TryGetReportCode(lockKey, out _))
+        {
+            return;
+        }
+
+        await InvokeAsync(async () =>
+        {
+            if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
+            {
+                _lockedReportGraphKeys.Add(lockKey!);
+            }
+            else
+            {
+                _lockedReportGraphKeys.Remove(lockKey!);
+                await LoadInitialData();
+                if (_investigationsGrid is not null)
+                {
+                    await _investigationsGrid.Reload();
+                }
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private string BuildCurrentSessionKey()
+    {
+        return $"investigation-listing:{_currentUserService?.UserCode}:{GetHashCode()}";
+    }
+
+    private bool IsReportGraphLocked(string? reportCode)
+    {
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            return false;
+        }
+
+        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
+        return _lockedReportGraphKeys.Contains(lockKey) || ReportGraphLockStateStore.IsLockKeyLocked(lockKey);
+    }
+
+    private async Task<bool> TryAcquireReportGraphLockAsync(string? reportCode, string action)
+    {
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            await _notificationHelper.ShowWarningAsync("Unable to lock record graph because report code is missing.");
+            return false;
+        }
+
+        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
+        if (_lockedReportGraphKeys.Contains(lockKey))
+        {
+            await _notificationHelper.ShowWarningAsync($"Report {reportCode} and related records are locked by another session.");
+            return false;
+        }
+
+        _activeReportGraphLockKey = lockKey;
+        _activeReportCode = reportCode;
+        _lockedReportGraphKeys.Add(lockKey);
+        await PublishReportGraphLockAsync(lockKey, true, action);
+        return true;
+    }
+
+    private async Task ReleaseActiveReportGraphLockAsync(string action)
+    {
+        var lockKey = _activeReportGraphLockKey;
+        if (string.IsNullOrWhiteSpace(lockKey) && !string.IsNullOrWhiteSpace(_activeReportCode))
+        {
+            lockKey = LiveUpdateReportGraphLock.BuildKey(_activeReportCode);
+        }
+
+        if (string.IsNullOrWhiteSpace(lockKey))
+        {
+            return;
+        }
+
+        _activeReportGraphLockKey = string.Empty;
+        _activeReportCode = string.Empty;
+        _lockedReportGraphKeys.Remove(lockKey);
+        await PublishReportGraphLockAsync(lockKey, false, action);
+    }
+
+    private async Task PublishReportGraphLockAsync(string lockKey, bool isLocked, string action)
+    {
+        await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
+        {
+            EventName = isLocked ? LiveUpdateEventNames.RecordEditLocked : LiveUpdateEventNames.RecordEditReleased,
+            SourceModule = nameof(InvestigationListing),
+            OccurredOn = DateTime.Now,
+            ActorUserCode = _currentUserService?.UserCode,
+            Message = LiveUpdateRecordLockMessage.Build(lockKey, action),
+            EntityType = nameof(Investigation),
+            EntityCode = lockKey
+        });
     }
     #endregion
 
@@ -158,16 +285,22 @@ public partial class InvestigationListing : ComponentBase
         return investigation?.Status?.Value ?? string.Empty;
     }
 
-    private void ShowInvestigationNotesDialog(Investigation investigation)
+    private async Task ShowInvestigationNotesDialog(Investigation investigation)
     {
+        if (!await TryAcquireReportGraphLockAsync(investigation.ReportCode, "NotesOpen").ConfigureAwait(false))
+        {
+            return;
+        }
+
         _selectedInvestigationNotes = investigation?.InvestigationNotes ?? "No notes available";
         _selectedInvestigationId = investigation?.Code ?? "Unknown";
         _showInvestigationNotesModal = true;
         StateHasChanged();
     }
 
-    private void CloseInvestigationNotesModal()
+    private async Task CloseInvestigationNotesModal()
     {
+        await ReleaseActiveReportGraphLockAsync("NotesClosed").ConfigureAwait(false);
         _showInvestigationNotesModal = false;
         _selectedInvestigationNotes = string.Empty;
         _selectedInvestigationId = string.Empty;
@@ -460,6 +593,11 @@ public partial class InvestigationListing : ComponentBase
         {
             if (investigation is null) return;
 
+            if (!await TryAcquireReportGraphLockAsync(investigation.ReportCode, "ViewStart").ConfigureAwait(false))
+            {
+                return;
+            }
+
             // Navigate to Investigation with HazardCode if available
             var navigationUrl = string.IsNullOrWhiteSpace(investigation.HazardCode)
                 ? $"/SMSRiskManagement/Investigations/{investigation.Code}"
@@ -471,6 +609,7 @@ public partial class InvestigationListing : ComponentBase
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("ViewFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error viewing investigation {Code}", investigation?.Code);
             await _notificationHelper.ShowErrorAsync("Error opening investigation");
         }
@@ -481,6 +620,11 @@ public partial class InvestigationListing : ComponentBase
         try
         {
             if (investigation is null) return;
+
+            if (!await TryAcquireReportGraphLockAsync(investigation.ReportCode, "EditStart").ConfigureAwait(false))
+            {
+                return;
+            }
 
             // Navigate to Investigation edit mode with HazardCode if available
             var navigationUrl = string.IsNullOrWhiteSpace(investigation.HazardCode)
@@ -493,6 +637,7 @@ public partial class InvestigationListing : ComponentBase
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("EditFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error editing investigation {Code}", investigation?.Code);
             await _notificationHelper.ShowErrorAsync("Error opening investigation editor");
         }

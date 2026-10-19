@@ -10,6 +10,28 @@ public static class LiveUpdateEventNames
     public const string ReportProcessingValidationReleased = "ReportProcessingValidationReleased";
 }
 
+public static class LiveUpdateReportGraphLock
+{
+    private const string Prefix = "ReportGraph:";
+
+    public static string BuildKey(string reportCode)
+    {
+        return $"{Prefix}{reportCode?.Trim()}";
+    }
+
+    public static bool TryGetReportCode(string? lockKey, out string reportCode)
+    {
+        reportCode = string.Empty;
+        if (string.IsNullOrWhiteSpace(lockKey) || !lockKey.StartsWith(Prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        reportCode = lockKey[Prefix.Length..].Trim();
+        return !string.IsNullOrWhiteSpace(reportCode);
+    }
+}
+
 public static class LiveUpdateRecordLockMessage
 {
     private const string LockKeyMarker = "LockKey=";

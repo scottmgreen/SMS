@@ -107,13 +107,14 @@
 
         <RadzenDataGridColumn TItem="HazardLocation" Title="Actions" Width="140px" Sortable="false" Filterable="false">
             <Template Context="location">
+                @{ var isLocked = IsReportGraphLocked(GetReportCodeForLocation(location)); }
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
                     @if (_currentUserService.CanRead("SMS_Listings_HazardLocations"))
                     {
                         <RadzenButton ButtonStyle="ButtonStyle.Base"
                                       Size="ButtonSize.Small"
                                       Click="@(() => ViewLocationMap(location))"
-                                      Disabled="@(!HasValidCoordinates(location))"
+                                      Disabled="@(isLocked || !HasValidCoordinates(location))"
                                       title="@(HasValidCoordinates(location) ? "View location on map" : "No valid coordinates available")"
                                       Icon="visibility" />
                     }
@@ -123,7 +124,7 @@
                         <RadzenButton ButtonStyle="ButtonStyle.Primary"
                                       Size="ButtonSize.Small"
                                       Click="@(() => ValidateLocation(location))"
-                                      Disabled="@(!HasValidCoordinates(location))"
+                                      Disabled="@(isLocked || !HasValidCoordinates(location))"
                                       title="@(HasValidCoordinates(location) ? "Validate location" : "No valid coordinates available")"
                                       Icon="edit" />
                     }

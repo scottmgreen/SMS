@@ -17,6 +17,7 @@ using SMS_Shared.Configuration;
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using SMS3.Hubs.Contracts;
 
 namespace SMS3.Components.Pages.SMSListings;
 
@@ -24,7 +25,7 @@ namespace SMS3.Components.Pages.SMSListings;
 /// Mitigation Listing Component - Enhanced with full CRUD operations and advanced filtering
 /// Provides comprehensive data grid listing with view details, edit navigation, and delete functionality
 /// </summary>
-public partial class MitigationListing : ComponentBase
+public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposable
 {
     private string _basicTextStyle = "font-size:smaller;font-weight: 600";
 
@@ -44,6 +45,7 @@ public partial class MitigationListing : ComponentBase
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -60,6 +62,9 @@ public partial class MitigationListing : ComponentBase
     private bool _showDescriptionModal = false;
     private string _selectedDescriptionTitle = string.Empty;
     private string _selectedDescription = string.Empty;
+    private readonly HashSet<string> _lockedReportGraphKeys = new(StringComparer.OrdinalIgnoreCase);
+    private string _activeReportGraphLockKey = string.Empty;
+    private string _activeReportCode = string.Empty;
 
     // For context display
     private Hazard? _contextHazard = null;
@@ -69,8 +74,130 @@ public partial class MitigationListing : ComponentBase
     #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
+        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
+        HydrateLockedReportGraphKeys();
         await LoadContextData();
         await LoadInitialData();
+    }
+
+    private void HydrateLockedReportGraphKeys()
+    {
+        _lockedReportGraphKeys.Clear();
+        foreach (var lockKey in ReportGraphLockStateStore.GetLockedKeys())
+        {
+            _lockedReportGraphKeys.Add(lockKey);
+        }
+    }
+
+    public void Dispose()
+    {
+        EventBusDispatcher.Unregister(this);
+        _ = InvokeAsync(() => ReleaseActiveReportGraphLockAsync("NavigationAway"));
+    }
+
+    public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
+    {
+        if (!title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
+            && !title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var lockKey = LiveUpdateRecordLockMessage.TryExtractLockKey(message);
+        if (!LiveUpdateReportGraphLock.TryGetReportCode(lockKey, out _))
+        {
+            return;
+        }
+
+        await InvokeAsync(async () =>
+        {
+            if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
+            {
+                _lockedReportGraphKeys.Add(lockKey!);
+            }
+            else
+            {
+                _lockedReportGraphKeys.Remove(lockKey!);
+                await LoadInitialData();
+                if (_mitigationsGrid is not null)
+                {
+                    await _mitigationsGrid.Reload();
+                }
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private string BuildCurrentSessionKey()
+    {
+        return $"mitigation-listing:{_currentUserService?.UserCode}:{GetHashCode()}";
+    }
+
+    private bool IsReportGraphLocked(string? reportCode)
+    {
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            return false;
+        }
+
+        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
+        return _lockedReportGraphKeys.Contains(lockKey) || ReportGraphLockStateStore.IsLockKeyLocked(lockKey);
+    }
+
+    private async Task<bool> TryAcquireReportGraphLockAsync(string? reportCode, string action)
+    {
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            await _notificationHelper.ShowWarningAsync("Unable to lock record graph because report code is missing.");
+            return false;
+        }
+
+        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
+        if (_lockedReportGraphKeys.Contains(lockKey))
+        {
+            await _notificationHelper.ShowWarningAsync($"Report {reportCode} and related records are locked by another session.");
+            return false;
+        }
+
+        _activeReportGraphLockKey = lockKey;
+        _activeReportCode = reportCode;
+        _lockedReportGraphKeys.Add(lockKey);
+        await PublishReportGraphLockAsync(lockKey, true, action);
+        return true;
+    }
+
+    private async Task ReleaseActiveReportGraphLockAsync(string action)
+    {
+        var lockKey = _activeReportGraphLockKey;
+        if (string.IsNullOrWhiteSpace(lockKey) && !string.IsNullOrWhiteSpace(_activeReportCode))
+        {
+            lockKey = LiveUpdateReportGraphLock.BuildKey(_activeReportCode);
+        }
+
+        if (string.IsNullOrWhiteSpace(lockKey))
+        {
+            return;
+        }
+
+        _activeReportGraphLockKey = string.Empty;
+        _activeReportCode = string.Empty;
+        _lockedReportGraphKeys.Remove(lockKey);
+        await PublishReportGraphLockAsync(lockKey, false, action);
+    }
+
+    private async Task PublishReportGraphLockAsync(string lockKey, bool isLocked, string action)
+    {
+        await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
+        {
+            EventName = isLocked ? LiveUpdateEventNames.RecordEditLocked : LiveUpdateEventNames.RecordEditReleased,
+            SourceModule = nameof(MitigationListing),
+            OccurredOn = DateTime.Now,
+            ActorUserCode = _currentUserService?.UserCode,
+            Message = LiveUpdateRecordLockMessage.Build(lockKey, action),
+            EntityType = nameof(Mitigation),
+            EntityCode = lockKey
+        });
     }
 
     protected override async Task OnParametersSetAsync()
@@ -550,6 +677,11 @@ public partial class MitigationListing : ComponentBase
     #region CRUD Action Methods
     private async Task ViewMitigation(Mitigation mitigation)
     {
+        if (!await TryAcquireReportGraphLockAsync(mitigation.ReportCode, "ViewOpen").ConfigureAwait(false))
+        {
+            return;
+        }
+
         try
         {
             _logger.LogInformation("Viewing mitigation: {Code}", mitigation.Code);
@@ -560,6 +692,7 @@ public partial class MitigationListing : ComponentBase
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("ViewFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error viewing mitigation {Code}", mitigation.Code);
             await _notificationHelper.ShowErrorAsync("Error viewing mitigation");
         }
@@ -567,6 +700,11 @@ public partial class MitigationListing : ComponentBase
 
     private async Task EditMitigation(Mitigation mitigation)
     {
+        if (!await TryAcquireReportGraphLockAsync(mitigation.ReportCode, "EditStart").ConfigureAwait(false))
+        {
+            return;
+        }
+
         try
         {
             _logger.LogInformation("Editing mitigation: {Code}", mitigation.Code);
@@ -575,6 +713,7 @@ public partial class MitigationListing : ComponentBase
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("EditFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error editing mitigation {Code}", mitigation.Code);
             await _notificationHelper.ShowErrorAsync("Error opening mitigation editor");
         }
@@ -582,6 +721,11 @@ public partial class MitigationListing : ComponentBase
 
     private async Task QuickApproveMitigation(Mitigation mitigation)
     {
+        if (!await TryAcquireReportGraphLockAsync(mitigation.ReportCode, "QuickApproveStart").ConfigureAwait(false))
+        {
+            return;
+        }
+
         try
         {
             mitigation.Status = MitigationStatus.Approved;
@@ -605,8 +749,13 @@ public partial class MitigationListing : ComponentBase
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("QuickApproveFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error quick approving mitigation {Code}", mitigation.Code);
             await _notificationHelper.ShowErrorAsync("Error approving mitigation");
+        }
+        finally
+        {
+            await ReleaseActiveReportGraphLockAsync("QuickApproveCompleted").ConfigureAwait(false);
         }
     }
 
@@ -622,6 +771,12 @@ public partial class MitigationListing : ComponentBase
                 return;
             }
 
+            var firstReportCode = approvableMitigations.FirstOrDefault()?.ReportCode;
+            if (!await TryAcquireReportGraphLockAsync(firstReportCode, "BulkApproveOpen").ConfigureAwait(false))
+            {
+                return;
+            }
+
             _selectedMitigations = approvableMitigations;
             _showBulkApprovalDialog = true;
             StateHasChanged();
@@ -630,6 +785,7 @@ public partial class MitigationListing : ComponentBase
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("BulkApproveOpenFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error opening bulk approval dialog");
             await _notificationHelper.ShowErrorAsync("Error opening bulk approval dialog");
         }
@@ -637,6 +793,7 @@ public partial class MitigationListing : ComponentBase
 
     private async Task CloseBulkApprovalDialog()
     {
+        await ReleaseActiveReportGraphLockAsync("BulkApproveClosed").ConfigureAwait(false);
         _showBulkApprovalDialog = false;
         _selectedMitigations = new List<Mitigation>();
         StateHasChanged();
@@ -703,11 +860,13 @@ public partial class MitigationListing : ComponentBase
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("BulkApproveFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error processing bulk approval");
             await _notificationHelper.ShowErrorAsync("Error processing bulk approval");
         }
         finally
         {
+            await ReleaseActiveReportGraphLockAsync("BulkApproveCompleted").ConfigureAwait(false);
             _isProcessingBulkApproval = false;
             StateHasChanged();
         }
@@ -729,6 +888,11 @@ public partial class MitigationListing : ComponentBase
 
     private async Task DeleteMitigation(Mitigation mitigation)
     {
+        if (!await TryAcquireReportGraphLockAsync(mitigation.ReportCode, "DeleteStart").ConfigureAwait(false))
+        {
+            return;
+        }
+
         try
         {
             var confirmResult = await _dialogService.Confirm(
@@ -759,11 +923,20 @@ public partial class MitigationListing : ComponentBase
                     await _notificationHelper.ShowErrorAsync($"Failed to delete mitigation: {result.Error?.Message}");
                 }
             }
+            else
+            {
+                await ReleaseActiveReportGraphLockAsync("DeleteCancelled").ConfigureAwait(false);
+            }
         }
         catch (Exception ex)
         {
+            await ReleaseActiveReportGraphLockAsync("DeleteFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error deleting mitigation {Code}", mitigation.Code);
             await _notificationHelper.ShowErrorAsync("Error deleting mitigation");
+        }
+        finally
+        {
+            await ReleaseActiveReportGraphLockAsync("DeleteCompleted").ConfigureAwait(false);
         }
     }
     #endregion

@@ -17,6 +17,7 @@ using SMS3.Hubs;
 using SMS3.Hubs.Contracts;
 
 using SMS3.Api.Endpoints;
+using SMS3.Components.Shared;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -104,6 +105,8 @@ public static class DependencyInjection
     /// </summary>
     private static IServiceCollection AddUIHelperServices(this IServiceCollection services)
     {
+        services.AddSingleton<IReportGraphLockStore, ReportGraphLockStore>();
+
         // Notification system with feature management integration
         services.AddScoped<INotificationHelper, NotificationHelper>();
         services.AddScoped<INotificationBellRefreshService, NotificationBellRefreshService>();

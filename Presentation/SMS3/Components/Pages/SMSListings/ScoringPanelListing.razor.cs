@@ -2,31 +2,191 @@
 using SMS_Domain.Events;
 
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Components.Shared;
+using SMS3.Hubs.Contracts;
 
 namespace SMS3.Components.Pages.SMSListings;
 
-public partial class ScoringPanelListing : ComponentBase
+public partial class ScoringPanelListing : ComponentBase, IEventReceiver, IDisposable
 {
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ScoringPanelListing> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
     
 
     private RadzenDataGrid<ScoringPanel>? _panelsGrid;
     private IEnumerable<ScoringPanel> _panels = new List<ScoringPanel>();
+    private readonly Dictionary<string, string> _hazardToReportCode = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _lockedReportGraphKeys = new(StringComparer.OrdinalIgnoreCase);
+    private string _activeReportGraphLockKey = string.Empty;
+    private string _activeReportCode = string.Empty;
     private int _totalCount;
 
     protected override async Task OnInitializedAsync()
     {
+        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
+        HydrateLockedReportGraphKeys();
         await LoadInitialData();
+    }
+
+    private void HydrateLockedReportGraphKeys()
+    {
+        _lockedReportGraphKeys.Clear();
+        foreach (var lockKey in ReportGraphLockStateStore.GetLockedKeys())
+        {
+            _lockedReportGraphKeys.Add(lockKey);
+        }
+    }
+
+    public void Dispose()
+    {
+        EventBusDispatcher.Unregister(this);
+        _ = InvokeAsync(() => ReleaseActiveReportGraphLockAsync("NavigationAway"));
+    }
+
+    public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
+    {
+        if (!title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
+            && !title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var lockKey = LiveUpdateRecordLockMessage.TryExtractLockKey(message);
+        if (!LiveUpdateReportGraphLock.TryGetReportCode(lockKey, out _))
+        {
+            return;
+        }
+
+        await InvokeAsync(async () =>
+        {
+            if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
+            {
+                _lockedReportGraphKeys.Add(lockKey!);
+            }
+            else
+            {
+                _lockedReportGraphKeys.Remove(lockKey!);
+                await LoadInitialData();
+                if (_panelsGrid is not null)
+                {
+                    await _panelsGrid.Reload();
+                }
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private string BuildCurrentSessionKey()
+    {
+        return $"scoring-panel-listing:{_currentUserService?.UserCode}:{GetHashCode()}";
+    }
+
+    private bool IsReportGraphLocked(string? reportCode)
+    {
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            return false;
+        }
+
+        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
+        return _lockedReportGraphKeys.Contains(lockKey) || ReportGraphLockStateStore.IsLockKeyLocked(lockKey);
+    }
+
+    private string? GetReportCodeForPanel(ScoringPanel? panel)
+    {
+        if (panel is null || string.IsNullOrWhiteSpace(panel.HazardCode))
+        {
+            return null;
+        }
+
+        return _hazardToReportCode.TryGetValue(panel.HazardCode, out var reportCode)
+            ? reportCode
+            : null;
+    }
+
+    private async Task<bool> TryAcquireReportGraphLockAsync(string? reportCode, string action)
+    {
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            await _notificationHelper.ShowWarningAsync("Unable to lock record graph because report code is missing.");
+            return false;
+        }
+
+        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
+        if (_lockedReportGraphKeys.Contains(lockKey))
+        {
+            await _notificationHelper.ShowWarningAsync($"Report {reportCode} and related records are locked by another session.");
+            return false;
+        }
+
+        _activeReportGraphLockKey = lockKey;
+        _activeReportCode = reportCode;
+        _lockedReportGraphKeys.Add(lockKey);
+        await PublishReportGraphLockAsync(lockKey, true, action);
+        return true;
+    }
+
+    private async Task ReleaseActiveReportGraphLockAsync(string action)
+    {
+        var lockKey = _activeReportGraphLockKey;
+        if (string.IsNullOrWhiteSpace(lockKey) && !string.IsNullOrWhiteSpace(_activeReportCode))
+        {
+            lockKey = LiveUpdateReportGraphLock.BuildKey(_activeReportCode);
+        }
+
+        if (string.IsNullOrWhiteSpace(lockKey))
+        {
+            return;
+        }
+
+        _activeReportGraphLockKey = string.Empty;
+        _activeReportCode = string.Empty;
+        _lockedReportGraphKeys.Remove(lockKey);
+        await PublishReportGraphLockAsync(lockKey, false, action);
+    }
+
+    private async Task PublishReportGraphLockAsync(string lockKey, bool isLocked, string action)
+    {
+        await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
+        {
+            EventName = isLocked ? LiveUpdateEventNames.RecordEditLocked : LiveUpdateEventNames.RecordEditReleased,
+            SourceModule = nameof(ScoringPanelListing),
+            OccurredOn = DateTime.Now,
+            ActorUserCode = _currentUserService?.UserCode,
+            Message = LiveUpdateRecordLockMessage.Build(lockKey, action),
+            EntityType = nameof(ScoringPanel),
+            EntityCode = lockKey
+        });
+    }
+
+    private async Task LoadHazardToReportMapAsync()
+    {
+        _hazardToReportCode.Clear();
+        var hazardsResult = await _mediator.SendAsync(new GetAllHazardsQuery(), CancellationToken.None);
+        if (!hazardsResult.IsSuccess || hazardsResult.Value is null)
+        {
+            return;
+        }
+
+        foreach (var hazard in hazardsResult.Value)
+        {
+            if (!string.IsNullOrWhiteSpace(hazard.Code) && !string.IsNullOrWhiteSpace(hazard.ReportCode))
+            {
+                _hazardToReportCode[hazard.Code] = hazard.ReportCode;
+            }
+        }
     }
 
     private async Task LoadInitialData()
     {
         try
         {
+            await LoadHazardToReportMapAsync();
             var query = new GetAllScoringPanelsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
@@ -108,8 +268,15 @@ public partial class ScoringPanelListing : ComponentBase
         return (propertyName, isDescending);
     }
 
-    private void ShowActions(ScoringPanel panel)
+    private async Task ShowActions(ScoringPanel panel)
     {
+        var reportCode = GetReportCodeForPanel(panel);
+        if (!await TryAcquireReportGraphLockAsync(reportCode, "ActionsOpen").ConfigureAwait(false))
+        {
+            return;
+        }
+
         _logger.LogInformation("Actions requested for scoring panel: {Code}", panel.Code);
+        await ReleaseActiveReportGraphLockAsync("ActionsClosed").ConfigureAwait(false);
     }
 }

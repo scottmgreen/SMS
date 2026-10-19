@@ -27,6 +27,18 @@ public class LiveUpdatesPublisher : ILiveUpdatesPublisher
             .Group(LiveUpdateHubConstants.ApplicationUsersGroup)
             .SendAsync("LiveUpdate", envelope);
 
+        if (envelope.EventName.Equals(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
+            || envelope.EventName.Equals(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
+        {
+            await EventBusDispatcher.DispatchNotificationAsync(
+                NotificationSeverity.Info,
+                envelope.EventName,
+                envelope.Message ?? string.Empty,
+                5000);
+
+            return;
+        }
+
         var applicationUsers = _activeUserSessionRegistry
             .GetActiveSessions()
             .Where(s => string.Equals(s.UserType, SMSUserType.Application.Value, StringComparison.OrdinalIgnoreCase))

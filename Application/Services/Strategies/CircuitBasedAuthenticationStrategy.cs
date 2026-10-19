@@ -159,7 +159,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
 
             // SECURITY: Never scan and pick arbitrary user auth data from global storage.
             // Resolve only against the current request/circuit identifiers.
-            var currentCircuitId = GetCachedOrGenerateCircuitId();
+            var currentCircuitId = GetCurrentCircuitId();
             _logger.LogApplicationDebug("Trying current circuit ID: {CircuitId}", currentCircuitId ?? "NULL");
 
             if (!string.IsNullOrEmpty(currentCircuitId))
@@ -541,7 +541,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
                 return connectionId;
             }
 
-            // Method 3: PRODUCTION FALLBACK - Generate deterministic ID from request characteristics
+            // Method 3: PRODUCTION FALLBACK - browser-scoped fallback identifier cookie
             var fallbackId = GenerateProductionFallbackId(context);
             _logger.LogApplicationInformation("PRODUCTION FALLBACK: Generated circuit ID: {FallbackId}", fallbackId);
             return fallbackId;
@@ -554,8 +554,8 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
     }
 
     /// <summary>
-    /// Generate a deterministic fallback circuit ID for production environments
-    /// Uses request characteristics to ensure consistency across requests
+    /// Generate a browser-scoped fallback circuit ID for production environments
+    /// Uses a dedicated fallback cookie so separate browser sessions remain isolated.
     /// </summary>
     private string GenerateProductionFallbackId(HttpContext? context)
     {
@@ -566,31 +566,29 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
                 return _instanceFallbackCircuitId;
             }
 
-            // Create deterministic ID based on request/client characteristics
-            var remoteIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown_ip";
-            var userAgent = context.Request.Headers["User-Agent"].FirstOrDefault() ?? "unknown_ua";
-            var connectionId = context.Connection.Id ?? string.Empty;
+            const string fallbackCookieName = "SMS_CircuitFallbackId";
 
-            // Prefer per-browser/session cookie identifiers when present.
-            context.Request.Cookies.TryGetValue("SMS_Auth", out var authCookieValue);
-            var sessionCookieValue = context.Request.Cookies
-                .FirstOrDefault(kvp => kvp.Key.Contains("Session", StringComparison.OrdinalIgnoreCase))
-                .Value;
+            if (context.Request.Cookies.TryGetValue(fallbackCookieName, out var existingFallback)
+                && !string.IsNullOrWhiteSpace(existingFallback))
+            {
+                return $"fallback_{existingFallback}";
+            }
 
-            var cookieFingerprint = !string.IsNullOrWhiteSpace(authCookieValue)
-                ? authCookieValue
-                : !string.IsNullOrWhiteSpace(sessionCookieValue)
-                    ? sessionCookieValue
-                    : string.Empty;
-            
-            // Create hash of characteristics for consistency
-            var combined = $"{remoteIp}|{userAgent}|{connectionId}|{cookieFingerprint}";
-            var hash = combined.GetHashCode().ToString("X8");
-            
-            var fallbackId = $"fallback_{hash}";
-            _logger.LogApplicationDebug("Generated fallback circuit ID for IP {RemoteIp}: {FallbackId}", remoteIp, fallbackId);
-            
-            return fallbackId;
+            var fallbackToken = Guid.NewGuid().ToString("N");
+
+            if (!context.Response.HasStarted)
+            {
+                context.Response.Cookies.Append(fallbackCookieName, fallbackToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Lax,
+                    IsEssential = true,
+                    Path = "/"
+                });
+            }
+
+            return $"fallback_{fallbackToken}";
         }
         catch (Exception ex)
         {
