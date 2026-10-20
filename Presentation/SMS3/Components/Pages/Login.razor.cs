@@ -3,6 +3,8 @@ using System.ComponentModel.DataAnnotations;
 using SMS_Domain.Entities;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.JSInterop;
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
 
@@ -17,7 +19,8 @@ public partial class Login : ComponentBase
     [Inject] private ILogger<Login> Logger { get; set; } = default!;
     [Inject] private ISMSSessionService SessionService { get; set; } = default!;
     [Inject] private IHttpContextAccessor HttpContextAccessor { get; set; } = default!;
-    [Inject] private IAuthenticationService AuthenticationService { get; set; } = default!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    [Inject] private SMS_Application.Interfaces.IAuthenticationService AuthenticationService { get; set; } = default!;
     [Inject] private SessionTimerService SessionTimerService { get; set; } = default!;
     [Inject] private TwoFactorAuthService TwoFactorAuthService { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
@@ -180,115 +183,67 @@ public partial class Login : ComponentBase
         // ?? CREATE SESSION-BASED AUTHENTICATION - Replaces static authentication
         await SessionService.CreateSMSSessionAsync(user, userType);
 
-        var sessionKey = BuildCurrentSessionKey();
-        _activeUserSessionRegistry.UpsertSession(new ActiveUserSessionInfo
-        {
-            SessionKey = sessionKey,
-            UserCode = user.Code,
-            DisplayName = user.DisplayName,
-            UserType = userType.Value,
-            LoginTimeUtc = DateTime.UtcNow,
-            LastSeenUtc = DateTime.UtcNow
-        });
+        // Ensure user hint cookie is present even when auth storage happened without HttpContext.
+        TrySetUserHintCookie(user.Code);
+        await TrySetUserHintCookieClientSideAsync(user.Code);
         
         // ?? START SESSION TIMER - Begin countdown for automatic logout
         SessionTimerService.StartTimer();
 
-        await TryRunDailyMitigationTargetDateScanAsync();
-        await TryRunDailyReportStatusEscalationScanAsync();
-
-        // Navigate to default page using secure route obfuscation
+        // Navigate to default page using secure route obfuscation.
         Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing", forceLoad: false);
     }
 
-    private string BuildCurrentSessionKey()
+    private void TrySetUserHintCookie(string userCode)
     {
-        var httpContext = HttpContextAccessor.HttpContext;
-        var sessionId = httpContext?.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>()?.Session?.Id;
-
-        if (!string.IsNullOrWhiteSpace(sessionId))
-        {
-            return $"session:{sessionId}";
-        }
-
-        var userCode = _currentUserService?.UserCode;
-        if (string.IsNullOrWhiteSpace(userCode))
-        {
-            userCode = LoginModel?.Username;
-        }
-
-        var remoteIp = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "unknown";
-        var userAgent = httpContext?.Request?.Headers["User-Agent"].FirstOrDefault() ?? "unknown";
-        return $"fallback:{userCode ?? "unknown"}:{remoteIp}:{userAgent.GetHashCode()}";
-    }
-
-    private async Task TryRunDailyReportStatusEscalationScanAsync()
-    {
-        await _dailyReportStatusScanLock.WaitAsync();
-
         try
         {
-            var todayUtc = DateOnly.FromDateTime(DateTime.Now);
-            if (_lastReportStatusScanUtcDate == todayUtc)
+            if (string.IsNullOrWhiteSpace(userCode))
             {
                 return;
             }
 
-            var scanResult = await _notificationsScanService
-                .ScanReportsNeedingStatusEscalationAsync("LoginDailyScan")
-                .ConfigureAwait(false);
-
-            if (scanResult.IsFailure)
+            var context = HttpContextAccessor.HttpContext;
+            if (context?.Response is null || context.Response.HasStarted)
             {
-                Logger.LogWarning("Daily report status escalation scan failed during login: {Error}", scanResult.Error?.Message);
                 return;
             }
 
-            _lastReportStatusScanUtcDate = todayUtc;
+            context.Response.Cookies.Append("SMS_UserCodeHint", userCode, new CookieOptions
+            {
+                Path = "/",
+                HttpOnly = true,
+                Secure = context.Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
+                IsEssential = true
+            });
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed running daily report status escalation scan during login.");
-        }
-        finally
-        {
-            _dailyReportStatusScanLock.Release();
+            Logger.LogDebug(ex, "Could not set SMS_UserCodeHint cookie during login completion.");
         }
     }
 
-    private async Task TryRunDailyMitigationTargetDateScanAsync()
+    private async Task TrySetUserHintCookieClientSideAsync(string userCode)
     {
-        await _dailyMitigationScanLock.WaitAsync();
-
         try
         {
-            var todayUtc = DateOnly.FromDateTime(DateTime.Now);
-            if (_lastMitigationScanUtcDate == todayUtc)
+            if (string.IsNullOrWhiteSpace(userCode))
             {
                 return;
             }
 
-            var scanResult = await _notificationsScanService
-                .ScanAllMitigationsAsync("LoginDailyScan")
-                .ConfigureAwait(false);
-
-            if (scanResult.IsFailure)
-            {
-                Logger.LogWarning("Daily mitigation target-date scan failed during login: {Error}", scanResult.Error?.Message);
-                return;
-            }
-
-            _lastMitigationScanUtcDate = todayUtc;
+            var encoded = Uri.EscapeDataString(userCode);
+            await JSRuntime.InvokeVoidAsync("eval",
+                $"document.cookie='SMS_UserCodeHint={encoded}; path=/; max-age=7200; SameSite=Lax; Secure'");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed running daily mitigation target-date scan during login.");
-        }
-        finally
-        {
-            _dailyMitigationScanLock.Release();
+            Logger.LogDebug(ex, "Could not set client-side SMS_UserCodeHint cookie.");
         }
     }
+
+
 
 
     private async Task HandleLoginFailureAsync(string username, string errorMessage)

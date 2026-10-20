@@ -26,6 +26,7 @@ public class SessionTimerService : IDisposable
     private readonly SessionConfiguration _sessionConfig;
     private readonly ICurrentUserService _currentUserService;
     private readonly ISMSSessionService _sessionService;
+    private readonly IActiveUserSessionRegistry _activeUserSessionRegistry;
     
     private Timer? _timer;
     private DateTime _lastActivity;
@@ -40,13 +41,15 @@ public class SessionTimerService : IDisposable
         IConfiguration configuration,
         SessionConfiguration sessionConfig,
         ICurrentUserService currentUserService,
-        ISMSSessionService sessionService)
+        ISMSSessionService sessionService,
+        IActiveUserSessionRegistry activeUserSessionRegistry)
     {
         _logger = logger;
         _configuration = configuration;
         _sessionConfig = sessionConfig;
         _currentUserService = currentUserService;
         _sessionService = sessionService;
+        _activeUserSessionRegistry = activeUserSessionRegistry;
     }
 
     private bool IsSessionTimerEnabled()
@@ -72,7 +75,7 @@ public class SessionTimerService : IDisposable
             return;
         }
 
-        _lastActivity = DateTime.Now;
+        _lastActivity = DateTime.UtcNow;
         _isActive = true;
 
         _timer?.Dispose();
@@ -96,7 +99,7 @@ public class SessionTimerService : IDisposable
 
         if (_isActive && _currentUserService.IsAuthenticated)
         {
-            _lastActivity = DateTime.Now;
+            _lastActivity = DateTime.UtcNow;
             _logger.LogApplicationTrace("Session activity updated", ApplicationEventIds.Trace);
         }
     }
@@ -123,10 +126,34 @@ public class SessionTimerService : IDisposable
         if (!_isActive || !_currentUserService.IsAuthenticated)
             return TimeSpan.Zero;
 
-        var elapsed = DateTime.Now - _lastActivity;
+        var elapsed = DateTime.UtcNow - GetLastActivityUtc();
         var remaining = _sessionConfig.IdleTimeout - elapsed;
         
         return remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero;
+    }
+
+    private DateTime GetLastActivityUtc()
+    {
+        var localLastActivityUtc = _lastActivity.Kind == DateTimeKind.Utc
+            ? _lastActivity
+            : _lastActivity.ToUniversalTime();
+
+        var userCode = _currentUserService.UserCode;
+        if (string.IsNullOrWhiteSpace(userCode))
+        {
+            return localLastActivityUtc;
+        }
+
+        var sharedLastActivityUtc = _activeUserSessionRegistry
+            .GetActiveSessions()
+            .Where(x => string.Equals(x.UserCode, userCode, StringComparison.OrdinalIgnoreCase))
+            .Select(x => x.LastSeenUtc)
+            .DefaultIfEmpty(localLastActivityUtc)
+            .Max();
+
+        return sharedLastActivityUtc > localLastActivityUtc
+            ? sharedLastActivityUtc
+            : localLastActivityUtc;
     }
 
     /// <summary>

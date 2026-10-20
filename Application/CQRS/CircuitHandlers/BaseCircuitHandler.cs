@@ -46,7 +46,6 @@ public abstract class BaseCircuitHandler : CircuitHandler
         if (session == null) return string.Empty;
 
         return session.GetString("SMS_UserCode") ??
-               session.GetString("SMS_UserId") ??
                string.Empty;
     }
 
@@ -72,7 +71,7 @@ public abstract class BaseCircuitHandler : CircuitHandler
         if (session == null) return false;
 
         return session.GetString("IsAuthenticated") == "true" &&
-               !string.IsNullOrEmpty(session.GetString("SMS_UserId"));
+               !string.IsNullOrEmpty(session.GetString("SMS_UserCode"));
     }
 
     public override async Task OnConnectionUpAsync(Circuit circuit, CancellationToken cancellationToken)

@@ -140,7 +140,7 @@ public partial class HazardReportSearch : ComponentBase
     /// <summary>
     /// Page title for header component
     /// </summary>
-    public string PageTitle => "Hazard Report Search";
+    public string PageTitle => "Hazard Report Tracking";
 
     /// <summary>
     /// Page subtitle for header component

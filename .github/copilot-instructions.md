@@ -68,6 +68,7 @@
 - Username format rule: Stakeholder users use 's_<first>.<last>', Organizational users use 'o_<first>.<last>', and Application users use '<first>.<last>' to allow same person across three user account types.
 - When applying required-field validation style updates, include both StakeholderUsers and OrganizationalUsers pages consistently.
 - Use consistent naming conventions across user management pages, specifically using `_isCreateFormValid` and `_isEditFormValid` in Application, Stakeholder, and Organizational user pages.
+- Prefer using SMS_UserCode as the canonical authentication/session key and avoid relying on SMS_UserId where both keys exist.
 
 ## Email Routing
 - Implement a hard business rule for email routing: emails must only be sent to group contacts as primary To recipients; if the recipient is not part of a group, no email should be sent via fallback methods. Allow CC/BCC as exceptions for manually added individual recipients.

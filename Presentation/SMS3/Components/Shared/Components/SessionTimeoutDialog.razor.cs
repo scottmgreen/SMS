@@ -16,7 +16,7 @@ public partial class SessionTimeoutDialog
     [Parameter] public EventCallback OnContinue { get; set; }
     
     private bool IsVisible { get; set; } = false;
-    private Timer? _countdownTimer;
+    private CancellationTokenSource? _countdownCts;
     private TimeSpan _warningTriggeredAt = TimeSpan.Zero;
 
     protected override void OnInitialized()
@@ -64,30 +64,55 @@ public partial class SessionTimeoutDialog
                 StateHasChanged();
             });
             
-            // Start countdown timer for real-time updates
-            _countdownTimer = new Timer(async _ => 
+            StartSynchronizedCountdown();
+        }
+    }
+
+    private void StartSynchronizedCountdown()
+    {
+        _countdownCts?.Cancel();
+        _countdownCts?.Dispose();
+        _countdownCts = new CancellationTokenSource();
+
+        _ = RunSynchronizedCountdownAsync(_countdownCts.Token);
+    }
+
+    private async Task RunSynchronizedCountdownAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var initialDelayMs = 1000 - (DateTime.UtcNow.Millisecond % 1000);
+            if (initialDelayMs < 1000)
+            {
+                await Task.Delay(initialDelayMs, cancellationToken);
+            }
+
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+            while (await timer.WaitForNextTickAsync(cancellationToken))
             {
                 await InvokeAsync(() =>
                 {
                     var remaining = SessionTimerService.GetRemainingTime();
 
-                    // If user activity reset the session, hide the warning modal.
                     if (remaining > TimeSpan.FromMinutes(2))
                     {
                         _ = HideModalInternal();
                         return;
                     }
-                    
-                    // Auto-logout if time runs out
+
                     if (remaining <= TimeSpan.Zero)
                     {
                         _ = InvokeAsync(ForceLogout);
                         return;
                     }
-                    
+
                     StateHasChanged();
                 });
-            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when modal closes or component disposes
         }
     }
 
@@ -191,8 +216,9 @@ public partial class SessionTimeoutDialog
     private async Task HideModalInternal()
     {
         IsVisible = false;
-        _countdownTimer?.Dispose();
-        _countdownTimer = null;
+        _countdownCts?.Cancel();
+        _countdownCts?.Dispose();
+        _countdownCts = null;
         
         // Remove modal-open class from body
         try
@@ -232,7 +258,8 @@ public partial class SessionTimeoutDialog
 
     public void Dispose()
     {
-        _countdownTimer?.Dispose();
+        _countdownCts?.Cancel();
+        _countdownCts?.Dispose();
         
         if (SessionTimerService != null)
         {

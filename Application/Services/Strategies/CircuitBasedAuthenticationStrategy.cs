@@ -24,7 +24,7 @@ namespace SMS_Application.Strategies;
 /// </summary>
 public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
 {
-    private readonly string _instanceFallbackCircuitId = $"no_context_{Guid.NewGuid():N}";
+    private readonly string _scopeFallbackCircuitId = $"no_context_{Guid.NewGuid():N}";
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<CircuitBasedAuthenticationStrategy> _logger;
     private readonly IUserInstantiationService _userInstantiationService;
@@ -96,6 +96,9 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
                 return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
+            _cachedCircuitId = circuitId;
+            _cacheExpiry = DateTime.Now.Add(_cacheTimeout);
+
             _logger.LogApplicationInformation("Storing user {UserCode} ({UserType}) in circuit storage with ID: {CircuitId}", user.Code, userType.Value, circuitId);
 
             // Get serialized user data with all roles/permissions
@@ -125,12 +128,42 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             if (context != null)
             {
                 context.Items["SMS_CIRCUIT_ID"] = circuitId;
+
+                if (!context.Response.HasStarted)
+                {
+                    context.Response.Cookies.Append("SMS_UserCodeHint", user.Code,
+                        new CookieOptions
+                        {
+                            Path = "/",
+                            HttpOnly = true,
+                            Secure = context.Request.IsHttps,
+                            SameSite = SameSiteMode.Lax,
+                            IsEssential = true
+                        });
+                }
+
+                if (context.Request.Cookies.TryGetValue("SMS_Session", out var sessionCookieValue)
+                    && !string.IsNullOrWhiteSpace(sessionCookieValue))
+                {
+                    var sessionCookieKey = $"sessioncookie_{sessionCookieValue}";
+                    _circuitAuthStorage.SetAuthData(sessionCookieKey, userData);
+                    _logger.LogApplicationDebug("Stored user auth data using session cookie key: {SessionCookieKey}", sessionCookieKey);
+                }
+
+                // Also maintain a browser-scoped fallback key so auth survives connection/circuit ID churn.
+                var browserFallbackId = GenerateProductionFallbackId(context);
+                if (!string.IsNullOrWhiteSpace(browserFallbackId))
+                {
+                    _circuitAuthStorage.SetAuthData(browserFallbackId, userData);
+                    _logger.LogApplicationDebug("Stored user auth data using browser fallback ID: {FallbackId}", browserFallbackId);
+                }
             }
 
             // Also store under user code for fallback retrieval
             var userCircuitKey = $"user_{user.Code}";
             userData["SMS_UserCircuitKey"] = userCircuitKey;
             _circuitAuthStorage.SetAuthData(userCircuitKey, userData);
+
 
             _logger.LogApplicationInformation("User {UserCode} ({UserType}) stored successfully in circuit storage - Circuit: {CircuitId}, Fields: {FieldCount}", 
                 user.Code, userType.Value, circuitId, userData.Count);
@@ -191,6 +224,40 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
                 }
             }
 
+            // Try browser-scoped fallback circuit ID cookie (survives full refresh / new circuit IDs)
+            if (userData == null)
+            {
+                var context = _httpContextAccessor.HttpContext;
+                if (context?.Request?.Cookies.TryGetValue("SMS_CircuitFallbackId", out var fallbackId) == true
+                    && !string.IsNullOrWhiteSpace(fallbackId))
+                {
+                    var fallbackKey = $"fallback_{fallbackId}";
+                    userData = _circuitAuthStorage.GetAuthData(fallbackKey);
+                    if (userData != null)
+                    {
+                        foundCircuitId = fallbackKey;
+                        _logger.LogApplicationDebug("Found user data with browser fallback key: {FallbackKey}", fallbackKey);
+                    }
+                }
+            }
+
+            // Try stable session cookie key (survives refresh when connection IDs change)
+            if (userData == null)
+            {
+                var context = _httpContextAccessor.HttpContext;
+                if (context?.Request?.Cookies.TryGetValue("SMS_Session", out var sessionCookieValue) == true
+                    && !string.IsNullOrWhiteSpace(sessionCookieValue))
+                {
+                    var sessionCookieKey = $"sessioncookie_{sessionCookieValue}";
+                    userData = _circuitAuthStorage.GetAuthData(sessionCookieKey);
+                    if (userData != null)
+                    {
+                        foundCircuitId = sessionCookieKey;
+                        _logger.LogApplicationDebug("Found user data with session cookie key: {SessionCookieKey}", sessionCookieKey);
+                    }
+                }
+            }
+
             // Try alternate circuit keys if still not found
             if (userData == null && !string.IsNullOrEmpty(_cachedCircuitId))
             {
@@ -244,6 +311,22 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
                         _logger.LogApplicationDebug("Found user data using user key: {UserKey}", userKey);
                     }
                 }
+
+                if (userData == null && context?.Request?.Cookies is not null)
+                {
+                    var cookieUserCode = context.Request.Cookies["SMS_UserCodeHint"];
+                    if (!string.IsNullOrWhiteSpace(cookieUserCode))
+                    {
+                        var cookieUserKey = $"user_{cookieUserCode}";
+                        userData = _circuitAuthStorage.GetAuthData(cookieUserKey);
+                        if (userData != null)
+                        {
+                            foundCircuitId = cookieUserKey;
+                            _logger.LogApplicationDebug("Found user data using cookie user key: {UserKey}", cookieUserKey);
+                        }
+                    }
+                }
+
             }
 
             if (userData == null)
@@ -541,6 +624,15 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
                 return connectionId;
             }
 
+            // Method 2b: Try browser-scoped fallback cookie before process fallback.
+            if (context?.Request?.Cookies.TryGetValue("SMS_CircuitFallbackId", out var browserFallbackId) == true
+                && !string.IsNullOrWhiteSpace(browserFallbackId))
+            {
+                var fallbackConnectionId = $"fallback_{browserFallbackId}";
+                _logger.LogApplicationDebug("Using fallback cookie circuit ID: {FallbackId}", fallbackConnectionId);
+                return fallbackConnectionId;
+            }
+
             // Method 3: PRODUCTION FALLBACK - browser-scoped fallback identifier cookie
             var fallbackId = GenerateProductionFallbackId(context);
             _logger.LogApplicationInformation("PRODUCTION FALLBACK: Generated circuit ID: {FallbackId}", fallbackId);
@@ -563,7 +655,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
         {
             if (context == null)
             {
-                return _instanceFallbackCircuitId;
+                return _scopeFallbackCircuitId;
             }
 
             const string fallbackCookieName = "SMS_CircuitFallbackId";

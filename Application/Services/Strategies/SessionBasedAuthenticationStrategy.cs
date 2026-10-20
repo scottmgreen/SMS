@@ -138,7 +138,7 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             var userData = new Dictionary<string, string>();
             var sessionKeys = new[] 
             {
-                "SMS_UserId", "SMS_UserCode", "SMS_UserType", "SMS_DisplayName", "SMS_Email",
+                "SMS_UserCode", "SMS_UserType", "SMS_DisplayName", "SMS_Email",
                 "SMS_FirstName", "SMS_LastName", "IsAuthenticated", "SMS_LoginTime", 
                 "SMS_UserRoleCode", "SMS_UserRoleName", "SMS_UserPermissions", "SMS_UserPermissionsJson",
                 "SMS_TwoFactorEnabled", "SMS_TwoFactorSecretKey", "SMS_FailedTwoFactorAttempts",

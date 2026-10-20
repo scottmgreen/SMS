@@ -227,7 +227,6 @@ public class UserInstantiationService : IUserInstantiationService
         {
             var userData = new Dictionary<string, string>
             {
-                ["SMS_UserId"] = user.Code,
                 ["SMS_UserCode"] = user.Code,
                 ["SMS_UserType"] = userType.Value,
                 ["SMS_DisplayName"] = user.DisplayName,

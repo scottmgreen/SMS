@@ -556,7 +556,7 @@ public partial class HazardListing : ComponentBase, IEventReceiver, IDisposable
     {
         _logger.LogInformation("View hazard details requested: {HazardCode}", hazard.Code);
 
-        if (!await TryAcquireReportGraphLockAsync(hazard.ReportCode, "ViewOpen").ConfigureAwait(false))
+        if (!await TryAcquireReportGraphLockAsync(hazard.ReportCode, "ViewOpen"))
         {
             return;
         }
@@ -594,7 +594,7 @@ public partial class HazardListing : ComponentBase, IEventReceiver, IDisposable
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("ViewFailed").ConfigureAwait(false);
+            await ReleaseActiveReportGraphLockAsync("ViewFailed");
             _logger.LogError(ex, "Error loading hazard details for {HazardCode}", hazard.Code);
             await ShowErrorAsyncNotification("Failed to load hazard details");
         }
@@ -607,7 +607,7 @@ public partial class HazardListing : ComponentBase, IEventReceiver, IDisposable
 
     private async Task CloseDetailsModal()
     {
-        await ReleaseActiveReportGraphLockAsync("ViewClosed").ConfigureAwait(false);
+        await ReleaseActiveReportGraphLockAsync("ViewClosed");
         ShowDetailsModal = false;
         SelectedHazard = null;
         SelectedReport = null;
@@ -660,7 +660,7 @@ public partial class HazardListing : ComponentBase, IEventReceiver, IDisposable
     {
         _logger.LogInformation("Edit hazard requested: {HazardCode}", hazard.Code);
 
-        if (!await TryAcquireReportGraphLockAsync(hazard.ReportCode, "EditStart").ConfigureAwait(false))
+        if (!await TryAcquireReportGraphLockAsync(hazard.ReportCode, "EditStart"))
         {
             return;
         }
@@ -685,12 +685,12 @@ public partial class HazardListing : ComponentBase, IEventReceiver, IDisposable
             }
             else
             {
-                await ReleaseActiveReportGraphLockAsync("EditCancelled").ConfigureAwait(false);
+                await ReleaseActiveReportGraphLockAsync("EditCancelled");
             }
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("EditFailed").ConfigureAwait(false);
+            await ReleaseActiveReportGraphLockAsync("EditFailed");
             _logger.LogError(ex, "Error navigating to edit hazard {HazardCode}", hazard.Code);
             await ShowErrorAsyncNotification("Failed to navigate to edit form");
         }
@@ -704,7 +704,7 @@ public partial class HazardListing : ComponentBase, IEventReceiver, IDisposable
     {
         _logger.LogInformation("Delete hazard requested: {HazardCode}", hazard.Code);
 
-        if (!await TryAcquireReportGraphLockAsync(hazard.ReportCode, "DeleteStart").ConfigureAwait(false))
+        if (!await TryAcquireReportGraphLockAsync(hazard.ReportCode, "DeleteStart"))
         {
             return;
         }
@@ -737,18 +737,18 @@ public partial class HazardListing : ComponentBase, IEventReceiver, IDisposable
             }
             else
             {
-                await ReleaseActiveReportGraphLockAsync("DeleteCancelled").ConfigureAwait(false);
+                await ReleaseActiveReportGraphLockAsync("DeleteCancelled");
             }
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("DeleteFailed").ConfigureAwait(false);
+            await ReleaseActiveReportGraphLockAsync("DeleteFailed");
             _logger.LogError(ex, "Error deleting hazard: {HazardCode}", hazard.Code);
             await ShowErrorAsyncNotification("Failed to delete the hazard");
         }
         finally
         {
-            await ReleaseActiveReportGraphLockAsync("DeleteCompleted").ConfigureAwait(false);
+            await ReleaseActiveReportGraphLockAsync("DeleteCompleted");
         }
     }
     #endregion

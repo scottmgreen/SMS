@@ -250,8 +250,9 @@ public static class AuthenticationExtensions
         // Authentication strategy manager (orchestrator)
         services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategyManager, SMS_Application.Services.AuthenticationStrategyManager>();
 
-        // ?? CRITICAL FIX: Register Strategy-Based Current User Service for NavMenu
-        services.AddScoped<SMS_Application.Interfaces.ICurrentUserService, SMS_Application.Services.StrategyBasedCurrentUserService>();
+        // ?? SERVER-SIDE CURRENT USER SOURCE OF TRUTH
+        // Use session/circuit-backed current user service for stable auth state across refresh/navigation.
+        services.AddScoped<SMS_Application.Interfaces.ICurrentUserService, SMS_Application.Services.SessionCurrentUserService>();
 
         return services;
     }

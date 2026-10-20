@@ -45,7 +45,7 @@ public class BlazorCircuitAuthStorage : IBlazorCircuitAuthStorage
     {
         // Find the most recent authentication data for the given user ID
         var matchingData = _circuitAuthData.Values
-            .Where(data => data.TryGetValue("SMS_UserId", out var storedUserId) && storedUserId == userId)
+            .Where(data => data.TryGetValue("SMS_UserCode", out var storedUserId) && storedUserId == userId)
             .OrderByDescending(data => data.TryGetValue("SMS_LoginTime", out var loginTime) ? loginTime : string.Empty)
             .FirstOrDefault();
 
@@ -60,7 +60,7 @@ public class BlazorCircuitAuthStorage : IBlazorCircuitAuthStorage
     public void ClearAuthDataByUserId(string userId)
     {
         var keysToRemove = _circuitAuthData
-            .Where(kvp => kvp.Value.TryGetValue("SMS_UserId", out var storedUserId) && storedUserId == userId)
+            .Where(kvp => kvp.Value.TryGetValue("SMS_UserCode", out var storedUserId) && storedUserId == userId)
             .Select(kvp => kvp.Key)
             .ToList();
 

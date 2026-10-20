@@ -15,6 +15,7 @@ namespace SMS3.Components.Layout;
 
 public partial class MainLayout
 {
+    private const string RemoteLogoutSignalTitle = "SMS_REMOTE_LOGOUT_SIGNAL";
 
 [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private ISMSSessionService _sessionService { get; set; } = default!;
@@ -53,6 +54,12 @@ public partial class MainLayout
 
     public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
     {
+        if (string.Equals(title, RemoteLogoutSignalTitle, StringComparison.Ordinal))
+        {
+            await HandleRemoteLogoutSignalAsync(message);
+            return;
+        }
+
         await InvokeAsync(() =>
         {
             _notificationService.Notify(new NotificationMessage
@@ -85,6 +92,8 @@ public partial class MainLayout
         SMSUserType userType = SMSUserType.Application;
         string sessionId = "Unknown";
         TimeSpan sessionDuration = TimeSpan.Zero;
+        var initiatingSessionKey = BuildCurrentSessionKey();
+        var initiatingUserCode = _currentUserService?.UserCode ?? string.Empty;
 
         try
         {
@@ -116,6 +125,16 @@ public partial class MainLayout
 
             _logger.LogInformation("Starting logout process for user: {UserName}", currentUserName);
 
+            if (!string.IsNullOrWhiteSpace(initiatingUserCode))
+            {
+                await EventBusDispatcher.DispatchNotificationAsync(
+                    NotificationSeverity.Info,
+                    RemoteLogoutSignalTitle,
+                    initiatingSessionKey,
+                    duration: 0,
+                    targetUserCode: initiatingUserCode);
+            }
+
             // ?? Record logout audit BEFORE clearing authentication (and wait for it)
             try
             {
@@ -144,6 +163,12 @@ public partial class MainLayout
 
             await _currentUserService.ClearAuthentication();
             await _sessionService.ClearSMSSessionAsync();
+
+            var context = _httpContextAccessor.HttpContext;
+            if (context is not null)
+            {
+                TryDeleteCookieIfPossible(context, "SMS_UserCodeHint", new CookieOptions { Path = "/" });
+            }
             
             _logger.LogInformation("Session authentication cleared for user: {UserName}", currentUserName);
             
@@ -160,6 +185,12 @@ public partial class MainLayout
                 _activeUserSessionRegistry.RemoveSessionsForUser(_currentUserService?.UserCode ?? string.Empty);
                 await _currentUserService.ClearAuthentication();
                 await _sessionService.ClearSMSSessionAsync();
+
+                var context = _httpContextAccessor.HttpContext;
+                if (context is not null)
+                {
+                    TryDeleteCookieIfPossible(context, "SMS_UserCodeHint", new CookieOptions { Path = "/" });
+                }
                 // Force navigation to login page
                 _navigation.NavigateTo("/login", forceLoad: true);
             }
@@ -173,6 +204,56 @@ public partial class MainLayout
 
     }
 
+    private async Task HandleRemoteLogoutSignalAsync(string initiatingSessionKey)
+    {
+        try
+        {
+            var currentSessionKey = BuildCurrentSessionKey();
+            if (string.Equals(currentSessionKey, initiatingSessionKey, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _logger.LogInformation("Remote logout signal received. Clearing local session for user {UserCode}.", _currentUserService?.UserCode);
+            _activeUserSessionRegistry.RemoveSession(currentSessionKey);
+            await _currentUserService.ClearAuthentication();
+            await _sessionService.ClearSMSSessionAsync();
+
+            var context = _httpContextAccessor.HttpContext;
+            if (context is not null)
+            {
+                TryDeleteCookieIfPossible(context, "SMS_UserCodeHint", new CookieOptions { Path = "/" });
+            }
+
+            await InvokeAsync(() =>
+            {
+                try
+                {
+                    _navigation.NavigateTo("/pdx", forceLoad: true);
+                }
+                catch (NavigationException ex)
+                {
+                    _logger.LogDebug(ex, "Navigation exception while applying remote logout signal.");
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to process remote logout signal.");
+        }
+    }
+
+    private void TryDeleteCookieIfPossible(HttpContext context, string cookieName, CookieOptions cookieOptions)
+    {
+        if (context.Response.HasStarted)
+        {
+            _logger.LogDebug("Skipping cookie delete for {CookieName} because response has already started.", cookieName);
+            return;
+        }
+
+        context.Response.Cookies.Delete(cookieName, cookieOptions);
+    }
+
     private string BuildCurrentSessionKey()
     {
         var context = _httpContextAccessor.HttpContext;
@@ -180,6 +261,12 @@ public partial class MainLayout
         if (!string.IsNullOrWhiteSpace(sessionId))
         {
             return $"session:{sessionId}";
+        }
+
+        var connectionId = context?.Connection?.Id;
+        if (!string.IsNullOrWhiteSpace(connectionId))
+        {
+            return $"conn:{connectionId}";
         }
 
         var userCode = _currentUserService?.UserCode ?? "unknown";

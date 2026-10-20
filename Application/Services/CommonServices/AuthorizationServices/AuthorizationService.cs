@@ -109,8 +109,8 @@ public class AuthorizationService : IAuthorizationService
                 return null;
             }
 
-            // Check if this is the current authenticated user by comparing session user ID
-            var sessionUserId = httpContext.Session?.GetString("SMS_UserId");
+            // Check if this is the current authenticated user by comparing session user code
+            var sessionUserId = httpContext.Session?.GetString("SMS_UserCode");
             if (sessionUserId != userId)
             {
                 _logger.LogApplicationDebug("User ID {UserId} does not match session user {SessionUserId}",
@@ -172,7 +172,7 @@ public class AuthorizationService : IAuthorizationService
             try
             {
                 var sessionAuth = httpContext.Session?.GetString("IsAuthenticated");
-                var sessionUserId = httpContext.Session?.GetString("SMS_UserId");
+                var sessionUserId = httpContext.Session?.GetString("SMS_UserCode");
                 
                 if (bool.TryParse(sessionAuth, out var sessionResult) && sessionResult && !string.IsNullOrEmpty(sessionUserId))
                 {
@@ -186,7 +186,7 @@ public class AuthorizationService : IAuthorizationService
 
             // Check Items as fallback
             var itemsAuth = httpContext.Items["IsAuthenticated"]?.ToString();
-            var itemsUserId = httpContext.Items["SMS_UserId"]?.ToString();
+            var itemsUserId = httpContext.Items["SMS_UserCode"]?.ToString();
             
             if (bool.TryParse(itemsAuth, out var itemsResult) && itemsResult && !string.IsNullOrEmpty(itemsUserId))
             {

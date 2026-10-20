@@ -10,6 +10,7 @@
 using SMS_Application.Common;
 using SMS_Domain.Entities;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 
@@ -27,6 +28,72 @@ public class SessionCurrentUserService : ICurrentUserService
     private readonly ILogger<SessionCurrentUserService> _logger;
     private readonly IBlazorCircuitAuthStorage _circuitAuthStorage;
     private readonly ISMSSessionService _smsSessionService;
+    private Dictionary<string, string>? _lastResolvedAuthData;
+    private static readonly TimeSpan SingleUserFallbackMaxAge = TimeSpan.FromHours(2);
+
+    private Dictionary<string, string>? TryGetRecentSingleUserCircuitAuthDataFallback()
+    {
+        try
+        {
+            var allData = _circuitAuthStorage.GetAllAuthData();
+            if (allData.Count == 0)
+            {
+                return null;
+            }
+
+            var authenticatedEntries = allData.Values
+                .Where(data => data.TryGetValue("IsAuthenticated", out var isAuth)
+                    && string.Equals(isAuth, "true", StringComparison.OrdinalIgnoreCase)
+                    && data.TryGetValue("SMS_UserCode", out var userCode)
+                    && !string.IsNullOrWhiteSpace(userCode))
+                .ToList();
+
+            if (authenticatedEntries.Count == 0)
+            {
+                return null;
+            }
+
+            var distinctUsers = authenticatedEntries
+                .Select(data => data["SMS_UserCode"])
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (distinctUsers.Count != 1)
+            {
+                return null;
+            }
+
+            var bestEntry = authenticatedEntries
+                .Select(data => new
+                {
+                    Data = data,
+                    LoginTime = data.TryGetValue("SMS_LoginTime", out var loginTimeRaw)
+                        && DateTime.TryParse(loginTimeRaw, out var loginTime)
+                            ? loginTime.ToUniversalTime()
+                            : DateTime.MinValue
+                })
+                .OrderByDescending(x => x.LoginTime)
+                .FirstOrDefault();
+
+            if (bestEntry == null || bestEntry.LoginTime == DateTime.MinValue)
+            {
+                return null;
+            }
+
+            if (DateTime.UtcNow - bestEntry.LoginTime > SingleUserFallbackMaxAge)
+            {
+                return null;
+            }
+
+            _logger.LogApplicationWarning("Using recent single-user circuit auth fallback for user {UserCode}.", bestEntry.Data["SMS_UserCode"]);
+            return bestEntry.Data;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationWarning(ex, "Failed single-user circuit fallback lookup.");
+            return null;
+        }
+    }
 
     public SessionCurrentUserService(
         IHttpContextAccessor httpContextAccessor, 
@@ -54,7 +121,7 @@ public class SessionCurrentUserService : ICurrentUserService
     { 
         get 
         { 
-            return SafeGetSessionString("SMS_UserId") ?? string.Empty;
+            return SafeGetSessionString("SMS_UserCode") ?? string.Empty;
         } 
     }
 
@@ -248,11 +315,12 @@ public class SessionCurrentUserService : ICurrentUserService
             _logger.LogApplicationInformation("Clearing session authentication for user: {UserId}", userId);
 
             // Clear session data if available
-            if (context?.Session != null)
+            var session = TryGetSession(context);
+            if (session != null)
             {
                 try
                 {
-                    context.Session.Clear();
+                    session.Clear();
                     _logger.LogApplicationInformation("Session data cleared for user: {UserId}", userId);
                 }
                 catch (Exception ex)
@@ -330,12 +398,13 @@ public class SessionCurrentUserService : ICurrentUserService
                 return null;
             }
 
-            // Try session first (if available and response hasn't started)
-            if (httpContext.Session != null && !httpContext.Response.HasStarted)
+            // Try session first (reads are valid even after response has started)
+            var session = TryGetSession(httpContext);
+            if (session != null)
             {
                 try
                 {
-                    var sessionValue = httpContext.Session.GetString(key);
+                    var sessionValue = session.GetString(key);
                     if (!string.IsNullOrEmpty(sessionValue))
                     {
                         return sessionValue;
@@ -361,6 +430,13 @@ public class SessionCurrentUserService : ICurrentUserService
                 return stringValue;
             }
 
+            // Final fallback: keep prior resolved auth snapshot for transient request/circuit misses.
+            if (_lastResolvedAuthData != null && _lastResolvedAuthData.TryGetValue(key, out var cachedValue))
+            {
+                _logger.LogApplicationDebug("SafeGetSessionString using cached auth snapshot for key {Key}.", key);
+                return cachedValue;
+            }
+
             return null;
         }
         catch (Exception ex)
@@ -379,12 +455,34 @@ public class SessionCurrentUserService : ICurrentUserService
         {
             // Method 1: Try to get stored circuit ID from context items
             var context = _httpContextAccessor.HttpContext;
+
+            if (context == null)
+            {
+                if (_lastResolvedAuthData != null)
+                {
+                    return _lastResolvedAuthData;
+                }
+
+                // Blazor Server interactive phases often have no HttpContext.
+                // Try constrained global fallback so auth can still be resolved.
+                var singleUserFallbackWhenNoContext = TryGetRecentSingleUserCircuitAuthDataFallback();
+                if (singleUserFallbackWhenNoContext != null)
+                {
+                    _lastResolvedAuthData = singleUserFallbackWhenNoContext;
+                    return singleUserFallbackWhenNoContext;
+                }
+
+                return null;
+            }
+
             if (context?.Items.TryGetValue("SMS_CIRCUIT_ID", out var storedCircuitId) == true && storedCircuitId != null)
             {
                 var circuitId = storedCircuitId.ToString();
                 var data = _circuitAuthStorage.GetAuthData(circuitId);
                 if (data != null)
                 {
+                    _logger.LogApplicationDebug("Auth source hit: context circuit id.");
+                    _lastResolvedAuthData = data;
                     return data;
                 }
             }
@@ -393,30 +491,100 @@ public class SessionCurrentUserService : ICurrentUserService
             var currentCircuitId = GetCurrentCircuitId();
             if (!string.IsNullOrEmpty(currentCircuitId))
             {
-                var data = _circuitAuthStorage.GetAuthData(currentCircuitId);
-                if (data != null)
+                var circuitKeys = new[]
                 {
-                    return data;
+                    currentCircuitId,
+                    $"conn_{currentCircuitId}"
+                };
+
+                foreach (var circuitKey in circuitKeys)
+                {
+                    var data = _circuitAuthStorage.GetAuthData(circuitKey);
+                    if (data != null)
+                    {
+                        _logger.LogApplicationDebug("Auth source hit: connection circuit key {CircuitKey}.", circuitKey);
+                        _lastResolvedAuthData = data;
+                        return data;
+                    }
                 }
             }
 
-            // Method 3: Fallback by current session user when available
+            // Method 3: Browser fallback cookie key (survives refresh/new connection IDs)
+            if (context?.Request?.Cookies.TryGetValue("SMS_CircuitFallbackId", out var fallbackId) == true
+                && !string.IsNullOrWhiteSpace(fallbackId))
+            {
+                var fallbackKey = $"fallback_{fallbackId}";
+                var fallbackData = _circuitAuthStorage.GetAuthData(fallbackKey);
+                if (fallbackData != null)
+                {
+                    _logger.LogApplicationDebug("Auth source hit: SMS_CircuitFallbackId cookie.");
+                    _lastResolvedAuthData = fallbackData;
+                    return fallbackData;
+                }
+            }
+
+            // Method 4: Session cookie based key
+            if (context?.Request?.Cookies.TryGetValue("SMS_Session", out var sessionCookieValue) == true
+                && !string.IsNullOrWhiteSpace(sessionCookieValue))
+            {
+                var sessionCookieKey = $"sessioncookie_{sessionCookieValue}";
+                var sessionCookieData = _circuitAuthStorage.GetAuthData(sessionCookieKey);
+                if (sessionCookieData != null)
+                {
+                    _logger.LogApplicationDebug("Auth source hit: SMS_Session cookie key.");
+                    _lastResolvedAuthData = sessionCookieData;
+                    return sessionCookieData;
+                }
+            }
+
+            // Method 5: Fallback by current session user when available
             try
             {
-                var sessionUserCode = context?.Session?.GetString("SMS_UserCode");
+                var contextSession = TryGetSession(context);
+                var sessionUserCode = contextSession?.GetString("SMS_UserCode");
                 if (!string.IsNullOrWhiteSpace(sessionUserCode))
                 {
                     var userData = _circuitAuthStorage.GetAuthDataByUserId(sessionUserCode);
                     if (userData != null)
                     {
-                        _logger.LogApplicationDebug("Found authentication data using session user fallback: {UserCode}", sessionUserCode);
+                        _logger.LogApplicationDebug("Auth source hit: session user fallback {UserCode}.", sessionUserCode);
+                        _lastResolvedAuthData = userData;
                         return userData;
+                    }
+                }
+
+                // Method 6: Fallback by user-code hint cookie (set at login)
+                if (context?.Request?.Cookies.TryGetValue("SMS_UserCodeHint", out var cookieUserCode) == true
+                    && !string.IsNullOrWhiteSpace(cookieUserCode))
+                {
+                    var cookieUserData = _circuitAuthStorage.GetAuthDataByUserId(cookieUserCode);
+                    if (cookieUserData != null
+                        && cookieUserData.TryGetValue("IsAuthenticated", out var cookieIsAuth)
+                        && string.Equals(cookieIsAuth, "true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogApplicationDebug("Auth source hit: SMS_UserCodeHint cookie fallback {UserCode}.", cookieUserCode);
+                        _lastResolvedAuthData = cookieUserData;
+                        return cookieUserData;
                     }
                 }
             }
             catch (Exception fallbackEx)
             {
                 _logger.LogApplicationWarning(fallbackEx, "Error in authentication data fallback lookup");
+            }
+
+            var singleUserFallback = TryGetRecentSingleUserCircuitAuthDataFallback();
+            if (singleUserFallback != null)
+            {
+                _logger.LogApplicationWarning("Auth source hit: constrained single-user fallback.");
+                _lastResolvedAuthData = singleUserFallback;
+                return singleUserFallback;
+            }
+
+            if (_lastResolvedAuthData != null)
+            {
+                _logger.LogApplicationDebug("Auth source hit: last resolved snapshot fallback.");
+                return _lastResolvedAuthData;
             }
 
             return null;
@@ -551,6 +719,26 @@ public class SessionCurrentUserService : ICurrentUserService
     /// LEGACY: Get DateTime value from session
     /// </summary>
     private DateTime? GetSessionDateTime(string key) => SafeGetSessionDateTime(key);
+
+    /// <summary>
+    /// Safe access to session without triggering InvalidOperationException when session middleware isn't available.
+    /// </summary>
+    private ISession? TryGetSession(HttpContext? context)
+    {
+        if (context == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return context.Features.Get<ISessionFeature>()?.Session;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+    }
 
     /// <summary>
     /// LEGACY: Reconstruct SMSUserRolePermission objects from session string data
