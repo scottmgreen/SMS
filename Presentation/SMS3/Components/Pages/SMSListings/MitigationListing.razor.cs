@@ -46,6 +46,7 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
+    [Inject] private IRecordLockLeaseCoordinator _recordLockLeaseCoordinator { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -62,8 +63,8 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
     private bool _showDescriptionModal = false;
     private string _selectedDescriptionTitle = string.Empty;
     private string _selectedDescription = string.Empty;
-    private readonly HashSet<string> _lockedReportGraphKeys = new(StringComparer.OrdinalIgnoreCase);
-    private string _activeReportGraphLockKey = string.Empty;
+    private readonly HashSet<string> _lockedRecordKeys = new(StringComparer.OrdinalIgnoreCase);
+    private string _activeRecordLockKey = string.Empty;
     private string _activeReportCode = string.Empty;
 
     // For context display
@@ -75,24 +76,25 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
     protected override async Task OnInitializedAsync()
     {
         EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
-        HydrateLockedReportGraphKeys();
+        HydrateLockedRecordKeys();
         await LoadContextData();
         await LoadInitialData();
     }
 
-    private void HydrateLockedReportGraphKeys()
+    private void HydrateLockedRecordKeys()
     {
-        _lockedReportGraphKeys.Clear();
-        foreach (var lockKey in ReportGraphLockStateStore.GetLockedKeys())
+        _lockedRecordKeys.Clear();
+        foreach (var lockKey in RecordLockStateStore.GetLockedKeys())
         {
-            _lockedReportGraphKeys.Add(lockKey);
+            _lockedRecordKeys.Add(lockKey);
         }
     }
 
     public void Dispose()
     {
         EventBusDispatcher.Unregister(this);
-        _ = InvokeAsync(() => ReleaseActiveReportGraphLockAsync("NavigationAway"));
+    _recordLockLeaseCoordinator.StopHeartbeat(BuildCurrentSessionKey());
+        _ = InvokeAsync(() => ReleaseActiveRecordLockAsync("NavigationAway"));
     }
 
     public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
@@ -104,7 +106,7 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
         }
 
         var lockKey = LiveUpdateRecordLockMessage.TryExtractLockKey(message);
-        if (!LiveUpdateReportGraphLock.TryGetReportCode(lockKey, out _))
+        if (!LiveUpdateRecordLock.TryGetReportCode(lockKey, out _))
         {
             return;
         }
@@ -113,11 +115,11 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
         {
             if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
             {
-                _lockedReportGraphKeys.Add(lockKey!);
+                _lockedRecordKeys.Add(lockKey!);
             }
             else
             {
-                _lockedReportGraphKeys.Remove(lockKey!);
+                _lockedRecordKeys.Remove(lockKey!);
                 await LoadInitialData();
                 if (_mitigationsGrid is not null)
                 {
@@ -134,18 +136,24 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
         return $"mitigation-listing:{_currentUserService?.UserCode}:{GetHashCode()}";
     }
 
-    private bool IsReportGraphLocked(string? reportCode)
+    private bool IsRecordLocked(string? reportCode)
     {
         if (string.IsNullOrWhiteSpace(reportCode))
         {
             return false;
         }
 
-        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
-        return _lockedReportGraphKeys.Contains(lockKey) || ReportGraphLockStateStore.IsLockKeyLocked(lockKey);
+        var lockKey = LiveUpdateRecordLock.BuildKey(reportCode);
+        var isStoreLocked = RecordLockStateStore.IsLockKeyLocked(lockKey);
+        if (!isStoreLocked)
+        {
+            _lockedRecordKeys.Remove(lockKey);
+        }
+
+        return _lockedRecordKeys.Contains(lockKey) || isStoreLocked;
     }
 
-    private async Task<bool> TryAcquireReportGraphLockAsync(string? reportCode, string action)
+    private async Task<bool> TryAcquireRecordLockAsync(string? reportCode, string action)
     {
         if (string.IsNullOrWhiteSpace(reportCode))
         {
@@ -153,26 +161,32 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
             return false;
         }
 
-        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
-        if (_lockedReportGraphKeys.Contains(lockKey))
+        var lockKey = LiveUpdateRecordLock.BuildKey(reportCode);
+        var isStoreLocked = RecordLockStateStore.IsLockKeyLocked(lockKey);
+        if (_lockedRecordKeys.Contains(lockKey) || isStoreLocked)
         {
             await _notificationHelper.ShowWarningAsync($"Report {reportCode} and related records are locked by another session.");
             return false;
         }
 
-        _activeReportGraphLockKey = lockKey;
+        _activeRecordLockKey = lockKey;
         _activeReportCode = reportCode;
-        _lockedReportGraphKeys.Add(lockKey);
-        await PublishReportGraphLockAsync(lockKey, true, action);
+        _lockedRecordKeys.Add(lockKey);
+        await _recordLockLeaseCoordinator.OnLockAcquiredAsync(
+            BuildCurrentSessionKey(),
+            lockKey,
+            _currentUserService?.UserCode,
+            PublishRecordLockAsync,
+            action);
         return true;
     }
 
-    private async Task ReleaseActiveReportGraphLockAsync(string action)
+    private async Task ReleaseActiveRecordLockAsync(string action)
     {
-        var lockKey = _activeReportGraphLockKey;
+        var lockKey = _activeRecordLockKey;
         if (string.IsNullOrWhiteSpace(lockKey) && !string.IsNullOrWhiteSpace(_activeReportCode))
         {
-            lockKey = LiveUpdateReportGraphLock.BuildKey(_activeReportCode);
+            lockKey = LiveUpdateRecordLock.BuildKey(_activeReportCode);
         }
 
         if (string.IsNullOrWhiteSpace(lockKey))
@@ -180,13 +194,18 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
             return;
         }
 
-        _activeReportGraphLockKey = string.Empty;
+        _activeRecordLockKey = string.Empty;
         _activeReportCode = string.Empty;
-        _lockedReportGraphKeys.Remove(lockKey);
-        await PublishReportGraphLockAsync(lockKey, false, action);
+        _lockedRecordKeys.Remove(lockKey);
+        await _recordLockLeaseCoordinator.OnLockReleasedAsync(
+            BuildCurrentSessionKey(),
+            lockKey,
+            _currentUserService?.UserCode,
+            PublishRecordLockAsync,
+            action);
     }
 
-    private async Task PublishReportGraphLockAsync(string lockKey, bool isLocked, string action)
+    private async Task PublishRecordLockAsync(string lockKey, bool isLocked, string action)
     {
         await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
         {
@@ -194,7 +213,7 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
             SourceModule = nameof(MitigationListing),
             OccurredOn = DateTime.Now,
             ActorUserCode = _currentUserService?.UserCode,
-            Message = LiveUpdateRecordLockMessage.Build(lockKey, action),
+            Message = LiveUpdateRecordLockMessage.Build(lockKey, action, _currentUserService?.UserCode),
             EntityType = nameof(Mitigation),
             EntityCode = lockKey
         });
@@ -677,7 +696,7 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
     #region CRUD Action Methods
     private async Task ViewMitigation(Mitigation mitigation)
     {
-        if (!await TryAcquireReportGraphLockAsync(mitigation.ReportCode, "ViewOpen").ConfigureAwait(false))
+        if (!await TryAcquireRecordLockAsync(mitigation.ReportCode, "ViewOpen").ConfigureAwait(false))
         {
             return;
         }
@@ -692,7 +711,7 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("ViewFailed").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("ViewFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error viewing mitigation {Code}", mitigation.Code);
             await _notificationHelper.ShowErrorAsync("Error viewing mitigation");
         }
@@ -700,7 +719,7 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
 
     private async Task EditMitigation(Mitigation mitigation)
     {
-        if (!await TryAcquireReportGraphLockAsync(mitigation.ReportCode, "EditStart").ConfigureAwait(false))
+        if (!await TryAcquireRecordLockAsync(mitigation.ReportCode, "EditStart").ConfigureAwait(false))
         {
             return;
         }
@@ -713,7 +732,7 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("EditFailed").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("EditFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error editing mitigation {Code}", mitigation.Code);
             await _notificationHelper.ShowErrorAsync("Error opening mitigation editor");
         }
@@ -721,7 +740,7 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
 
     private async Task QuickApproveMitigation(Mitigation mitigation)
     {
-        if (!await TryAcquireReportGraphLockAsync(mitigation.ReportCode, "QuickApproveStart").ConfigureAwait(false))
+        if (!await TryAcquireRecordLockAsync(mitigation.ReportCode, "QuickApproveStart").ConfigureAwait(false))
         {
             return;
         }
@@ -749,13 +768,13 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("QuickApproveFailed").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("QuickApproveFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error quick approving mitigation {Code}", mitigation.Code);
             await _notificationHelper.ShowErrorAsync("Error approving mitigation");
         }
         finally
         {
-            await ReleaseActiveReportGraphLockAsync("QuickApproveCompleted").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("QuickApproveCompleted").ConfigureAwait(false);
         }
     }
 
@@ -772,7 +791,7 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
             }
 
             var firstReportCode = approvableMitigations.FirstOrDefault()?.ReportCode;
-            if (!await TryAcquireReportGraphLockAsync(firstReportCode, "BulkApproveOpen").ConfigureAwait(false))
+            if (!await TryAcquireRecordLockAsync(firstReportCode, "BulkApproveOpen").ConfigureAwait(false))
             {
                 return;
             }
@@ -785,7 +804,7 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("BulkApproveOpenFailed").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("BulkApproveOpenFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error opening bulk approval dialog");
             await _notificationHelper.ShowErrorAsync("Error opening bulk approval dialog");
         }
@@ -793,7 +812,7 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
 
     private async Task CloseBulkApprovalDialog()
     {
-        await ReleaseActiveReportGraphLockAsync("BulkApproveClosed").ConfigureAwait(false);
+        await ReleaseActiveRecordLockAsync("BulkApproveClosed").ConfigureAwait(false);
         _showBulkApprovalDialog = false;
         _selectedMitigations = new List<Mitigation>();
         StateHasChanged();
@@ -860,13 +879,13 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("BulkApproveFailed").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("BulkApproveFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error processing bulk approval");
             await _notificationHelper.ShowErrorAsync("Error processing bulk approval");
         }
         finally
         {
-            await ReleaseActiveReportGraphLockAsync("BulkApproveCompleted").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("BulkApproveCompleted").ConfigureAwait(false);
             _isProcessingBulkApproval = false;
             StateHasChanged();
         }
@@ -888,7 +907,7 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
 
     private async Task DeleteMitigation(Mitigation mitigation)
     {
-        if (!await TryAcquireReportGraphLockAsync(mitigation.ReportCode, "DeleteStart").ConfigureAwait(false))
+        if (!await TryAcquireRecordLockAsync(mitigation.ReportCode, "DeleteStart").ConfigureAwait(false))
         {
             return;
         }
@@ -925,18 +944,18 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
             }
             else
             {
-                await ReleaseActiveReportGraphLockAsync("DeleteCancelled").ConfigureAwait(false);
+                await ReleaseActiveRecordLockAsync("DeleteCancelled").ConfigureAwait(false);
             }
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("DeleteFailed").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("DeleteFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error deleting mitigation {Code}", mitigation.Code);
             await _notificationHelper.ShowErrorAsync("Error deleting mitigation");
         }
         finally
         {
-            await ReleaseActiveReportGraphLockAsync("DeleteCompleted").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("DeleteCompleted").ConfigureAwait(false);
         }
     }
     #endregion

@@ -1,4 +1,4 @@
-﻿using SMS3.Security;
+using SMS3.Security;
 using global::System.Reflection;
 using Microsoft.AspNetCore.Components;
 

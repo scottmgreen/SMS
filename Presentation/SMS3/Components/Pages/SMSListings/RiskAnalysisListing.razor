@@ -44,7 +44,7 @@
         <RadzenDataGridColumn TItem="RiskAnalysis" Property="ResidualRootCause" Title="Residual RC" Width="220px" />
         <RadzenDataGridColumn TItem="RiskAnalysis" Title="Actions" Width="100px" Sortable="false" Filterable="false">
             <Template Context="analysis">
-                @{ var reportCode = GetReportCodeForAnalysis(analysis); var isLocked = IsReportGraphLocked(reportCode); }
+                @{ var reportCode = GetReportCodeForAnalysis(analysis); var isLocked = IsRecordLocked(reportCode); }
                 <RadzenButton Icon="more_vert" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
                             Click="@(() => ShowActions(analysis))" Disabled="@isLocked" />
             </Template>

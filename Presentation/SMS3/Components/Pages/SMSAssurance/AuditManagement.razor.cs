@@ -1,4 +1,4 @@
-﻿using SMS_Domain.Entities;
+using SMS_Domain.Entities;
 
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;

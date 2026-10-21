@@ -107,7 +107,7 @@
 
         <RadzenDataGridColumn TItem="HazardLocation" Title="Actions" Width="140px" Sortable="false" Filterable="false">
             <Template Context="location">
-                @{ var isLocked = IsReportGraphLocked(GetReportCodeForLocation(location)); }
+                @{ var isLocked = IsRecordLocked(GetReportCodeForLocation(location)); }
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
                     @if (_currentUserService.CanRead("SMS_Listings_HazardLocations"))
                     {

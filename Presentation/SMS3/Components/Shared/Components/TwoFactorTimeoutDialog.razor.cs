@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -42,7 +42,7 @@ public partial class TwoFactorTimeoutDialog
         // If modal is showing and 2FA session expires, force redirect to login
         if (IsVisible)
         {
-            Logger.LogWarning("🔐 2FA session expired while timeout modal was displayed");
+            Logger.LogWarning("?? 2FA session expired while timeout modal was displayed");
             await InvokeAsync(async () => await ForceRedirectToLogin());
         }
     }
@@ -54,7 +54,7 @@ public partial class TwoFactorTimeoutDialog
             await InvokeAsync(async () =>
             {
                 IsVisible = true;
-                Logger.LogInformation("🔐 2FA timeout modal displayed - {RemainingTime} remaining", 
+                Logger.LogInformation("?? 2FA timeout modal displayed - {RemainingTime} remaining", 
                     TwoFactorTimer.GetRemainingTime());
                 
                 StateHasChanged();
@@ -101,7 +101,7 @@ public partial class TwoFactorTimeoutDialog
     {
         try
         {
-            Logger.LogInformation("🔐 User dismissed 2FA timeout warning");
+            Logger.LogInformation("?? User dismissed 2FA timeout warning");
             
             // Hide modal
             await InvokeAsync(async () =>
@@ -117,7 +117,7 @@ public partial class TwoFactorTimeoutDialog
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "🔐 Error dismissing 2FA timeout modal");
+            Logger.LogError(ex, "?? Error dismissing 2FA timeout modal");
         }
     }
 
@@ -125,12 +125,12 @@ public partial class TwoFactorTimeoutDialog
     {
         try
         {
-            Logger.LogInformation("🔐 User chose to start over from 2FA timeout modal");
+            Logger.LogInformation("?? User chose to start over from 2FA timeout modal");
             await PerformStartOver();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "🔐 Error during start over from 2FA modal");
+            Logger.LogError(ex, "?? Error during start over from 2FA modal");
             await ForceRedirectToLogin();
         }
     }
@@ -163,7 +163,7 @@ public partial class TwoFactorTimeoutDialog
     {
         try
         {
-            Logger.LogWarning("🔐 Force redirect to login due to 2FA session expiry");
+            Logger.LogWarning("?? Force redirect to login due to 2FA session expiry");
             
             await InvokeAsync(async () =>
             {
@@ -177,7 +177,7 @@ public partial class TwoFactorTimeoutDialog
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "🔐 Error during force redirect to login");
+            Logger.LogError(ex, "?? Error during force redirect to login");
             // Last resort - reload page
             Navigation.NavigateTo("/login", forceLoad: true);
         }

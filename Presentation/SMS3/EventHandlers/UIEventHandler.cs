@@ -55,14 +55,17 @@ public class UIEventHandler : BaseUIEventHandler<UINotificationEvent>
                 ? targetSessionValue?.ToString()
                 : null;
 
+            var isLockBroadcastEvent = uiEvent.Title.Contains(SMS3.Hubs.Contracts.LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
+                || uiEvent.Title.Contains(SMS3.Hubs.Contracts.LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase);
+
             // Enforce user-specific toasts when target user is supplied.
             // If no target is supplied, default to the publishing user's session identity.
-            if (string.IsNullOrWhiteSpace(targetUserCode) && string.IsNullOrWhiteSpace(targetSessionKey))
+            if (!isLockBroadcastEvent && string.IsNullOrWhiteSpace(targetUserCode) && string.IsNullOrWhiteSpace(targetSessionKey))
             {
                 targetUserCode = _currentUserService?.UserCode;
             }
 
-            if (string.IsNullOrWhiteSpace(targetUserCode) && string.IsNullOrWhiteSpace(targetSessionKey))
+            if (!isLockBroadcastEvent && string.IsNullOrWhiteSpace(targetUserCode) && string.IsNullOrWhiteSpace(targetSessionKey))
             {
                 _logger.LogWarning("UINotificationHandler: Dropping notification {EventId} because TargetUserCode could not be resolved.", uiEvent.EventId);
                 return Result.Success();

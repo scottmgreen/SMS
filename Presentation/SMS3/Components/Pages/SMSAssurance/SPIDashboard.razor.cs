@@ -1,4 +1,4 @@
-﻿using SMS3.Components.Shared.UIHelpers;
+using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
 using System;
 using System.Collections.Generic;

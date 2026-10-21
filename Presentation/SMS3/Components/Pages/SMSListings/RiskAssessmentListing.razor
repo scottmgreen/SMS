@@ -112,7 +112,7 @@
                
         <RadzenDataGridColumn TItem="RiskAssessment" Title="Actions" Width="250px" Sortable="false" Filterable="false">
             <Template Context="assessment">
-                @{ var isLocked = IsReportGraphLocked(assessment.ReportCode); }
+                @{ var isLocked = IsRecordLocked(assessment.ReportCode); }
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
                     
                     @if (_currentUserService.CanRead("SMS_Listings_RiskAssessments"))

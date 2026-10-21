@@ -1,4 +1,4 @@
-﻿@page "/SMSRiskManagement/InterviewCalendar"
+@page "/SMSRiskManagement/InterviewCalendar"
 @using SMS3.Components.Shared
 @using SMS3.Components.Pages.SMSAssurance.Components
 @using SMS_Application.Queries
@@ -305,7 +305,7 @@
 
     /* Confidential interviews get a special indicator */
     .interview-scheduler .rz-scheduler-appointment.confidential::before {
-        content: '🔒';
+        content: '??';
         position: absolute;
         top: 2px;
         right: 2px;
@@ -317,7 +317,7 @@
 
     /* High priority interviews get a special indicator */
     .interview-scheduler .rz-scheduler-appointment.high-priority::before {
-        content: '⚡';
+        content: '?';
         position: absolute;
         top: 2px;
         left: 2px;
@@ -327,7 +327,7 @@
 
     /* Status-specific enhancements */
     .interview-scheduler .rz-scheduler-appointment.interview-inprogress::after {
-        content: '▶️';
+        content: '??';
         position: absolute;
         top: 2px;
         left: 2px;
@@ -335,7 +335,7 @@
     }
 
     .interview-scheduler .rz-scheduler-appointment.interview-completed::after {
-        content: '✅';
+        content: '?';
         position: absolute;
         top: 2px;
         left: 2px;
@@ -343,7 +343,7 @@
     }
 
     .interview-scheduler .rz-scheduler-appointment.interview-cancelled::after {
-        content: '❌';
+        content: '?';
         position: absolute;
         top: 2px;
         left: 2px;

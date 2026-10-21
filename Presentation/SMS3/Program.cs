@@ -1,4 +1,4 @@
-﻿using SMS_Application.Configuration;
+using SMS_Application.Configuration;
 using System.Net;
 
 using SMS_Infrastructure.Configuration;
@@ -23,7 +23,7 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // 🔧 ENSURE LOGS DIRECTORY EXISTS - Simple directory creation
+        // ?? ENSURE LOGS DIRECTORY EXISTS - Simple directory creation
         try
         {
             var logsDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
@@ -42,16 +42,16 @@ public class Program
         // Register mock email sender for development/testing
         builder.Services.AddScoped<IEmailSender, SMS3.Components.Pages.SMSSystem.Services.MockEmailSender>();
         
-        // 🚀 FEATURE MANAGEMENT - Must be registered early**
+        // ?? FEATURE MANAGEMENT - Must be registered early**
         builder.Services.AddSharedServices(builder.Configuration);
 
-        // 🚀 REGISTER APPLICATION SERVICES EARLY - Need SecurityFeatureService**
+        // ?? REGISTER APPLICATION SERVICES EARLY - Need SecurityFeatureService**
         builder.Services.AddApplicationServices(builder.Configuration);
 
-        // 🔐 PRESENTATION AUTHENTICATION SERVICES - Centralized authentication registration**
+        // ?? PRESENTATION AUTHENTICATION SERVICES - Centralized authentication registration**
         builder.Services.AddPresentationAuthenticationServices(builder.Configuration);
 
-        // 🔧 INFRASTRUCTURE SERVICES also includes AddHttpContextAccessor() registration
+        // ?? INFRASTRUCTURE SERVICES also includes AddHttpContextAccessor() registration
         builder.Services.AddInfrastructureServices(builder.Configuration);
 
         // Initialize SQL-driven organization smart-enum values at startup

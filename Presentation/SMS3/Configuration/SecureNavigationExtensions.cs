@@ -27,15 +27,22 @@ public static class SecureNavigationExtensions
         bool forceLoad = false)
     {
         var secureRoutingService = ServiceLocator.Current?.GetService<ISecureRoutingService>();
-        if (secureRoutingService is not null)
+        try
         {
-            var encryptedUrl = secureRoutingService.EncryptUrl(url);
-            navigationManager.NavigateTo(encryptedUrl, forceLoad);
+            if (secureRoutingService is not null)
+            {
+                var encryptedUrl = secureRoutingService.EncryptUrl(url);
+                navigationManager.NavigateTo(encryptedUrl, forceLoad);
+            }
+            else
+            {
+                // Fallback to regular navigation
+                navigationManager.NavigateTo(url, forceLoad);
+            }
         }
-        else
+        catch (NavigationException)
         {
-            // Fallback to regular navigation
-            navigationManager.NavigateTo(url, forceLoad);
+            // Expected in some Blazor Server navigation phases; safe to ignore.
         }
     }
     
@@ -128,15 +135,22 @@ public static class SecureNavigationExtensions
         var url = $"{baseRoute}/{parameterValue}";
         
         var secureRoutingService = ServiceLocator.Current?.GetService<ISecureRoutingService>();
-        if (secureRoutingService is not null)
+        try
         {
-            var encryptedUrl = secureRoutingService.EncryptUrl(url);
-            navigationManager.NavigateTo(encryptedUrl, forceLoad);
+            if (secureRoutingService is not null)
+            {
+                var encryptedUrl = secureRoutingService.EncryptUrl(url);
+                navigationManager.NavigateTo(encryptedUrl, forceLoad);
+            }
+            else
+            {
+                // Fallback to regular navigation
+                navigationManager.NavigateTo(url, forceLoad);
+            }
         }
-        else
+        catch (NavigationException)
         {
-            // Fallback to regular navigation
-            navigationManager.NavigateTo(url, forceLoad);
+            // Expected in some Blazor Server navigation phases; safe to ignore.
         }
     }
 }

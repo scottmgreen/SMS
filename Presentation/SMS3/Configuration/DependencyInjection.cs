@@ -105,12 +105,13 @@ public static class DependencyInjection
     /// </summary>
     private static IServiceCollection AddUIHelperServices(this IServiceCollection services)
     {
-        services.AddSingleton<IReportGraphLockStore, ReportGraphLockStore>();
+        services.AddSingleton<IRecordLockStore, RecordLockStore>();
 
         // Notification system with feature management integration
         services.AddScoped<INotificationHelper, NotificationHelper>();
         services.AddScoped<INotificationBellRefreshService, NotificationBellRefreshService>();
         services.AddScoped<ILiveUpdatesPublisher, LiveUpdatesPublisher>();
+        services.AddScoped<IRecordLockLeaseCoordinator, RecordLockLeaseCoordinator>();
 
         // EventBus UI Event Handlers
         services.AddScoped<UIEventHandler>();

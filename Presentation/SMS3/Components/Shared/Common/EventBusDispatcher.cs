@@ -83,11 +83,14 @@ public static class EventBusDispatcher
 
         if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
         {
-            ReportGraphLockStateStore.SetLocked(LiveUpdateRecordLockMessage.TryExtractLockKey(message));
+            RecordLockStateStore.SetLocked(
+                LiveUpdateRecordLockMessage.TryExtractLockKey(message),
+                LiveUpdateRecordLockMessage.TryExtractUserCode(message),
+                DateTime.UtcNow);
         }
         else if (title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
         {
-            ReportGraphLockStateStore.SetReleased(LiveUpdateRecordLockMessage.TryExtractLockKey(message));
+            RecordLockStateStore.SetReleased(LiveUpdateRecordLockMessage.TryExtractLockKey(message));
         }
 
         lock (_lock)

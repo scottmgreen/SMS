@@ -5,6 +5,7 @@ using SMS_Domain.Errors;
 
 using SMS_Shared.Configuration;
 
+using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
 using SMS3.Hubs.Contracts;
@@ -24,6 +25,7 @@ public partial class ReportValidation : ComponentBase
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
+    [Inject] private IRecordLockLeaseCoordinator _recordLockLeaseCoordinator { get; set; } = default!;
 
     // Form Data Properties - Using Smart Enum
     private ValidationDecision? _selectedValidationDecision { get; set; }
@@ -62,6 +64,7 @@ public partial class ReportValidation : ComponentBase
 
     //private string CurrentStatus { get; set;}= string.Empty; // ExistingValidation?.Status ?? "New";
     private bool _isProcessing { get; set; } = false;
+    private string _activeValidationLockKey = string.Empty;
 
     
 
@@ -73,66 +76,107 @@ public partial class ReportValidation : ComponentBase
     {
         _isLoading = true;
         await LoadDataAsync();
-        await PublishValidationLockAcquiredAsync("Open");
+        if (!await TryAcquireValidationLockAsync("Open"))
+        {
+            await _notificationHelper.ShowWarningAsync("This report validation is currently being edited by another session.");
+            _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
+            return;
+        }
+
         _isLoading = false;
     }
 
-    private async Task PublishValidationLockAcquiredAsync(string reason)
+    public void Dispose()
     {
-        try
+        _recordLockLeaseCoordinator.StopHeartbeat(BuildCurrentSessionKey());
+        if (!string.IsNullOrWhiteSpace(_activeValidationLockKey))
         {
-            if (string.IsNullOrWhiteSpace(ReportId))
-            {
-                return;
-            }
-
-            var envelope = new LiveUpdateEnvelope
-            {
-                EventName = LiveUpdateEventNames.ReportProcessingValidationLocked,
-                SourceModule = "ReportValidation",
-                OccurredOn = DateTime.Now,
-                ActorUserCode = _currentUserService.UserCode,
-                Severity = "Info",
-                Message = $"Validation lock acquired ({reason}). ReportId={ReportId}",
-                EntityType = "Report",
-                EntityCode = ReportId
-            };
-
-            await _liveUpdatesPublisher.PublishToApplicationUsersAsync(envelope);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish validation lock acquired for report {ReportId}", ReportId);
+            _ = InvokeAsync(() => ReleaseActiveValidationLockAsync("NavigationAway"));
         }
     }
 
-    private async Task PublishValidationLockReleasedAsync(string reason)
+    private string BuildValidationLockKey(string reportId)
+    {
+        return $"ReportValidation:{reportId?.Trim()}";
+    }
+
+    private async Task<bool> TryAcquireValidationLockAsync(string action)
+    {
+        if (string.IsNullOrWhiteSpace(ReportId))
+        {
+            return false;
+        }
+
+        var lockKey = BuildValidationLockKey(ReportId);
+        if (RecordLockStateStore.IsLockKeyLocked(lockKey))
+        {
+            return false;
+        }
+
+        _activeValidationLockKey = lockKey;
+        await _recordLockLeaseCoordinator.OnLockAcquiredAsync(
+            BuildCurrentSessionKey(),
+            lockKey,
+            _currentUserService?.UserCode,
+            PublishValidationLockAsync,
+            action);
+        return true;
+    }
+
+    private async Task ReleaseActiveValidationLockAsync(string action)
+    {
+        var lockKey = _activeValidationLockKey;
+        if (string.IsNullOrWhiteSpace(lockKey) && !string.IsNullOrWhiteSpace(ReportId))
+        {
+            lockKey = BuildValidationLockKey(ReportId);
+        }
+
+        if (string.IsNullOrWhiteSpace(lockKey))
+        {
+            return;
+        }
+
+        _activeValidationLockKey = string.Empty;
+        await _recordLockLeaseCoordinator.OnLockReleasedAsync(
+            BuildCurrentSessionKey(),
+            lockKey,
+            _currentUserService?.UserCode,
+            PublishValidationLockAsync,
+            action);
+    }
+
+    private async Task PublishValidationLockAsync(string lockKey, bool isLocked, string reason)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(ReportId))
+            if (string.IsNullOrWhiteSpace(lockKey))
             {
                 return;
             }
 
             var envelope = new LiveUpdateEnvelope
             {
-                EventName = LiveUpdateEventNames.ReportProcessingValidationReleased,
+                EventName = isLocked ? LiveUpdateEventNames.RecordEditLocked : LiveUpdateEventNames.RecordEditReleased,
                 SourceModule = "ReportValidation",
                 OccurredOn = DateTime.Now,
-                ActorUserCode = _currentUserService.UserCode,
+                ActorUserCode = _currentUserService?.UserCode,
                 Severity = "Info",
-                Message = $"Validation lock released ({reason}). ReportId={ReportId}",
+                Message = LiveUpdateRecordLockMessage.Build(lockKey, reason, _currentUserService?.UserCode),
                 EntityType = "Report",
-                EntityCode = ReportId
+                EntityCode = lockKey
             };
 
             await _liveUpdatesPublisher.PublishToApplicationUsersAsync(envelope);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to publish validation lock released for report {ReportId}", ReportId);
+            _logger.LogWarning(ex, "Failed to publish validation lock state for report {ReportId}", ReportId);
         }
+    }
+
+    private string BuildCurrentSessionKey()
+    {
+        return $"report-validation:{_currentUserService?.UserCode}:{GetHashCode()}";
     }
 
     #region Data Loading
@@ -340,7 +384,7 @@ public partial class ReportValidation : ComponentBase
             // Create validation record first
             await CreateValidationRecord();
 
-            await PublishValidationLockReleasedAsync("DecisionMade");
+            await ReleaseActiveValidationLockAsync("DecisionMade");
 
                                                
             var navigationTask = _selectedValidationDecision switch
@@ -368,7 +412,7 @@ public partial class ReportValidation : ComponentBase
 
     private async Task BackToProcessingQueue()
     {
-        await PublishValidationLockReleasedAsync("Cancel");
+        await ReleaseActiveValidationLockAsync("Cancel");
         _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
     }
 

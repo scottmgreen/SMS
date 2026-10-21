@@ -306,8 +306,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 return;
             }
 
-            var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
-            ReportGraphLockStateStore.SetReleased(lockKey);
+            var lockKey = LiveUpdateRecordLock.BuildKey(reportCode);
+            RecordLockStateStore.SetReleased(lockKey);
 
             var envelope = new LiveUpdateEnvelope
             {

@@ -53,6 +53,7 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
     [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
+    [Inject] private IRecordLockLeaseCoordinator _recordLockLeaseCoordinator { get; set; } = default!;
 
     // NEW: EventBus Integration
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
@@ -115,9 +116,10 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
     private Report? _reportForDescriptionEdit;
     private string _editableReportDescription = string.Empty;
     private bool _isSavingDescription = false;
-    private readonly HashSet<string> _lockedReportGraphKeys = new(StringComparer.OrdinalIgnoreCase);
-    private string _activeReportGraphLockKey = string.Empty;
+    private readonly HashSet<string> _lockedRecordKeys = new(StringComparer.OrdinalIgnoreCase);
+    private string _activeRecordLockKey = string.Empty;
     private string _activeReportCode = string.Empty;
+    private bool _holdRecordLockAcrossNavigation = false;
 
     private static readonly PropertyInfo[] ReportExportProperties = typeof(Report)
         .GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -179,23 +181,27 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
     protected override async Task OnInitializedAsync()
     {
         EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
-        HydrateLockedReportGraphKeys();
+        HydrateLockedRecordKeys();
         await LoadInitialData();
     }
 
-    private void HydrateLockedReportGraphKeys()
+    private void HydrateLockedRecordKeys()
     {
-        _lockedReportGraphKeys.Clear();
-        foreach (var lockKey in ReportGraphLockStateStore.GetLockedKeys())
+        _lockedRecordKeys.Clear();
+        foreach (var lockKey in RecordLockStateStore.GetLockedKeys())
         {
-            _lockedReportGraphKeys.Add(lockKey);
+            _lockedRecordKeys.Add(lockKey);
         }
     }
 
     public void Dispose()
     {
         EventBusDispatcher.Unregister(this);
-        _ = InvokeAsync(() => ReleaseActiveReportGraphLockAsync("NavigationAway"));
+        _recordLockLeaseCoordinator.StopHeartbeat(BuildCurrentSessionKey());
+        if (!_holdRecordLockAcrossNavigation)
+        {
+            _ = InvokeAsync(() => ReleaseActiveRecordLockAsync("NavigationAway"));
+        }
     }
 
     public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
@@ -207,7 +213,7 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
         }
 
         var lockKey = LiveUpdateRecordLockMessage.TryExtractLockKey(message);
-        if (!LiveUpdateReportGraphLock.TryGetReportCode(lockKey, out _))
+        if (!LiveUpdateRecordLock.TryGetReportCode(lockKey, out _))
         {
             return;
         }
@@ -216,11 +222,11 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
         {
             if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
             {
-                _lockedReportGraphKeys.Add(lockKey!);
+                _lockedRecordKeys.Add(lockKey!);
             }
             else
             {
-                _lockedReportGraphKeys.Remove(lockKey!);
+                _lockedRecordKeys.Remove(lockKey!);
                 await LoadInitialData();
                 if (_reportsGrid is not null)
                 {
@@ -237,18 +243,24 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
         return $"report-listing:{_currentUserService?.UserCode}:{GetHashCode()}";
     }
 
-    private bool IsReportGraphLocked(string? reportCode)
+    private bool IsRecordLocked(string? reportCode)
     {
         if (string.IsNullOrWhiteSpace(reportCode))
         {
             return false;
         }
 
-        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
-        return _lockedReportGraphKeys.Contains(lockKey) || ReportGraphLockStateStore.IsLockKeyLocked(lockKey);
+        var lockKey = LiveUpdateRecordLock.BuildKey(reportCode);
+        var isStoreLocked = RecordLockStateStore.IsLockKeyLocked(lockKey);
+        if (!isStoreLocked)
+        {
+            _lockedRecordKeys.Remove(lockKey);
+        }
+
+        return _lockedRecordKeys.Contains(lockKey) || isStoreLocked;
     }
 
-    private async Task<bool> TryAcquireReportGraphLockAsync(string? reportCode, string action)
+    private async Task<bool> TryAcquireRecordLockAsync(string? reportCode, string action)
     {
         if (string.IsNullOrWhiteSpace(reportCode))
         {
@@ -256,27 +268,32 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
             return false;
         }
 
-        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
-        if (_lockedReportGraphKeys.Contains(lockKey))
+        var lockKey = LiveUpdateRecordLock.BuildKey(reportCode);
+        var isStoreLocked = RecordLockStateStore.IsLockKeyLocked(lockKey);
+        if (_lockedRecordKeys.Contains(lockKey) || isStoreLocked)
         {
             await _notificationHelper.ShowWarningAsync($"Report {reportCode} and related records are locked by another session.");
             return false;
         }
 
-        _activeReportGraphLockKey = lockKey;
+        _activeRecordLockKey = lockKey;
         _activeReportCode = reportCode;
-        _lockedReportGraphKeys.Add(lockKey);
-        ReportGraphLockStateStore.SetLocked(lockKey);
-        await PublishReportGraphLockAsync(lockKey, true, action);
+        _lockedRecordKeys.Add(lockKey);
+        await _recordLockLeaseCoordinator.OnLockAcquiredAsync(
+            BuildCurrentSessionKey(),
+            lockKey,
+            _currentUserService?.UserCode,
+            PublishRecordLockAsync,
+            action);
         return true;
     }
 
-    private async Task ReleaseActiveReportGraphLockAsync(string action)
+    private async Task ReleaseActiveRecordLockAsync(string action)
     {
-        var lockKey = _activeReportGraphLockKey;
+        var lockKey = _activeRecordLockKey;
         if (string.IsNullOrWhiteSpace(lockKey) && !string.IsNullOrWhiteSpace(_activeReportCode))
         {
-            lockKey = LiveUpdateReportGraphLock.BuildKey(_activeReportCode);
+            lockKey = LiveUpdateRecordLock.BuildKey(_activeReportCode);
         }
 
         if (string.IsNullOrWhiteSpace(lockKey))
@@ -284,14 +301,19 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
             return;
         }
 
-        _activeReportGraphLockKey = string.Empty;
+        _activeRecordLockKey = string.Empty;
         _activeReportCode = string.Empty;
-        _lockedReportGraphKeys.Remove(lockKey);
-        ReportGraphLockStateStore.SetReleased(lockKey);
-        await PublishReportGraphLockAsync(lockKey, false, action);
+        _holdRecordLockAcrossNavigation = false;
+        _lockedRecordKeys.Remove(lockKey);
+        await _recordLockLeaseCoordinator.OnLockReleasedAsync(
+            BuildCurrentSessionKey(),
+            lockKey,
+            _currentUserService?.UserCode,
+            PublishRecordLockAsync,
+            action);
     }
 
-    private async Task PublishReportGraphLockAsync(string lockKey, bool isLocked, string action)
+    private async Task PublishRecordLockAsync(string lockKey, bool isLocked, string action)
     {
         await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
         {
@@ -299,7 +321,7 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
             SourceModule = nameof(ReportListing),
             OccurredOn = DateTime.Now,
             ActorUserCode = _currentUserService?.UserCode,
-            Message = LiveUpdateRecordLockMessage.Build(lockKey, action),
+            Message = LiveUpdateRecordLockMessage.Build(lockKey, action, _currentUserService?.UserCode),
             EntityType = nameof(Report),
             EntityCode = lockKey
         });
@@ -307,7 +329,7 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
 
     private async Task OpenEditDescriptionDialog(Report report)
     {
-        if (!await TryAcquireReportGraphLockAsync(report.Code, "EditDescriptionOpen"))
+        if (!await TryAcquireRecordLockAsync(report.Code, "EditDescriptionOpen"))
         {
             return;
         }
@@ -320,7 +342,7 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
 
     private async Task CloseEditDescriptionModal()
     {
-        await ReleaseActiveReportGraphLockAsync("EditDescriptionClosed");
+        await ReleaseActiveRecordLockAsync("EditDescriptionClosed");
         _showEditDescriptionModal = false;
         _reportForDescriptionEdit = null;
         _editableReportDescription = string.Empty;
@@ -1992,7 +2014,7 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
     {
         _logger.LogInformation("View report details requested: {ReportCode}", report.Code);
 
-            if (!await TryAcquireReportGraphLockAsync(report.Code, "ViewOpen"))
+            if (!await TryAcquireRecordLockAsync(report.Code, "ViewOpen"))
         {
             return;
         }
@@ -2028,7 +2050,7 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("ViewFailed");
+            await ReleaseActiveRecordLockAsync("ViewFailed");
             _logger.LogError(ex, "Error loading report details for {ReportCode}", report.Code);
 
             await _notificationHelper.ShowErrorAsync( "Failed to load report details");
@@ -2048,7 +2070,7 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
     {
         _logger.LogInformation("Edit report requested: {ReportCode}", report.Code);
 
-            if (!await TryAcquireReportGraphLockAsync(report.Code, "EditStart"))
+            if (!await TryAcquireRecordLockAsync(report.Code, "EditStart"))
         {
             return;
         }
@@ -2073,25 +2095,26 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
 
                 if (initialHazard is not null && !string.IsNullOrEmpty(initialHazard.Code))
                 {
+                    _holdRecordLockAcrossNavigation = true;
                     _navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting/{initialHazard.Code}?returnTo=report-listing");
                     _logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
                     await _notificationHelper.ShowInfoAsync( $"Opening {report.Code} for editing...");
                 }
                 else
                 {
-                await ReleaseActiveReportGraphLockAsync("EditNoInitialHazard");
+                await ReleaseActiveRecordLockAsync("EditNoInitialHazard");
                     _logger.LogWarning("No initial hazard found for report: {ReportCode}", report.Code);
                     await _notificationHelper.ShowWarningAsync( $"No initial hazard found for {report.Code}.");
                 }
             }
             else
             {
-                await ReleaseActiveReportGraphLockAsync("EditCancelled");
+                await ReleaseActiveRecordLockAsync("EditCancelled");
             }
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("EditFailed");
+            await ReleaseActiveRecordLockAsync("EditFailed");
             _logger.LogError(ex, "Error navigating to edit report {ReportCode}", report.Code);
             await _notificationHelper.ShowErrorAsync( "Failed to navigate to edit form");
         }
@@ -2105,7 +2128,7 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
     {
         _logger.LogInformation("Delete report requested: {ReportCode}", report.Code);
 
-            if (!await TryAcquireReportGraphLockAsync(report.Code, "DeleteStart"))
+            if (!await TryAcquireRecordLockAsync(report.Code, "DeleteStart"))
         {
             return;
         }
@@ -2169,18 +2192,18 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
             }
             else
             {
-                await ReleaseActiveReportGraphLockAsync("DeleteCancelled");
+                await ReleaseActiveRecordLockAsync("DeleteCancelled");
             }
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("DeleteFailed");
+            await ReleaseActiveRecordLockAsync("DeleteFailed");
             _logger.LogError(ex, "Error deleting report: {ReportCode}", report.Code);
             await _notificationHelper.ShowErrorAsync( "Failed to delete the report");
         }
         finally
         {
-            await ReleaseActiveReportGraphLockAsync("DeleteCompleted");
+            await ReleaseActiveRecordLockAsync("DeleteCompleted");
         }
     }
     #endregion
@@ -2192,7 +2215,7 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
     /// </summary>
     public async Task CloseDetailsModal()
     {
-        await ReleaseActiveReportGraphLockAsync("ViewClosed");
+        await ReleaseActiveRecordLockAsync("ViewClosed");
         ShowDetailsModal = false;
         SelectedReport = null;
         AssociatedHazards.Clear();
@@ -2508,7 +2531,7 @@ public async Task OnResetReportAsync(Report report)
 
         _logger.LogInformation("Reset Report requested: {ReportCode}", report.Code);
 
-        if (!await TryAcquireReportGraphLockAsync(report.Code, "ResetOpen"))
+        if (!await TryAcquireRecordLockAsync(report.Code, "ResetOpen"))
         {
             return;
         }
@@ -2530,7 +2553,7 @@ public async Task OnResetReportAsync(Report report)
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("ResetOpenFailed");
+            await ReleaseActiveRecordLockAsync("ResetOpenFailed");
             _logger.LogError(ex, "Error preparing reset confirmation for report {ReportCode}", report.Code);
             await _notificationHelper.ShowErrorAsync( $"Error preparing reset confirmation: {ex.Message}");
         }
@@ -2576,7 +2599,7 @@ public async Task OnResetReportAsync(Report report)
             }
             else
             {
-                await ReleaseActiveReportGraphLockAsync("ResetFailed");
+                await ReleaseActiveRecordLockAsync("ResetFailed");
                 var errorMessage = result.Error?.Message ?? "Unknown error occurred during reset";
                 _logger.LogError("Failed to reset report validation for {ReportCode}: {Error}", _reportToReset.Code, errorMessage);
 
@@ -2585,13 +2608,13 @@ public async Task OnResetReportAsync(Report report)
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("ResetException");
+            await ReleaseActiveRecordLockAsync("ResetException");
             _logger.LogError(ex, "Unexpected error during reset operation for report {ReportCode}", _reportToReset?.Code);
             await _notificationHelper.ShowErrorAsync( $"An unexpected error occurred while resetting the report: {ex.Message}");
         }
         finally
         {
-            await ReleaseActiveReportGraphLockAsync("ResetCompleted");
+            await ReleaseActiveRecordLockAsync("ResetCompleted");
             // Clean up
             _reportToReset = null;
             _resetConfirmationMessage = string.Empty;
@@ -2605,7 +2628,7 @@ public async Task OnResetReportAsync(Report report)
     /// </summary>
     private async Task CancelResetConfirmation()
     {
-        await ReleaseActiveReportGraphLockAsync("ResetCancelled");
+        await ReleaseActiveRecordLockAsync("ResetCancelled");
         _showResetConfirmModal = false;
         _reportToReset = null;
         _resetConfirmationMessage = string.Empty;

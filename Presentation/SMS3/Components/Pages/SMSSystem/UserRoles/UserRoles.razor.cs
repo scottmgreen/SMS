@@ -1,4 +1,4 @@
-﻿using System.Security;
+using System.Security;
 
 using SMS3.Components.Shared.UIHelpers;
 

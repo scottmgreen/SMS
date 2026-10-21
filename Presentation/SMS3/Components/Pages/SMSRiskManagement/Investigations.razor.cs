@@ -6,13 +6,14 @@ using SMS_Domain.Events;
 
 using SMS_Shared.Configuration;
 
+using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
 using SMS3.Hubs.Contracts;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
-public partial class Investigations : ComponentBase
+public partial class Investigations : ComponentBase, IDisposable
 {
     #region Helper Classes
    
@@ -25,6 +26,7 @@ public partial class Investigations : ComponentBase
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
+    [Inject] private IRecordLockLeaseCoordinator _recordLockLeaseCoordinator { get; set; } = default!;
 
     [Inject] private ILogger<Investigations> _logger { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -47,6 +49,7 @@ public partial class Investigations : ComponentBase
     private bool _showReturnToValidationModal = false;
     private string _returnToValidationMessage = string.Empty;
     private InvestigationEditableState? _originalInvestigationState;
+    private string _activeInvestigationLockKey = string.Empty;
 
     private string InvestigationStatusId { get; set; } = string.Empty;
 
@@ -87,9 +90,94 @@ public partial class Investigations : ComponentBase
     {
 
         await LoadInvestigationData();
+        if (!await TryAcquireInvestigationLockAsync("Open"))
+        {
+            await _notificationHelper.ShowWarningAsync("This investigation is currently being edited by another session.");
+            _navigation.NavigateToSecure("/SMSListings/Investigations");
+            return;
+        }
+
         await LoadAvailableInvestigators();
         await LoadInterviews();
         await LoadEvidenceFiles();
+    }
+
+    public void Dispose()
+    {
+        _recordLockLeaseCoordinator.StopHeartbeat(BuildCurrentSessionKey());
+        if (!string.IsNullOrWhiteSpace(_activeInvestigationLockKey))
+        {
+            _ = InvokeAsync(() => ReleaseActiveInvestigationLockAsync("NavigationAway"));
+        }
+    }
+
+    private static string BuildInvestigationLockKey(string investigationCode)
+    {
+        return $"Investigation:{investigationCode?.Trim()}";
+    }
+
+    private async Task<bool> TryAcquireInvestigationLockAsync(string action)
+    {
+        if (string.IsNullOrWhiteSpace(InvestigationId))
+        {
+            return false;
+        }
+
+        var lockKey = BuildInvestigationLockKey(InvestigationId);
+        if (RecordLockStateStore.IsLockKeyLocked(lockKey))
+        {
+            return false;
+        }
+
+        _activeInvestigationLockKey = lockKey;
+        await _recordLockLeaseCoordinator.OnLockAcquiredAsync(
+            BuildCurrentSessionKey(),
+            lockKey,
+            _currentUserService?.UserCode,
+            PublishInvestigationLockAsync,
+            action);
+        return true;
+    }
+
+    private async Task ReleaseActiveInvestigationLockAsync(string action)
+    {
+        var lockKey = _activeInvestigationLockKey;
+        if (string.IsNullOrWhiteSpace(lockKey) && !string.IsNullOrWhiteSpace(InvestigationId))
+        {
+            lockKey = BuildInvestigationLockKey(InvestigationId);
+        }
+
+        if (string.IsNullOrWhiteSpace(lockKey))
+        {
+            return;
+        }
+
+        _activeInvestigationLockKey = string.Empty;
+        await _recordLockLeaseCoordinator.OnLockReleasedAsync(
+            BuildCurrentSessionKey(),
+            lockKey,
+            _currentUserService?.UserCode,
+            PublishInvestigationLockAsync,
+            action);
+    }
+
+    private async Task PublishInvestigationLockAsync(string lockKey, bool isLocked, string action)
+    {
+        await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
+        {
+            EventName = isLocked ? LiveUpdateEventNames.RecordEditLocked : LiveUpdateEventNames.RecordEditReleased,
+            SourceModule = nameof(Investigations),
+            OccurredOn = DateTime.Now,
+            ActorUserCode = _currentUserService?.UserCode,
+            Message = LiveUpdateRecordLockMessage.Build(lockKey, action, _currentUserService?.UserCode),
+            EntityType = nameof(Investigation),
+            EntityCode = lockKey
+        });
+    }
+
+    private string BuildCurrentSessionKey()
+    {
+        return $"investigations:{_currentUserService?.UserCode}:{GetHashCode()}";
     }
 
     #endregion
@@ -361,6 +449,7 @@ public partial class Investigations : ComponentBase
                 if (!string.IsNullOrEmpty(InvestigationEntity.HazardCode))
                 {
                     // ?? SECURE NAVIGATION - Navigate to Report Validation with encrypted URL
+                    await ReleaseActiveInvestigationLockAsync("InvestigationCompleted");
                     _navigation.NavigateToSecure($"/SMSRiskManagement/ReportValidation/{InvestigationEntity.ReportCode}");
                 }
                 break;
@@ -520,6 +609,7 @@ public partial class Investigations : ComponentBase
 
             // Navigate to validations listing to show where the report went
             // ?? SECURE NAVIGATION - Navigate to Report Validation with encrypted URL
+            await ReleaseActiveInvestigationLockAsync("ReturnedToValidation");
             _navigation.NavigateToSecure($"/SMSRiskManagement/ReportValidation/{InvestigationEntity.ReportCode}");
         }
         catch (Exception ex)
@@ -940,6 +1030,11 @@ public partial class Investigations : ComponentBase
     /// </summary>
     private void NavigateToListings()
     {
+        if (!string.IsNullOrWhiteSpace(_activeInvestigationLockKey))
+        {
+            _ = InvokeAsync(() => ReleaseActiveInvestigationLockAsync("NavigateToListings"));
+        }
+
         var returnTarget = ReturnTo;
 
         if (string.Equals(returnTarget, "report-processing", StringComparison.OrdinalIgnoreCase))

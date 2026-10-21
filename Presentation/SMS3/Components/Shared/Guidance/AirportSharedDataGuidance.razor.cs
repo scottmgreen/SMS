@@ -1,4 +1,4 @@
-﻿namespace SMS3.Components.Shared.Guidance;
+namespace SMS3.Components.Shared.Guidance;
 
 public partial class AirportSharedDataGuidance
 {

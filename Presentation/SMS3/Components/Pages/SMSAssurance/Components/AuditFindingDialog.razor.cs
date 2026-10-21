@@ -1,4 +1,4 @@
-﻿using SMS_Domain.Enums;
+using SMS_Domain.Enums;
 using SMS3.Components.Shared.UIHelpers;
 using Radzen;
 using System;

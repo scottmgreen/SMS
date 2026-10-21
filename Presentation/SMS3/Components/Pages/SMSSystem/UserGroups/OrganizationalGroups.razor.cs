@@ -1,4 +1,4 @@
-﻿using SMS_Application.Interfaces;
+using SMS_Application.Interfaces;
 using SMS_Domain.Events;
 using SMS_Shared.Configuration;
 

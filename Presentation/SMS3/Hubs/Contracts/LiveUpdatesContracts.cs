@@ -6,13 +6,13 @@ public static class LiveUpdateEventNames
     public const string ReportReturnedToValidation = "ReportReturnedToValidation";
     public const string RecordEditLocked = "RecordEditLocked";
     public const string RecordEditReleased = "RecordEditReleased";
-    public const string ReportProcessingValidationLocked = "ReportProcessingValidationLocked";
-    public const string ReportProcessingValidationReleased = "ReportProcessingValidationReleased";
+    public const string RecordProcessingValidationLocked = "RecordProcessingValidationLocked";
+    public const string RecordProcessingValidationReleased = "RecordProcessingValidationReleased";
 }
 
-public static class LiveUpdateReportGraphLock
+public static class LiveUpdateRecordLock
 {
-    private const string Prefix = "ReportGraph:";
+    private const string Prefix = "Record:";
 
     public static string BuildKey(string reportCode)
     {
@@ -35,10 +35,16 @@ public static class LiveUpdateReportGraphLock
 public static class LiveUpdateRecordLockMessage
 {
     private const string LockKeyMarker = "LockKey=";
+    private const string UserCodeMarker = "UserCode=";
+    private const string HeartbeatMarker = "Heartbeat=";
 
-    public static string Build(string lockKey, string action)
+    public static string Build(string lockKey, string action, string? actorUserCode = null, bool isHeartbeat = false)
     {
-        return $"{action};{LockKeyMarker}{lockKey}";
+        var userCodePart = string.IsNullOrWhiteSpace(actorUserCode)
+            ? string.Empty
+            : $";{UserCodeMarker}{actorUserCode.Trim()}";
+
+        return $"{action};{LockKeyMarker}{lockKey}{userCodePart};{HeartbeatMarker}{isHeartbeat}";
     }
 
     public static string? TryExtractLockKey(string? message)
@@ -64,6 +70,33 @@ public static class LiveUpdateRecordLockMessage
         return delimiterIndex >= 0
             ? lockKey[..delimiterIndex].Trim()
             : lockKey;
+    }
+
+    public static string? TryExtractUserCode(string? message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return null;
+        }
+
+        var markerIndex = message.IndexOf(UserCodeMarker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0)
+        {
+            return null;
+        }
+
+        var value = message[(markerIndex + UserCodeMarker.Length)..].Trim();
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var delimiterIndex = value.IndexOf(';');
+        var userCode = delimiterIndex >= 0
+            ? value[..delimiterIndex].Trim()
+            : value;
+
+        return string.IsNullOrWhiteSpace(userCode) ? null : userCode;
     }
 }
 

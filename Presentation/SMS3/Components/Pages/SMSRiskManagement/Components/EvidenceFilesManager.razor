@@ -1,4 +1,4 @@
-﻿@using SMS_Domain.Entities
+@using SMS_Domain.Entities
 @using SMS_Domain.ValueObjects
 @using SMS_Application.Queries
 @using SMS_Application.Commands
@@ -177,7 +177,7 @@
                                                           Click="@(() => ViewFile(file))"
                                                           title="Click to view image" />
                                                 <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color); text-align: center;">
-                                                    @FormatFileSize(file.FileSizeBytes) • @file.UploadedDate?.ToString("MMM dd, yyyy")
+                                                    @FormatFileSize(file.FileSizeBytes) � @file.UploadedDate?.ToString("MMM dd, yyyy")
                                                 </RadzenText>
                                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
                                                     <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 

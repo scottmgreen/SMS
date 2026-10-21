@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -13,6 +13,8 @@ using SMS3.Configuration.Extensions;
 using SMS3.Security;
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
+using SMS3.Components.Shared;
+using SMS3.Hubs.Contracts;
 namespace SMS3.Components.Layout;
 
 public partial class NavMenu
@@ -23,6 +25,7 @@ public partial class NavMenu
     [Inject] private IEventQueueService _eventQueueService { get; set; } = default!;
     [Inject] private IActiveUserSessionRegistry _activeUserSessionRegistry { get; set; } = default!;
     [Inject] private IHttpContextAccessor _httpContextAccessor { get; set; } = default!;
+[Inject] private IRecordLockLeaseCoordinator _recordLockLeaseCoordinator { get; set; } = default!;
 
     [Parameter]
     public EventCallback OnLogoutRequested { get; set; }
@@ -33,6 +36,7 @@ public partial class NavMenu
     private Task? _notificationPollingTask;
     private DotNetObjectReference<NavMenu>? _dotNetRef;
     private List<ActiveUserSessionInfo> _activeUserSessions = new();
+    private List<RecordLockInfo> _activeRecordLocks = new();
     private bool _isFullyAuthenticated;
     private bool _isLogoutInitiated;
     private bool _hasRegisteredCurrentSession;
@@ -412,6 +416,19 @@ public partial class NavMenu
             if (!string.IsNullOrEmpty(args.Value?.ToString()))
             {
                 var value = args.Value.ToString();
+                var requiresLockReleaseConfirmation = await RequiresLockReleaseConfirmationAsync(value);
+
+                if (requiresLockReleaseConfirmation
+                    && !await ConfirmLockReleaseBeforeNavigationAsync())
+                {
+                    return;
+                }
+
+                if (requiresLockReleaseConfirmation)
+                {
+                    await ReleaseCurrentUserLocksForNavigationAsync();
+                }
+
                 if (!string.IsNullOrEmpty(value) && value.StartsWith("/"))
                 {
                     _logger.LogInformation("Navigating to secure URL: {Url}", value);
@@ -437,6 +454,68 @@ public partial class NavMenu
         {
             _logger.LogError(ex, "Error in OnMenuClick");
         }
+    }
+
+    private Task<bool> RequiresLockReleaseConfirmationAsync(string? targetValue)
+    {
+        if (string.IsNullOrWhiteSpace(targetValue) || !_isFullyAuthenticated)
+        {
+            return Task.FromResult(false);
+        }
+
+        var currentUri = _navigation.ToAbsoluteUri(_navigation.Uri);
+        var hasOwnedLocks = _recordLockLeaseCoordinator.GetOwnedLockKeys().Any();
+
+        if (!hasOwnedLocks)
+        {
+            return Task.FromResult(false);
+        }
+
+        if (targetValue.StartsWith("/"))
+        {
+            var targetUri = _navigation.ToAbsoluteUri(targetValue);
+            var isSamePath = string.Equals(currentUri.AbsolutePath, targetUri.AbsolutePath, StringComparison.OrdinalIgnoreCase);
+            return Task.FromResult(!isSamePath);
+        }
+
+        if (Uri.TryCreate(targetValue, UriKind.Absolute, out var absoluteUri))
+        {
+            var isSameAbsoluteUri = string.Equals(currentUri.AbsoluteUri, absoluteUri.AbsoluteUri, StringComparison.OrdinalIgnoreCase);
+            return Task.FromResult(!isSameAbsoluteUri);
+        }
+
+        return Task.FromResult(false);
+    }
+
+    private async Task<bool> ConfirmLockReleaseBeforeNavigationAsync()
+    {
+        var result = await _dialogService.Confirm(
+            "You currently have an active record lock. If you continue, the lock will be released. Continue navigation?",
+            "Release Record Lock",
+            new ConfirmOptions
+            {
+                OkButtonText = "Yes, Continue",
+                CancelButtonText = "Stay Here"
+            });
+
+        return result == true;
+    }
+
+    private async Task ReleaseCurrentUserLocksForNavigationAsync()
+    {
+        await _recordLockLeaseCoordinator.ReleaseOwnedLocksAsync(
+            _currentUserService?.UserCode,
+            async (lockKey, isLocked, action) =>
+            {
+                RecordLockStateStore.SetReleased(lockKey);
+
+                await EventBusDispatcher.DispatchNotificationAsync(
+                    NotificationSeverity.Info,
+                    LiveUpdateEventNames.RecordEditReleased,
+                    LiveUpdateRecordLockMessage.Build(lockKey, action, _currentUserService?.UserCode),
+                    3000);
+            },
+            "NavigationAway");
     }
 
     private async Task OnLogoutClick()
@@ -489,6 +568,7 @@ public partial class NavMenu
         if (!CanViewActiveUsers)
         {
             _activeUserSessions = [];
+            _activeRecordLocks = [];
             return;
         }
 
@@ -498,6 +578,25 @@ public partial class NavMenu
             .ThenBy(x => x.UserCode)
             .Take(50)
             .ToList();
+
+        _activeRecordLocks = RecordLockStateStore
+            .GetActiveLocks()
+            .OrderByDescending(x => x.LastHeartbeatUtc)
+            .Take(50)
+            .ToList();
+    }
+
+    private string GetLockStatusText(RecordLockInfo lockInfo)
+    {
+        var expiresAtUtc = lockInfo.LastHeartbeatUtc.Add(RecordLockStateStore.LockStaleThreshold);
+        var remaining = expiresAtUtc - DateTime.UtcNow;
+
+        if (remaining <= TimeSpan.Zero)
+        {
+            return "Stale";
+        }
+
+        return $"Stale in {Math.Ceiling(remaining.TotalSeconds):0}s";
     }
 
     private bool IsCurrentSessionStillActive()

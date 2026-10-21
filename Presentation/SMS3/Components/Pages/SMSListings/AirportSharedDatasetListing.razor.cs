@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Events;

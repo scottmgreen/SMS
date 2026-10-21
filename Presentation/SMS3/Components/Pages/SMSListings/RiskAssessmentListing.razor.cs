@@ -63,8 +63,8 @@ public partial class RiskAssessmentListing : ComponentBase, IEventReceiver, IDis
     private bool _isLoading = false;
     private bool _showViewDialog = false;
     private RiskAssessment? _selectedAssessment = null;
-    private readonly HashSet<string> _lockedReportGraphKeys = new(StringComparer.OrdinalIgnoreCase);
-    private string _activeReportGraphLockKey = string.Empty;
+    private readonly HashSet<string> _lockedRecordKeys = new(StringComparer.OrdinalIgnoreCase);
+    private string _activeRecordLockKey = string.Empty;
     private string _activeReportCode = string.Empty;
     #endregion
     
@@ -72,23 +72,23 @@ public partial class RiskAssessmentListing : ComponentBase, IEventReceiver, IDis
     protected override async Task OnInitializedAsync()
     {
         EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
-        HydrateLockedReportGraphKeys();
+        HydrateLockedRecordKeys();
         await LoadInitialData();
     }
 
-    private void HydrateLockedReportGraphKeys()
+    private void HydrateLockedRecordKeys()
     {
-        _lockedReportGraphKeys.Clear();
-        foreach (var lockKey in ReportGraphLockStateStore.GetLockedKeys())
+        _lockedRecordKeys.Clear();
+        foreach (var lockKey in RecordLockStateStore.GetLockedKeys())
         {
-            _lockedReportGraphKeys.Add(lockKey);
+            _lockedRecordKeys.Add(lockKey);
         }
     }
 
     public void Dispose()
     {
         EventBusDispatcher.Unregister(this);
-        _ = InvokeAsync(() => ReleaseActiveReportGraphLockAsync("NavigationAway"));
+        _ = InvokeAsync(() => ReleaseActiveRecordLockAsync("NavigationAway"));
     }
 
     public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
@@ -100,7 +100,7 @@ public partial class RiskAssessmentListing : ComponentBase, IEventReceiver, IDis
         }
 
         var lockKey = LiveUpdateRecordLockMessage.TryExtractLockKey(message);
-        if (!LiveUpdateReportGraphLock.TryGetReportCode(lockKey, out _))
+        if (!LiveUpdateRecordLock.TryGetReportCode(lockKey, out _))
         {
             return;
         }
@@ -109,11 +109,11 @@ public partial class RiskAssessmentListing : ComponentBase, IEventReceiver, IDis
         {
             if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
             {
-                _lockedReportGraphKeys.Add(lockKey!);
+                _lockedRecordKeys.Add(lockKey!);
             }
             else
             {
-                _lockedReportGraphKeys.Remove(lockKey!);
+                _lockedRecordKeys.Remove(lockKey!);
                 await LoadInitialData();
                 if (_assessmentsGrid is not null)
                 {
@@ -130,18 +130,24 @@ public partial class RiskAssessmentListing : ComponentBase, IEventReceiver, IDis
         return $"risk-assessment-listing:{_currentUserService?.UserCode}:{GetHashCode()}";
     }
 
-    private bool IsReportGraphLocked(string? reportCode)
+    private bool IsRecordLocked(string? reportCode)
     {
         if (string.IsNullOrWhiteSpace(reportCode))
         {
             return false;
         }
 
-        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
-        return _lockedReportGraphKeys.Contains(lockKey) || ReportGraphLockStateStore.IsLockKeyLocked(lockKey);
+        var lockKey = LiveUpdateRecordLock.BuildKey(reportCode);
+        var isStoreLocked = RecordLockStateStore.IsLockKeyLocked(lockKey);
+        if (!isStoreLocked)
+        {
+            _lockedRecordKeys.Remove(lockKey);
+        }
+
+        return _lockedRecordKeys.Contains(lockKey) || isStoreLocked;
     }
 
-    private async Task<bool> TryAcquireReportGraphLockAsync(string? reportCode, string action)
+    private async Task<bool> TryAcquireRecordLockAsync(string? reportCode, string action)
     {
         if (string.IsNullOrWhiteSpace(reportCode))
         {
@@ -149,26 +155,26 @@ public partial class RiskAssessmentListing : ComponentBase, IEventReceiver, IDis
             return false;
         }
 
-        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
-        if (_lockedReportGraphKeys.Contains(lockKey))
+        var lockKey = LiveUpdateRecordLock.BuildKey(reportCode);
+        if (_lockedRecordKeys.Contains(lockKey))
         {
             await _notificationHelper.ShowWarningAsync($"Report {reportCode} and related records are locked by another session.");
             return false;
         }
 
-        _activeReportGraphLockKey = lockKey;
+        _activeRecordLockKey = lockKey;
         _activeReportCode = reportCode;
-        _lockedReportGraphKeys.Add(lockKey);
-        await PublishReportGraphLockAsync(lockKey, true, action);
+        _lockedRecordKeys.Add(lockKey);
+        await PublishRecordLockAsync(lockKey, true, action);
         return true;
     }
 
-    private async Task ReleaseActiveReportGraphLockAsync(string action)
+    private async Task ReleaseActiveRecordLockAsync(string action)
     {
-        var lockKey = _activeReportGraphLockKey;
+        var lockKey = _activeRecordLockKey;
         if (string.IsNullOrWhiteSpace(lockKey) && !string.IsNullOrWhiteSpace(_activeReportCode))
         {
-            lockKey = LiveUpdateReportGraphLock.BuildKey(_activeReportCode);
+            lockKey = LiveUpdateRecordLock.BuildKey(_activeReportCode);
         }
 
         if (string.IsNullOrWhiteSpace(lockKey))
@@ -176,13 +182,13 @@ public partial class RiskAssessmentListing : ComponentBase, IEventReceiver, IDis
             return;
         }
 
-        _activeReportGraphLockKey = string.Empty;
+        _activeRecordLockKey = string.Empty;
         _activeReportCode = string.Empty;
-        _lockedReportGraphKeys.Remove(lockKey);
-        await PublishReportGraphLockAsync(lockKey, false, action);
+        _lockedRecordKeys.Remove(lockKey);
+        await PublishRecordLockAsync(lockKey, false, action);
     }
 
-    private async Task PublishReportGraphLockAsync(string lockKey, bool isLocked, string action)
+    private async Task PublishRecordLockAsync(string lockKey, bool isLocked, string action)
     {
         await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
         {
@@ -967,7 +973,7 @@ public partial class RiskAssessmentListing : ComponentBase, IEventReceiver, IDis
 
     private async Task ViewAssessment(RiskAssessment assessment)
     {
-        if (!await TryAcquireReportGraphLockAsync(assessment.ReportCode, "ViewOpen").ConfigureAwait(false))
+        if (!await TryAcquireRecordLockAsync(assessment.ReportCode, "ViewOpen").ConfigureAwait(false))
         {
             return;
         }
@@ -982,7 +988,7 @@ public partial class RiskAssessmentListing : ComponentBase, IEventReceiver, IDis
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("ViewFailed").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("ViewFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error viewing risk assessment {Code}", assessment.Code);
             await _notificationHelper.ShowErrorAsync("Error viewing risk assessment");
         }
@@ -990,7 +996,7 @@ public partial class RiskAssessmentListing : ComponentBase, IEventReceiver, IDis
 
     private async Task EditAssessment(RiskAssessment assessment)
     {
-        if (!await TryAcquireReportGraphLockAsync(assessment.ReportCode, "EditStart").ConfigureAwait(false))
+        if (!await TryAcquireRecordLockAsync(assessment.ReportCode, "EditStart").ConfigureAwait(false))
         {
             return;
         }
@@ -1002,7 +1008,7 @@ public partial class RiskAssessmentListing : ComponentBase, IEventReceiver, IDis
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("EditFailed").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("EditFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error editing risk assessment {Code}", assessment.Code);
             await _notificationHelper.ShowErrorAsync("Error opening risk assessment editor");
         }
@@ -1015,14 +1021,14 @@ public partial class RiskAssessmentListing : ComponentBase, IEventReceiver, IDis
             return;
         }
 
-        await ReleaseActiveReportGraphLockAsync("ViewClosedForEdit").ConfigureAwait(false);
+        await ReleaseActiveRecordLockAsync("ViewClosedForEdit").ConfigureAwait(false);
         _showViewDialog = false;
         await EditAssessment(_selectedAssessment);
     }
 
     private async Task CloseAssessmentViewDialogAsync()
     {
-        await ReleaseActiveReportGraphLockAsync("ViewClosed").ConfigureAwait(false);
+        await ReleaseActiveRecordLockAsync("ViewClosed").ConfigureAwait(false);
         _showViewDialog = false;
         _selectedAssessment = null;
         StateHasChanged();
@@ -1111,7 +1117,7 @@ public partial class RiskAssessmentListing : ComponentBase, IEventReceiver, IDis
 
     private async Task DeleteAssessment(RiskAssessment assessment)
     {
-        if (!await TryAcquireReportGraphLockAsync(assessment.ReportCode, "DeleteStart").ConfigureAwait(false))
+        if (!await TryAcquireRecordLockAsync(assessment.ReportCode, "DeleteStart").ConfigureAwait(false))
         {
             return;
         }
@@ -1152,18 +1158,18 @@ public partial class RiskAssessmentListing : ComponentBase, IEventReceiver, IDis
             }
             else
             {
-                await ReleaseActiveReportGraphLockAsync("DeleteCancelled").ConfigureAwait(false);
+                await ReleaseActiveRecordLockAsync("DeleteCancelled").ConfigureAwait(false);
             }
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("DeleteFailed").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("DeleteFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error deleting risk assessment {Code}", assessment.Code);
             await _notificationHelper.ShowErrorAsync("Error deleting risk assessment");
         }
         finally
         {
-            await ReleaseActiveReportGraphLockAsync("DeleteCompleted").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("DeleteCompleted").ConfigureAwait(false);
         }
     }
     #endregion

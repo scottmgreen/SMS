@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Net.Mail;
 using System.Threading.Tasks;
@@ -296,7 +296,7 @@ public class EmailComposeDialogBase : ComponentBase
         ValidateList(m.Cc, "Cc");
         ValidateList(m.Bcc, "Bcc");
 
-        // Optional: subject not strictly required (Outlook allows empty subject with a prompt; we’ll allow)
+        // Optional: subject not strictly required (Outlook allows empty subject with a prompt; we�ll allow)
         // Optional: bodyHtml can be empty
 
         return errors;

@@ -32,7 +32,7 @@
         <RadzenDataGridColumn TItem="Investigation" Property="Code" Title="Investigation ID" Width="150px" />
         <RadzenDataGridColumn TItem="Investigation" Property="InvestigationNotes" Title="Investigation Notes" Width="110px" Sortable="false" Filterable="false">
             <Template Context="investigation">
-                @{ var isLocked = IsReportGraphLocked(investigation.ReportCode); }
+                @{ var isLocked = IsRecordLocked(investigation.ReportCode); }
                 <RadzenButton Text="Notes"
                               Icon="description"
                               ButtonStyle="ButtonStyle.Base"
@@ -72,7 +72,7 @@
 
         <RadzenDataGridColumn TItem="Investigation" Title="Actions" Width="120px" Sortable="false" Filterable="false">
             <Template Context="investigation">
-                @{ var isLocked = IsReportGraphLocked(investigation.ReportCode); }
+                @{ var isLocked = IsRecordLocked(investigation.ReportCode); }
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
                     <RadzenButton ButtonStyle="ButtonStyle.Base"
                                   Size="ButtonSize.Small"

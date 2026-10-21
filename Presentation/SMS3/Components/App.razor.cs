@@ -1,4 +1,4 @@
-﻿namespace SMS3.Components;
+namespace SMS3.Components;
 
 public partial class App
 {

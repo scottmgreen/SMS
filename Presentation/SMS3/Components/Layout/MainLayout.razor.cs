@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components;
 using Radzen;
 using SMS3.Components.Layout;
 using SMS3.Components.Shared;
+using SMS3.Hubs.Contracts;
 using SMS3.Configuration.Extensions;
 using SMS_Application.Services;
 using SMS_Domain.Entities;
@@ -60,6 +61,22 @@ public partial class MainLayout
         if (string.Equals(title, RemoteLogoutSignalTitle, StringComparison.Ordinal))
         {
             await HandleRemoteLogoutSignalAsync(message);
+            return;
+        }
+
+        if (title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase)
+            && message.Contains("StaleTimeout", StringComparison.OrdinalIgnoreCase))
+        {
+            await InvokeAsync(() =>
+            {
+                _notificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Record Lock Released",
+                    Detail = "Record lock has been released.",
+                    Duration = duration
+                });
+            });
             return;
         }
 

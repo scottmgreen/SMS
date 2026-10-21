@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -61,7 +61,7 @@ public partial class TechnicalAssessmentStep1
         else if (length < minLength)
             return $"{length}/{minLength} characters (minimum {minLength} required)";
         else
-            return $"{length} characters ✓";
+            return $"{length} characters ?";
     }
 
     private string GetLeadAssessorValidation()
@@ -74,7 +74,7 @@ public partial class TechnicalAssessmentStep1
         var selectedAssessor = AvailableAssessors?.FirstOrDefault(a => a.Code == Step1.LeadAssessor);
         if (!ReferenceEquals(selectedAssessor, null))
         {
-            return $"Selected: {selectedAssessor.DisplayName} ✓";
+            return $"Selected: {selectedAssessor.DisplayName} ?";
         }
 
         return "Invalid assessor selection";

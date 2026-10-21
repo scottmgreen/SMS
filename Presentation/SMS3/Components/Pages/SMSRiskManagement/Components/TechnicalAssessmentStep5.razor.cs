@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -40,7 +40,7 @@ public partial class TechnicalAssessmentStep5
     private Dictionary<string, string> MonitoringOrganizations { get; set; } = new();
     private Dictionary<string, string> ReviewTriggers { get; set; } = new();
 
-    // ✅ NEW: Collapsible state tracking per hazard and section
+    // ? NEW: Collapsible state tracking per hazard and section
     private Dictionary<string, bool> MitigationSectionsCollapsed { get; set; } = new();
     private Dictionary<string, bool> ScoringPanelSectionsCollapsed { get; set; } = new();
     private Dictionary<string, bool> AnalysisSectionsCollapsed { get; set; } = new();
@@ -61,7 +61,7 @@ public partial class TechnicalAssessmentStep5
         "Continuous", "Daily", "Weekly", "Monthly", "Quarterly", "Annually"
     };
 
-    // ✅ UPDATED: Replace hardcoded organization list with SMSOrganization enum
+    // ? UPDATED: Replace hardcoded organization list with SMSOrganization enum
     private List<string> Organizations => SMSOrganization.GetAllOrganizations()
         .Select(o => o.Name)
         .OrderBy(name => name)
@@ -131,7 +131,7 @@ public partial class TechnicalAssessmentStep5
     }
     protected override async Task OnInitializedAsync()
     {
-        // ✅ Load existing mitigations for all hazards
+        // ? Load existing mitigations for all hazards
         await LoadExistingMitigationsForAllHazards();
 
         // Note: Residual risk analysis data loading is now handled by Step5Model.LoadExistingResidualRiskAnalysesAsync
@@ -141,7 +141,7 @@ public partial class TechnicalAssessmentStep5
 
 
     /// <summary>
-    /// ✅ NEW: Load existing mitigations for all hazards to populate Step5 model data
+    /// ? NEW: Load existing mitigations for all hazards to populate Step5 model data
     /// </summary>
     private async Task LoadExistingMitigationsForAllHazards()
     {
@@ -170,7 +170,7 @@ public partial class TechnicalAssessmentStep5
                     {
                         var mitigations = result.Value.ToList();
 
-                        // ✅ FIXED: Now using correct Mitigation entities
+                        // ? FIXED: Now using correct Mitigation entities
                         Step5.HazardMitigations[hazard.Code] = mitigations;
                         Step5.SavedMitigationStrategies[hazard.Code] = mitigations.Select(m => m.Name ?? "Unnamed Mitigation").ToList();
 
@@ -312,8 +312,8 @@ public partial class TechnicalAssessmentStep5
 
     private bool HasMitigations(Hazard hazard)
     {
-        // ✅ IMPROVED: Use multiple data sources and prioritize Step5 model data first
-        Logger.LogInformation("🔍 HasMitigations DEBUG for hazard {HazardCode}:", hazard.Code);
+        // ? IMPROVED: Use multiple data sources and prioritize Step5 model data first
+        Logger.LogInformation("?? HasMitigations DEBUG for hazard {HazardCode}:", hazard.Code);
 
         // First check Step5 HazardMitigations dictionary (most reliable after sync)
         var hazardMitigationsHas = Step5.HazardMitigations?.ContainsKey(hazard.Code) == true && 
@@ -358,10 +358,10 @@ public partial class TechnicalAssessmentStep5
     //     };
     // }
 
-    #region ✅ Residual Risk Analysis Methods - REFACTORED to use @bind-Value pattern
+    #region ? Residual Risk Analysis Methods - REFACTORED to use @bind-Value pattern
 
     /// <summary>
-    /// ✅ Handle residual risk analysis field changes using proper Domain Entities - Updated to match Step3 pattern
+    /// ? Handle residual risk analysis field changes using proper Domain Entities - Updated to match Step3 pattern
     /// </summary>
     private async Task OnAnalysisFieldChanged(string hazardCode, string fieldName, ChangeEventArgs args)
     {
@@ -373,7 +373,7 @@ public partial class TechnicalAssessmentStep5
             {
 
 
-                // ✅ Update the domain entity properties
+                // ? Update the domain entity properties
                 switch (fieldName)
                 {
                     case "WorstCredibleOutcome":
@@ -387,7 +387,7 @@ public partial class TechnicalAssessmentStep5
                         break;
                 }
 
-                // ✅ Ensure the updated entity is maintained in the dictionary
+                // ? Ensure the updated entity is maintained in the dictionary
                 Step5.HazardResidualRiskAnalyses[hazardCode] = analysis;
             }
 
@@ -397,7 +397,7 @@ public partial class TechnicalAssessmentStep5
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "❌ Error updating residual analysis field {FieldName} for hazard {HazardCode}", fieldName, hazardCode);
+            Logger.LogError(ex, "? Error updating residual analysis field {FieldName} for hazard {HazardCode}", fieldName, hazardCode);
         }
     }
 
@@ -405,7 +405,7 @@ public partial class TechnicalAssessmentStep5
 
 
     /// <summary>
-    /// ✅ Save residual risk analysis using proper RiskAnalysis domain entity and CQRS
+    /// ? Save residual risk analysis using proper RiskAnalysis domain entity and CQRS
     /// </summary>
     private async Task SaveResidualAnalysisToDatabase(RiskAnalysis analysis)
     {
@@ -413,12 +413,12 @@ public partial class TechnicalAssessmentStep5
 
         try
         {
-            Logger.LogInformation("💾 Saving residual risk analysis for hazard {HazardCode} to ResidualRiskAssessment {AssessmentCode}", analysis.HazardCode, CurrentRiskAssessment.Code);
+            Logger.LogInformation("?? Saving residual risk analysis for hazard {HazardCode} to ResidualRiskAssessment {AssessmentCode}", analysis.HazardCode, CurrentRiskAssessment.Code);
 
-            // ✅ Use proper CQRS commands - check if entity exists first
+            // ? Use proper CQRS commands - check if entity exists first
             if (string.IsNullOrEmpty(analysis.Code) || analysis.Code == "RA-0000")
             {
-                Logger.LogInformation("🆕 Creating new residual RiskAnalysis for hazard {HazardCode}", analysis.HazardCode);
+                Logger.LogInformation("?? Creating new residual RiskAnalysis for hazard {HazardCode}", analysis.HazardCode);
 
                 // Create new RiskAnalysis
                 var createCommand = new CreateRiskAnalysisCommand(analysis);
@@ -428,18 +428,18 @@ public partial class TechnicalAssessmentStep5
                 {
                     // Update the Step5 model with the saved entity (which has a proper ID/Code)
                     Step5.HazardResidualRiskAnalyses[analysis.HazardCode ?? ""] = createResult.Value;
-                    Logger.LogInformation("✅ Created new residual RiskAnalysis for hazard {HazardCode} with code {Code}", 
+                    Logger.LogInformation("? Created new residual RiskAnalysis for hazard {HazardCode} with code {Code}", 
                         analysis.HazardCode, createResult.Value.Code);
                 }
                 else
                 {
-                    Logger.LogError("❌ Failed to create residual RiskAnalysis for hazard {HazardCode}: {Error}", 
+                    Logger.LogError("? Failed to create residual RiskAnalysis for hazard {HazardCode}: {Error}", 
                         analysis.HazardCode, createResult.Error?.Message ?? "Unknown error");
                 }
             }
             else
             {
-                Logger.LogInformation("🔄 Updating existing residual RiskAnalysis {Code} for hazard {HazardCode}", 
+                Logger.LogInformation("?? Updating existing residual RiskAnalysis {Code} for hazard {HazardCode}", 
                     analysis.Code, analysis.HazardCode);
 
                 // Update existing RiskAnalysis
@@ -450,20 +450,20 @@ public partial class TechnicalAssessmentStep5
                 {
                     // Update the Step5 model with the updated entity
                     Step5.HazardResidualRiskAnalyses[analysis.HazardCode ?? ""] = updateResult.Value;
-                    Logger.LogInformation("✅ Updated residual RiskAnalysis for hazard {HazardCode} with code {Code}", analysis.HazardCode, updateResult.Value.Code);
+                    Logger.LogInformation("? Updated residual RiskAnalysis for hazard {HazardCode} with code {Code}", analysis.HazardCode, updateResult.Value.Code);
                 }
                 else
                 {
-                    Logger.LogError("❌ Failed to update residual RiskAnalysis for hazard {HazardCode}: {Error}", analysis.HazardCode, updateResult.Error?.Message ?? "Unknown error");
+                    Logger.LogError("? Failed to update residual RiskAnalysis for hazard {HazardCode}: {Error}", analysis.HazardCode, updateResult.Error?.Message ?? "Unknown error");
                 }
             }
 
-            // ✅ Notify parent about Step5 changes
+            // ? Notify parent about Step5 changes
             await Step5Changed.InvokeAsync(Step5);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "❌ Error saving residual risk analysis for hazard {HazardCode}", analysis.HazardCode ?? "Unknown");
+            Logger.LogError(ex, "? Error saving residual risk analysis for hazard {HazardCode}", analysis.HazardCode ?? "Unknown");
         }
     }
 
@@ -504,8 +504,8 @@ public partial class TechnicalAssessmentStep5
     {
         try
         {
-            // ✅ ENHANCED: Load mitigations from database and sync with Step5 model
-            Logger.LogInformation("🔄 OnMitigationUpdated called for hazard {HazardCode}", hazardId);
+            // ? ENHANCED: Load mitigations from database and sync with Step5 model
+            Logger.LogInformation("?? OnMitigationUpdated called for hazard {HazardCode}", hazardId);
 
             // Load mitigations from database
             var query = new GetMitigationsByHazardCodeQuery(hazardId);
@@ -513,7 +513,7 @@ public partial class TechnicalAssessmentStep5
 
             if (result.IsSuccess && result.Value?.Any() == true)
             {
-                // ✅ SYNC: Update Step5.SavedMitigationStrategies as a simple indicator
+                // ? SYNC: Update Step5.SavedMitigationStrategies as a simple indicator
                 if (Step5.SavedMitigationStrategies == null)
                 {
                     Step5.SavedMitigationStrategies = new Dictionary<string, List<string>>();
@@ -525,19 +525,19 @@ public partial class TechnicalAssessmentStep5
                 var mitigationNames = mitigations.Select(m => m.Name ?? "Unnamed Mitigation").ToList();
                 Step5.SavedMitigationStrategies[hazardId] = mitigationNames;
 
-                Logger.LogInformation("✅ Synced {Count} mitigations to Step5.SavedMitigationStrategies[{HazardCode}]: {Names}", 
+                Logger.LogInformation("? Synced {Count} mitigations to Step5.SavedMitigationStrategies[{HazardCode}]: {Names}", 
                     mitigationNames.Count, hazardId, string.Join(", ", mitigationNames));
 
-                // ✅ CRITICAL: Update Step5.HazardMitigations with correct Mitigation entities
+                // ? CRITICAL: Update Step5.HazardMitigations with correct Mitigation entities
                 if (Step5.HazardMitigations == null)
                 {
                     Step5.HazardMitigations = new Dictionary<string, List<Mitigation>>();
                 }
                 Step5.HazardMitigations[hazardId] = mitigations;
                 
-                // ✅ FIXED: DO NOT trigger hazard scoring recalculation when adding mitigations
+                // ? FIXED: DO NOT trigger hazard scoring recalculation when adding mitigations
                 // The risk level should only change when residual scoring panels are submitted, not when mitigations are added
-                Logger.LogInformation("✅ Mitigation added successfully - Risk level preserved (no scoring recalculation triggered)");
+                Logger.LogInformation("? Mitigation added successfully - Risk level preserved (no scoring recalculation triggered)");
             }
             else
             {
@@ -551,7 +551,7 @@ public partial class TechnicalAssessmentStep5
                     Step5.HazardMitigations.Remove(hazardId);
                 }
                 
-                Logger.LogInformation("❌ Cleared Step5 mitigation data for {HazardCode} - no mitigations found", hazardId);
+                Logger.LogInformation("? Cleared Step5 mitigation data for {HazardCode} - no mitigations found", hazardId);
             }
             
             HazardMitigationRefreshVersions[hazardId] = GetMitigationRefreshVersion(hazardId) + 1;
@@ -560,7 +560,7 @@ public partial class TechnicalAssessmentStep5
             await Step5Changed.InvokeAsync(Step5);
             await InvokeAsync(StateHasChanged);
             
-            Logger.LogInformation("✅ Completed mitigation sync and state refresh for hazard {HazardCode}", hazardId);
+            Logger.LogInformation("? Completed mitigation sync and state refresh for hazard {HazardCode}", hazardId);
         }
         catch (Exception ex)
         {
@@ -574,7 +574,7 @@ public partial class TechnicalAssessmentStep5
     }
 
     /// <summary>
-    /// ✅ REFACTORED: Simplified to use HazardScoringPanel's existing logic and read from updated hazard entities
+    /// ? REFACTORED: Simplified to use HazardScoringPanel's existing logic and read from updated hazard entities
     /// </summary>
     private async Task HandleResidualHazardScored()
     {
@@ -582,7 +582,7 @@ public partial class TechnicalAssessmentStep5
         {
             Logger.LogInformation("Residual risk assessment completed for current hazard scoring session");
             
-            // ✅ Update Step5 model from all hazard entities (which HazardScoringPanel already updated)
+            // ? Update Step5 model from all hazard entities (which HazardScoringPanel already updated)
             await UpdateStep5FromAllHazardEntities();
             
             // Trigger Step5 model update
@@ -598,7 +598,7 @@ public partial class TechnicalAssessmentStep5
     }
 
     /// <summary>
-    /// ✅ NEW: Update Step5 model from hazard entities that were already updated by HazardScoringPanel
+    /// ? NEW: Update Step5 model from hazard entities that were already updated by HazardScoringPanel
     /// This eliminates the need to duplicate complex residual scoring calculation logic
     /// </summary>
     private async Task UpdateStep5FromAllHazardEntities()
@@ -637,7 +637,7 @@ public partial class TechnicalAssessmentStep5
                 }
             }
 
-            Logger.LogInformation("✅ Completed Step5 model update from hazard entities");
+            Logger.LogInformation("? Completed Step5 model update from hazard entities");
         }
         catch (Exception ex)
         {

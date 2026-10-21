@@ -104,7 +104,7 @@
         <!-- Mitigation Description -->
         <RadzenDataGridColumn TItem="Mitigation" Title="Mitigation" Width="115px" Sortable="false" Filterable="false">
             <Template Context="mitigation">
-                @{ var isLocked = IsReportGraphLocked(mitigation.ReportCode); }
+                @{ var isLocked = IsRecordLocked(mitigation.ReportCode); }
                 <RadzenButton Text="Description"
                               Icon="description"
                               ButtonStyle="ButtonStyle.Base"
@@ -120,7 +120,7 @@
         <!-- Related Hazard Description -->
         <RadzenDataGridColumn TItem="Mitigation" Title="Hazard" Width="115px" Sortable="false" Filterable="false">
             <Template Context="mitigation">
-                @{ var isLocked = IsReportGraphLocked(mitigation.ReportCode); }
+                @{ var isLocked = IsRecordLocked(mitigation.ReportCode); }
                 <RadzenButton Text="Description"
                               Icon="description"
                               ButtonStyle="ButtonStyle.Base"
@@ -171,7 +171,7 @@
         <!-- Actions Column -->
         <RadzenDataGridColumn TItem="Mitigation" Title="Actions" Width="200px" Sortable="false" Filterable="false">
             <Template Context="mitigation">
-                @{ var isLocked = IsReportGraphLocked(mitigation.ReportCode); }
+                @{ var isLocked = IsRecordLocked(mitigation.ReportCode); }
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
                     <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
                                   Tooltip="View Mitigation Details"

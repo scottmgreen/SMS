@@ -40,7 +40,7 @@
         
         <RadzenDataGridColumn TItem="ScoringPanel" Title="Actions" Width="100px" Sortable="false" Filterable="false">
             <Template Context="panel">
-                @{ var reportCode = GetReportCodeForPanel(panel); var isLocked = IsReportGraphLocked(reportCode); }
+                @{ var reportCode = GetReportCodeForPanel(panel); var isLocked = IsRecordLocked(reportCode); }
                 <RadzenButton Icon="more_vert" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
                             Click="@(() => ShowActions(panel))" Disabled="@isLocked" />
             </Template>

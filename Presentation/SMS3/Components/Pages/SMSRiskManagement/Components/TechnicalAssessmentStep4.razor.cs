@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -88,7 +88,7 @@ public partial class TechnicalAssessmentStep4
     }
 
     /// <summary>
-    /// ✅ REFACTORED: Simplified method that reads from updated hazard entities instead of duplicating scoring panel logic
+    /// ? REFACTORED: Simplified method that reads from updated hazard entities instead of duplicating scoring panel logic
     /// HazardScoringPanel component handles all complex scoring calculations and updates hazard entities
     /// This method just reads the calculated values from the hazard entities
     /// </summary>
@@ -98,7 +98,7 @@ public partial class TechnicalAssessmentStep4
         {
             Logger.LogInformation("Handling hazard scored: {HazardCode}", hazardCode);
             
-            // ✅ Let HazardScoringPanel handle all the complex logic
+            // ? Let HazardScoringPanel handle all the complex logic
             // We just need to update our Step4 model from the updated hazard entity
             await UpdateStep4FromHazardEntity(hazardCode);
             
@@ -128,7 +128,7 @@ public partial class TechnicalAssessmentStep4
     }
 
     /// <summary>
-    /// ✅ NEW: Update Step4 model from hazard entity that was already updated by HazardScoringPanel
+    /// ? NEW: Update Step4 model from hazard entity that was already updated by HazardScoringPanel
     /// This eliminates the need to duplicate the complex scoring calculation logic
     /// </summary>
     private async Task UpdateStep4FromHazardEntity(string hazardCode)
@@ -168,7 +168,7 @@ public partial class TechnicalAssessmentStep4
     }
 
     /// <summary>
-    /// ✅ REFACTORED: Load Step4 data from hazard entities instead of duplicating scoring panel queries
+    /// ? REFACTORED: Load Step4 data from hazard entities instead of duplicating scoring panel queries
     /// This method initializes Step4 model from existing hazard entity data
     /// </summary>
     private async Task LoadStep4DataFromHazardEntities()
@@ -194,12 +194,12 @@ public partial class TechnicalAssessmentStep4
                         Step4.HazardRiskLevels[hazard.Code] = hazard.HazardRiskLevel ?? RiskLevel.Unkonwn;
                         Step4.HazardMatrixCodes[hazard.Code] = hazard.InitialRiskMatrixCode ?? "Unknown";
 
-                        Logger.LogInformation("✅ Loaded Step4 data for hazard {HazardCode} from entity: Score={Score:F2}, Matrix={Matrix}, Risk={Risk}",
+                        Logger.LogInformation("? Loaded Step4 data for hazard {HazardCode} from entity: Score={Score:F2}, Matrix={Matrix}, Risk={Risk}",
                             hazard.Code, hazard.InitialAverageScore.Value, hazard.InitialRiskMatrixCode, hazard.HazardRiskLevel?.Value ?? "Unknown");
                     }
                     else
                     {
-                        Logger.LogInformation("⚠️ No initial scoring data available for hazard {HazardCode}", hazard.Code);
+                        Logger.LogInformation("?? No initial scoring data available for hazard {HazardCode}", hazard.Code);
                     }
                 }
                 catch (Exception ex)
@@ -208,7 +208,7 @@ public partial class TechnicalAssessmentStep4
                 }
             }
 
-            Logger.LogInformation("✅ LoadStep4DataFromHazardEntities completed: {Count} hazards with scores",
+            Logger.LogInformation("? LoadStep4DataFromHazardEntities completed: {Count} hazards with scores",
                 Step4.HazardAverageScores.Count);
         }
         catch (Exception ex)
@@ -339,7 +339,7 @@ public partial class TechnicalAssessmentStep4
         else if (length < minLength)
             return $"{length}/{minLength} characters (minimum {minLength} required)";
         else
-            return $"{length} characters ✓";
+            return $"{length} characters ?";
     }
 }
 

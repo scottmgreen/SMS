@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 
 using Microsoft.AspNetCore.Components;
 
@@ -49,8 +49,8 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
     private readonly Dictionary<string, string> _hazardCodeToReportCodeMap = new(StringComparer.OrdinalIgnoreCase);
     private int _totalCount;
     private bool _isLoading = false;
-    private readonly HashSet<string> _lockedReportGraphKeys = new(StringComparer.OrdinalIgnoreCase);
-    private string _activeReportGraphLockKey = string.Empty;
+    private readonly HashSet<string> _lockedRecordKeys = new(StringComparer.OrdinalIgnoreCase);
+    private string _activeRecordLockKey = string.Empty;
     private string _activeReportCode = string.Empty;
     #endregion
     
@@ -58,23 +58,23 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
     protected override async Task OnInitializedAsync()
     {
         EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
-        HydrateLockedReportGraphKeys();
+        HydrateLockedRecordKeys();
         await LoadInitialData();
     }
 
-    private void HydrateLockedReportGraphKeys()
+    private void HydrateLockedRecordKeys()
     {
-        _lockedReportGraphKeys.Clear();
-        foreach (var lockKey in ReportGraphLockStateStore.GetLockedKeys())
+        _lockedRecordKeys.Clear();
+        foreach (var lockKey in RecordLockStateStore.GetLockedKeys())
         {
-            _lockedReportGraphKeys.Add(lockKey);
+            _lockedRecordKeys.Add(lockKey);
         }
     }
 
     public void Dispose()
     {
         EventBusDispatcher.Unregister(this);
-        _ = InvokeAsync(() => ReleaseActiveReportGraphLockAsync("NavigationAway"));
+        _ = InvokeAsync(() => ReleaseActiveRecordLockAsync("NavigationAway"));
     }
 
     public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
@@ -86,7 +86,7 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
         }
 
         var lockKey = LiveUpdateRecordLockMessage.TryExtractLockKey(message);
-        if (!LiveUpdateReportGraphLock.TryGetReportCode(lockKey, out _))
+        if (!LiveUpdateRecordLock.TryGetReportCode(lockKey, out _))
         {
             return;
         }
@@ -95,11 +95,11 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
         {
             if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
             {
-                _lockedReportGraphKeys.Add(lockKey!);
+                _lockedRecordKeys.Add(lockKey!);
             }
             else
             {
-                _lockedReportGraphKeys.Remove(lockKey!);
+                _lockedRecordKeys.Remove(lockKey!);
                 await LoadInitialData();
                 if (_locationsGrid is not null)
                 {
@@ -116,18 +116,24 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
         return $"hazard-location-listing:{_currentUserService?.UserCode}:{GetHashCode()}";
     }
 
-    private bool IsReportGraphLocked(string? reportCode)
+    private bool IsRecordLocked(string? reportCode)
     {
         if (string.IsNullOrWhiteSpace(reportCode) || string.Equals(reportCode, "N/A", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
-        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
-        return _lockedReportGraphKeys.Contains(lockKey) || ReportGraphLockStateStore.IsLockKeyLocked(lockKey);
+        var lockKey = LiveUpdateRecordLock.BuildKey(reportCode);
+        var isStoreLocked = RecordLockStateStore.IsLockKeyLocked(lockKey);
+        if (!isStoreLocked)
+        {
+            _lockedRecordKeys.Remove(lockKey);
+        }
+
+        return _lockedRecordKeys.Contains(lockKey) || isStoreLocked;
     }
 
-    private async Task<bool> TryAcquireReportGraphLockAsync(string? reportCode, string action)
+    private async Task<bool> TryAcquireRecordLockAsync(string? reportCode, string action)
     {
         if (string.IsNullOrWhiteSpace(reportCode) || string.Equals(reportCode, "N/A", StringComparison.OrdinalIgnoreCase))
         {
@@ -135,26 +141,26 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
             return false;
         }
 
-        var lockKey = LiveUpdateReportGraphLock.BuildKey(reportCode);
-        if (_lockedReportGraphKeys.Contains(lockKey))
+        var lockKey = LiveUpdateRecordLock.BuildKey(reportCode);
+        if (_lockedRecordKeys.Contains(lockKey))
         {
             await _notificationHelper.ShowWarningAsync($"Report {reportCode} and related records are locked by another session.");
             return false;
         }
 
-        _activeReportGraphLockKey = lockKey;
+        _activeRecordLockKey = lockKey;
         _activeReportCode = reportCode;
-        _lockedReportGraphKeys.Add(lockKey);
-        await PublishReportGraphLockAsync(lockKey, true, action);
+        _lockedRecordKeys.Add(lockKey);
+        await PublishRecordLockAsync(lockKey, true, action);
         return true;
     }
 
-    private async Task ReleaseActiveReportGraphLockAsync(string action)
+    private async Task ReleaseActiveRecordLockAsync(string action)
     {
-        var lockKey = _activeReportGraphLockKey;
+        var lockKey = _activeRecordLockKey;
         if (string.IsNullOrWhiteSpace(lockKey) && !string.IsNullOrWhiteSpace(_activeReportCode))
         {
-            lockKey = LiveUpdateReportGraphLock.BuildKey(_activeReportCode);
+            lockKey = LiveUpdateRecordLock.BuildKey(_activeReportCode);
         }
 
         if (string.IsNullOrWhiteSpace(lockKey))
@@ -162,13 +168,13 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
             return;
         }
 
-        _activeReportGraphLockKey = string.Empty;
+        _activeRecordLockKey = string.Empty;
         _activeReportCode = string.Empty;
-        _lockedReportGraphKeys.Remove(lockKey);
-        await PublishReportGraphLockAsync(lockKey, false, action);
+        _lockedRecordKeys.Remove(lockKey);
+        await PublishRecordLockAsync(lockKey, false, action);
     }
 
-    private async Task PublishReportGraphLockAsync(string lockKey, bool isLocked, string action)
+    private async Task PublishRecordLockAsync(string lockKey, bool isLocked, string action)
     {
         await _liveUpdatesPublisher.PublishToApplicationUsersAsync(new LiveUpdateEnvelope
         {
@@ -670,7 +676,7 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
     private async Task ViewLocationMap(HazardLocation location)
     {
         var reportCode = GetReportCodeForLocation(location);
-        if (!await TryAcquireReportGraphLockAsync(reportCode, "ViewMapOpen").ConfigureAwait(false))
+        if (!await TryAcquireRecordLockAsync(reportCode, "ViewMapOpen").ConfigureAwait(false))
         {
             return;
         }
@@ -780,12 +786,12 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
                     CloseDialogOnOverlayClick = false
                 });
 
-            await ReleaseActiveReportGraphLockAsync("ViewMapClosed").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("ViewMapClosed").ConfigureAwait(false);
             await ShowInfoAsyncNotification($"Opened location map for {location.Code}");
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("ViewMapFailed").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("ViewMapFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error opening location map for {LocationCode}", location.Code);
             await ShowErrorAsyncNotification("Error opening location map");
         }
@@ -827,7 +833,7 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
     private async Task ValidateLocation(HazardLocation location)
     {
         var reportCode = GetReportCodeForLocation(location);
-        if (!await TryAcquireReportGraphLockAsync(reportCode, "ValidateStart").ConfigureAwait(false))
+        if (!await TryAcquireRecordLockAsync(reportCode, "ValidateStart").ConfigureAwait(false))
         {
             return;
         }
@@ -857,7 +863,7 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
 
             if (confirmResult != true)
             {
-                await ReleaseActiveReportGraphLockAsync("ValidateCancelled").ConfigureAwait(false);
+                await ReleaseActiveRecordLockAsync("ValidateCancelled").ConfigureAwait(false);
                 return;
             }
 
@@ -879,13 +885,13 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
         }
         catch (Exception ex)
         {
-            await ReleaseActiveReportGraphLockAsync("ValidateFailed").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("ValidateFailed").ConfigureAwait(false);
             _logger.LogError(ex, "Error validating location {LocationCode}", location?.Code);
             await ShowErrorAsyncNotification("Error validating location.");
         }
         finally
         {
-            await ReleaseActiveReportGraphLockAsync("ValidateCompleted").ConfigureAwait(false);
+            await ReleaseActiveRecordLockAsync("ValidateCompleted").ConfigureAwait(false);
         }
     }
     #endregion

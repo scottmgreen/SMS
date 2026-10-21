@@ -1,4 +1,4 @@
-﻿
+
 @using Radzen
 @using Radzen.Blazor
 @using SMS3.Components.Shared.Components
@@ -34,7 +34,7 @@
             {
                 <div class="navbar-nav d-flex flex-row align-items-center me-auto">
                     
-                    <!-- 🔐 SESSION TIMER - Hidden but still functional for modal trigger -->
+                    <!-- ?? SESSION TIMER - Hidden but still functional for modal trigger -->
                     
                     
                     <!-- SMS Risk Management Menu -->
@@ -307,6 +307,23 @@
                                         else
                                         {
                                             <RadzenMenuItem Text="No active users detected" Icon="info" />
+                                        }
+                                    </RadzenMenuItem>
+
+                                    <RadzenMenuItem Text="Current Locks" Icon="lock_clock">
+                                        @if (_activeRecordLocks.Any())
+                                        {
+                                            @foreach (var activeLock in _activeRecordLocks)
+                                            {
+                                                var owner = string.IsNullOrWhiteSpace(activeLock.LockedByUserCode)
+                                                    ? "Unknown"
+                                                    : activeLock.LockedByUserCode;
+                                                <RadzenMenuItem Text="@($"{activeLock.ReportCode} | {owner}")" Icon="lock" />
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <RadzenMenuItem Text="No active locks" Icon="info" />
                                         }
                                     </RadzenMenuItem>
                                 }

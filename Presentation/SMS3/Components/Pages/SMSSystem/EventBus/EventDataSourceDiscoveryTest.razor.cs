@@ -1,4 +1,4 @@
-﻿// <copyright file="EventDataSourceDiscoveryTest.cs" company="SMS Safety Management System">
+// <copyright file="EventDataSourceDiscoveryTest.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
 //     Description: Test demonstration of dynamic event data source discovery.

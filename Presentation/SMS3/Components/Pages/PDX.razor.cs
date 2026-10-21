@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -28,7 +28,7 @@ private bool IsProcessing { get; set; } = false;
         {
             IsProcessing = true;
             
-            Logger.LogInformation("✅ User accepted PDX terms, proceeding to login");
+            Logger.LogInformation("? User accepted PDX terms, proceeding to login");
             
             // Simulate processing delay for better UX
             await Task.Delay(500);

@@ -1,4 +1,4 @@
-﻿namespace SMS3.Components.Shared;
+namespace SMS3.Components.Shared;
 
 /// <summary>
 /// Helper class for replacing parameters in LINQ expressions

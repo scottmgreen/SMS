@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Options;
 
 using SMS_Application.Commands;
 using SMS_Application.Queries;
@@ -30,6 +30,7 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private ISMSJobTitleRepository _jobTitleRepository { get; set; } = default!;
     [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
+    [Inject] private IRecordLockLeaseCoordinator _recordLockLeaseCoordinator { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -328,6 +329,7 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
     public void Dispose()
     {
         EventBusDispatcher.Unregister(this);
+        _recordLockLeaseCoordinator.StopHeartbeat(BuildCurrentSessionKey());
     }
 
     public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
@@ -1295,18 +1297,24 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
             return false;
         }
 
-        return _lockedRecordKeys.Contains(BuildRecordLockKey(userCode));
+        var lockKey = BuildRecordLockKey(userCode);
+        return _lockedRecordKeys.Contains(lockKey) || RecordLockStateStore.IsLockKeyLocked(lockKey);
     }
 
     private async Task<bool> TryAcquireRecordLockAsync(string lockKey, string action)
     {
-        if (_lockedRecordKeys.Contains(lockKey))
+        if (_lockedRecordKeys.Contains(lockKey) || RecordLockStateStore.IsLockKeyLocked(lockKey))
         {
             return false;
         }
 
         _activeEditLockKey = lockKey;
-        await PublishRecordLockAsync(lockKey, true, action);
+        await _recordLockLeaseCoordinator.OnLockAcquiredAsync(
+            BuildCurrentSessionKey(),
+            lockKey,
+            _currentUserService?.UserCode,
+            PublishRecordLockAsync,
+            action);
         _lockedRecordKeys.Add(lockKey);
         return true;
     }
@@ -1326,7 +1334,12 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
         }
 
         _activeEditLockKey = string.Empty;
-        await PublishRecordLockAsync(lockKey, false, action);
+        await _recordLockLeaseCoordinator.OnLockReleasedAsync(
+            BuildCurrentSessionKey(),
+            lockKey,
+            _currentUserService?.UserCode,
+            PublishRecordLockAsync,
+            action);
         _lockedRecordKeys.Remove(lockKey);
     }
 
@@ -1338,7 +1351,7 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
             SourceModule = nameof(OrganizationalUsers),
             OccurredOn = DateTime.Now,
             ActorUserCode = _currentUserService?.UserCode,
-            Message = LiveUpdateRecordLockMessage.Build(lockKey, action),
+            Message = LiveUpdateRecordLockMessage.Build(lockKey, action, _currentUserService?.UserCode),
             EntityType = nameof(SMSOrganizationalUser),
             EntityCode = lockKey
         });
