@@ -35,6 +35,50 @@ public partial class Login : ComponentBase
     private LoginFormModel LoginModel { get; set; } = new();
     private string ErrorMessage { get; set; } = string.Empty;
     private bool IsLoading { get; set; } = false;
+    private bool _sessionResetAttempted;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await EnsureCleanLoginSessionAsync();
+    }
+
+    private async Task EnsureCleanLoginSessionAsync()
+    {
+        if (_sessionResetAttempted)
+        {
+            return;
+        }
+
+        _sessionResetAttempted = true;
+
+        try
+        {
+            var existingUserCode = _currentUserService?.UserCode;
+
+            SessionTimerService.StopTimer();
+
+            if (!string.IsNullOrWhiteSpace(existingUserCode))
+            {
+                _activeUserSessionRegistry.RemoveSessionsForUser(existingUserCode);
+            }
+
+            await _currentUserService.ClearAuthentication();
+            await SessionService.ClearPending2FAUserAsync();
+            await SessionService.ClearSMSSessionAsync();
+
+            var context = HttpContextAccessor.HttpContext;
+            if (context?.Response is not null && !context.Response.HasStarted)
+            {
+                context.Response.Cookies.Delete("SMS_UserCodeHint", new CookieOptions { Path = "/" });
+            }
+
+            await ClearUserHintCookieClientSideAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to fully clear existing session state on login page initialization.");
+        }
+    }
 
     private async Task HandleLoginAsync(LoginFormModel model)
     {
@@ -83,6 +127,19 @@ public partial class Login : ComponentBase
                             ErrorMessage = "Failed to initiate 2FA process. Please try again.";
                             return;
                         }
+
+    private async Task ClearUserHintCookieClientSideAsync()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval",
+                "document.cookie='SMS_UserCodeHint=; path=/; max-age=0; SameSite=Lax; Secure'");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogDebug(ex, "Could not clear client-side SMS_UserCodeHint cookie.");
+        }
+    }
                         
                         // ?? VERIFICATION: Ensure stored user matches current user (prevent contamination)
                         if (storedUser.Value.User.UserName.Value != model.Username)
