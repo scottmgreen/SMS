@@ -124,5 +124,9 @@
 
 ## Memory
 - Use 'Organization' terminology instead of 'Department' in code and UI where possible; avoid conflating Organization with OrganizationalUser entity.
-- When explicitly requested, remove compatibility wrappers instead of retaining them (e.g., remove SMSDepartmentError and use SMSOrganizationError only).
+- When explicitly requested, remove compatibility wrappers instead of retaining them (e.g., remove SMSDepartmentError and use SMSOrganizationError only). 
 - The SMS3 project should not contain Models classes; model types should be moved out of Presentation (e.g., into Domain entities).
+
+## Git Commands
+- Provide lists of git commands only; do not execute commands.
+- Avoid executing git commands inside Visual Studio because it can hang; provide external cmd/PowerShell automation scripts instead.

@@ -36,6 +36,8 @@ public partial class NavMenu
     private bool _isFullyAuthenticated;
     private bool _isLogoutInitiated;
     private bool _hasRegisteredCurrentSession;
+    private DateTime _lastAuthenticationSuccessUtc;
+    private static readonly TimeSpan AuthStateDropGuardWindow = TimeSpan.FromMinutes(2);
 
     // Environment Detection - Always production appearance
     private string BrandCssClass => "";
@@ -300,7 +302,6 @@ public partial class NavMenu
                         continue;
                     }
 
-                    RegisterCurrentUserActivity();
                     await LoadPendingIntegrationEventCountAsync();
                 }
 
@@ -716,6 +717,7 @@ public partial class NavMenu
 
         if (_currentUserService?.IsFullyAuthenticated == true)
         {
+            _lastAuthenticationSuccessUtc = DateTime.UtcNow;
             _logger.LogInformation("NavMenu auth resolve succeeded immediately for user {UserCode}.", _currentUserService?.UserCode);
             return true;
         }
@@ -734,7 +736,20 @@ public partial class NavMenu
 
             if (_currentUserService?.IsFullyAuthenticated == true)
             {
+                _lastAuthenticationSuccessUtc = DateTime.UtcNow;
                 _logger.LogInformation("NavMenu auth resolve succeeded on retry {Attempt} for user {UserCode}.", attempt + 1, _currentUserService?.UserCode);
+                return true;
+            }
+        }
+
+        if (!_isLogoutInitiated && _isFullyAuthenticated && _lastAuthenticationSuccessUtc != default)
+        {
+            var elapsedSinceSuccess = DateTime.UtcNow - _lastAuthenticationSuccessUtc;
+            if (elapsedSinceSuccess <= AuthStateDropGuardWindow)
+            {
+                _logger.LogWarning("NavMenu auth drop blocked by guard window ({ElapsedSeconds}s <= {GuardSeconds}s).",
+                    elapsedSinceSuccess.TotalSeconds,
+                    AuthStateDropGuardWindow.TotalSeconds);
                 return true;
             }
         }

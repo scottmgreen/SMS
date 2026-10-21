@@ -16,6 +16,8 @@ namespace SMS3.Components.Layout;
 public partial class MainLayout
 {
     private const string RemoteLogoutSignalTitle = "SMS_REMOTE_LOGOUT_SIGNAL";
+    private const char RemoteLogoutPayloadSeparator = '|';
+    private readonly string _layoutFallbackSessionKey = $"layout:{Guid.NewGuid():N}";
 
 [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private ISMSSessionService _sessionService { get; set; } = default!;
@@ -24,6 +26,7 @@ public partial class MainLayout
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<MainLayout> _logger { get; set; } = default!;
     [Inject] private NotificationService _notificationService { get; set; } = default!;
+[Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private IHttpContextAccessor _httpContextAccessor { get; set; } = default!;
     [Inject] private IActiveUserSessionRegistry _activeUserSessionRegistry { get; set; } = default!;
 
@@ -97,6 +100,11 @@ public partial class MainLayout
 
         try
         {
+            if (!await ConfirmMultiSessionLogoutAsync(initiatingUserCode, initiatingSessionKey))
+            {
+                return;
+            }
+
             // Get current user info BEFORE clearing session authentication
             if (_currentUserService.IsAuthenticated)
             {
@@ -127,12 +135,14 @@ public partial class MainLayout
 
             if (!string.IsNullOrWhiteSpace(initiatingUserCode))
             {
+                var remoteLogoutPayload = $"{initiatingUserCode}{RemoteLogoutPayloadSeparator}{initiatingSessionKey}";
                 await EventBusDispatcher.DispatchNotificationAsync(
                     NotificationSeverity.Info,
                     RemoteLogoutSignalTitle,
-                    initiatingSessionKey,
-                    duration: 0,
-                    targetUserCode: initiatingUserCode);
+                    remoteLogoutPayload,
+                    duration: 0);
+
+                await WaitForOtherSessionsToLogoutAsync(initiatingUserCode, initiatingSessionKey, TimeSpan.FromSeconds(3));
             }
 
             // ?? Record logout audit BEFORE clearing authentication (and wait for it)
@@ -208,8 +218,32 @@ public partial class MainLayout
     {
         try
         {
+            var initiatingUserCode = string.Empty;
+            var signalSessionKey = initiatingSessionKey;
+
+            if (!string.IsNullOrWhiteSpace(initiatingSessionKey))
+            {
+                var separatorIndex = initiatingSessionKey.IndexOf(RemoteLogoutPayloadSeparator);
+                if (separatorIndex > 0 && separatorIndex < initiatingSessionKey.Length - 1)
+                {
+                    initiatingUserCode = initiatingSessionKey[..separatorIndex];
+                    signalSessionKey = initiatingSessionKey[(separatorIndex + 1)..];
+                }
+            }
+
             var currentSessionKey = BuildCurrentSessionKey();
-            if (string.Equals(currentSessionKey, initiatingSessionKey, StringComparison.Ordinal))
+
+            if (!string.IsNullOrWhiteSpace(initiatingUserCode))
+            {
+                var currentUserCode = ResolveUserCodeForSession(currentSessionKey);
+                if (!string.IsNullOrWhiteSpace(currentUserCode)
+                    && !string.Equals(currentUserCode, initiatingUserCode, StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+            }
+
+            if (string.Equals(currentSessionKey, signalSessionKey, StringComparison.Ordinal))
             {
                 return;
             }
@@ -269,10 +303,81 @@ public partial class MainLayout
             return $"conn:{connectionId}";
         }
 
-        var userCode = _currentUserService?.UserCode ?? "unknown";
-        var remoteIp = context?.Connection?.RemoteIpAddress?.ToString() ?? "unknown";
-        var userAgent = context?.Request?.Headers["User-Agent"].FirstOrDefault() ?? "unknown";
-        return $"fallback:{userCode}:{remoteIp}:{userAgent.GetHashCode()}";
+        return _layoutFallbackSessionKey;
+    }
+
+    private string ResolveUserCodeForSession(string sessionKey)
+    {
+        var currentUserCode = _currentUserService?.UserCode ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(currentUserCode))
+        {
+            return currentUserCode;
+        }
+
+        if (string.IsNullOrWhiteSpace(sessionKey))
+        {
+            return string.Empty;
+        }
+
+        return _activeUserSessionRegistry
+            .GetActiveSessions()
+            .FirstOrDefault(x => string.Equals(x.SessionKey, sessionKey, StringComparison.OrdinalIgnoreCase))
+            ?.UserCode
+            ?? string.Empty;
+    }
+
+    private async Task<bool> ConfirmMultiSessionLogoutAsync(string userCode, string currentSessionKey)
+    {
+        if (string.IsNullOrWhiteSpace(userCode))
+        {
+            return true;
+        }
+
+        var otherSessionCount = _activeUserSessionRegistry
+            .GetActiveSessions()
+            .Count(x => string.Equals(x.UserCode, userCode, StringComparison.OrdinalIgnoreCase)
+                        && !string.Equals(x.SessionKey, currentSessionKey, StringComparison.OrdinalIgnoreCase));
+
+        var displayedOtherSessionCount = Math.Max(0, otherSessionCount + 1);
+        var confirmMessage = displayedOtherSessionCount <= 1
+            ? "This action will end your current session. Continue?"
+            : $"This action will end this session and {displayedOtherSessionCount} other active session(s). Continue?";
+
+        var confirmed = await _dialogService.Confirm(
+            confirmMessage,
+            "Confirm Logoff",
+            new ConfirmOptions
+            {
+                OkButtonText = "Log Off All",
+                CancelButtonText = "Cancel"
+            });
+
+        return confirmed == true;
+    }
+
+    private async Task WaitForOtherSessionsToLogoutAsync(string userCode, string currentSessionKey, TimeSpan timeout)
+    {
+        if (string.IsNullOrWhiteSpace(userCode) || timeout <= TimeSpan.Zero)
+        {
+            return;
+        }
+
+        var timeoutAt = DateTime.UtcNow.Add(timeout);
+
+        while (DateTime.UtcNow < timeoutAt)
+        {
+            var hasOtherSessions = _activeUserSessionRegistry
+                .GetActiveSessions()
+                .Any(x => string.Equals(x.UserCode, userCode, StringComparison.OrdinalIgnoreCase)
+                          && !string.Equals(x.SessionKey, currentSessionKey, StringComparison.OrdinalIgnoreCase));
+
+            if (!hasOtherSessions)
+            {
+                return;
+            }
+
+            await Task.Delay(100);
+        }
     }
 }
 
