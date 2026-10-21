@@ -463,15 +463,6 @@ public class SessionCurrentUserService : ICurrentUserService
                     return _lastResolvedAuthData;
                 }
 
-                // Blazor Server interactive phases often have no HttpContext.
-                // Try constrained global fallback so auth can still be resolved.
-                var singleUserFallbackWhenNoContext = TryGetRecentSingleUserCircuitAuthDataFallback();
-                if (singleUserFallbackWhenNoContext != null)
-                {
-                    _lastResolvedAuthData = singleUserFallbackWhenNoContext;
-                    return singleUserFallbackWhenNoContext;
-                }
-
                 return null;
             }
 
@@ -535,50 +526,6 @@ public class SessionCurrentUserService : ICurrentUserService
                     _lastResolvedAuthData = sessionCookieData;
                     return sessionCookieData;
                 }
-            }
-
-            // Method 5: Fallback by current session user when available
-            try
-            {
-                var contextSession = TryGetSession(context);
-                var sessionUserCode = contextSession?.GetString("SMS_UserCode");
-                if (!string.IsNullOrWhiteSpace(sessionUserCode))
-                {
-                    var userData = _circuitAuthStorage.GetAuthDataByUserId(sessionUserCode);
-                    if (userData != null)
-                    {
-                        _logger.LogApplicationDebug("Auth source hit: session user fallback {UserCode}.", sessionUserCode);
-                        _lastResolvedAuthData = userData;
-                        return userData;
-                    }
-                }
-
-                // Method 6: Fallback by user-code hint cookie (set at login)
-                if (context?.Request?.Cookies.TryGetValue("SMS_UserCodeHint", out var cookieUserCode) == true
-                    && !string.IsNullOrWhiteSpace(cookieUserCode))
-                {
-                    var cookieUserData = _circuitAuthStorage.GetAuthDataByUserId(cookieUserCode);
-                    if (cookieUserData != null
-                        && cookieUserData.TryGetValue("IsAuthenticated", out var cookieIsAuth)
-                        && string.Equals(cookieIsAuth, "true", StringComparison.OrdinalIgnoreCase))
-                    {
-                        _logger.LogApplicationDebug("Auth source hit: SMS_UserCodeHint cookie fallback {UserCode}.", cookieUserCode);
-                        _lastResolvedAuthData = cookieUserData;
-                        return cookieUserData;
-                    }
-                }
-            }
-            catch (Exception fallbackEx)
-            {
-                _logger.LogApplicationWarning(fallbackEx, "Error in authentication data fallback lookup");
-            }
-
-            var singleUserFallback = TryGetRecentSingleUserCircuitAuthDataFallback();
-            if (singleUserFallback != null)
-            {
-                _logger.LogApplicationWarning("Auth source hit: constrained single-user fallback.");
-                _lastResolvedAuthData = singleUserFallback;
-                return singleUserFallback;
             }
 
             if (_lastResolvedAuthData != null)
