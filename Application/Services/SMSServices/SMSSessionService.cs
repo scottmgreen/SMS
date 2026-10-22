@@ -234,55 +234,29 @@ public class SMSSessionService : ISMSSessionService
                 ["Pending2FA_Protocol"] = "HTTP"
             };
 
-            var attemptedStrategies = new List<string>();
-            var strategyOrder = new[] { AuthenticationMethod.CircuitBased, AuthenticationMethod.SessionBased };
-
-            foreach (var method in strategyOrder)
+            var sessionStrategy = _strategyManager.GetStrategy(AuthenticationMethod.SessionBased);
+            if (sessionStrategy?.IsAvailable != true)
             {
-                var strategy = _strategyManager.GetStrategy(method);
-                if (strategy?.IsAvailable != true)
-                {
-                    _logger.LogApplicationWarning("{Method} strategy not available", method);
-                    continue;
-                }
-
-                attemptedStrategies.Add(method.ToString());
-
-                try
-                {
-                    var storageMethod = strategy.GetType().GetMethod("StoreUserAsync",
-                        new Type[] { typeof(BaseUser), typeof(SMSUserType), typeof(Dictionary<string, string>), typeof(CancellationToken) });
-
-                    Result<bool> storeResult = storageMethod != null
-                        ? await (Task<Result<bool>>)storageMethod.Invoke(strategy,
-                            new object[] { completeUser, userType, twoFAMarkers, CancellationToken.None })
-                        : await strategy.StoreUserAsync(completeUser, userType);
-
-                    if (storeResult.IsSuccess)
-                    {
-                        _logger.LogApplicationInformation("2FA STORAGE SUCCESS using strategy: {Strategy}", method);
-                        return;
-                    }
-
-                    _logger.LogApplicationWarning("{Method} strategy failed to store pending 2FA user: {Error}",
-                        method, storeResult.Error?.Message);
-                }
-                catch (Exception strategyEx)
-                {
-                    _logger.LogApplicationWarning(strategyEx, "{Method} strategy threw exception while storing pending 2FA user", method);
-                }
+                _logger.LogApplicationError("SessionBased strategy is not available for pending 2FA storage.");
+                throw new InvalidOperationException("2FA storage failed - SessionBased strategy unavailable.");
             }
 
-            _logger.LogApplicationError("CRITICAL FAILURE: Failed to store pending 2FA user in configured strategies. Attempted: {AttemptedStrategies}",
-                string.Join(", ", attemptedStrategies));
+            var sessionStorageMethod = sessionStrategy.GetType().GetMethod("StoreUserAsync",
+                new Type[] { typeof(BaseUser), typeof(SMSUserType), typeof(Dictionary<string, string>), typeof(CancellationToken) });
 
-            var circuitAvailable = _strategyManager.GetStrategy(AuthenticationMethod.CircuitBased)?.IsAvailable;
-            var sessionAvailable = _strategyManager.GetStrategy(AuthenticationMethod.SessionBased)?.IsAvailable;
+            Result<bool> sessionStoreResult = sessionStorageMethod != null
+                ? await (Task<Result<bool>>)sessionStorageMethod.Invoke(sessionStrategy,
+                    new object[] { completeUser, userType, twoFAMarkers, CancellationToken.None })
+                : await sessionStrategy.StoreUserAsync(completeUser, userType);
 
-            _logger.LogApplicationError("Strategy availability - Circuit: {Circuit}, Session: {Session}",
-                circuitAvailable, sessionAvailable);
+            if (sessionStoreResult.IsSuccess)
+            {
+                _logger.LogApplicationInformation("2FA STORAGE SUCCESS using strategy: {Strategy}", AuthenticationMethod.SessionBased);
+                return;
+            }
 
-            throw new InvalidOperationException($"2FA storage failed - no compatible strategy available. Attempted: {string.Join(", ", attemptedStrategies)}");
+            _logger.LogApplicationError("SessionBased strategy failed to store pending 2FA user: {Error}", sessionStoreResult.Error?.Message);
+            throw new InvalidOperationException("2FA storage failed in SessionBased strategy.");
         }
         catch (Exception ex)
         {
@@ -299,38 +273,24 @@ public class SMSSessionService : ISMSSessionService
     {
         try
         {
-            _logger.LogApplicationDebug("Retrieving pending 2FA user from multiple strategies");
+            _logger.LogApplicationDebug("Retrieving pending 2FA user from SessionBased strategy");
 
-            // Try all strategies to find 2FA data
-            var strategies = new[]
+            var sessionStrategy = _strategyManager.GetStrategy(AuthenticationMethod.SessionBased);
+            if (sessionStrategy?.IsAvailable != true)
             {
-                AuthenticationMethod.CircuitBased,
-                AuthenticationMethod.SessionBased
-            };
-
-            foreach (var strategyMethod in strategies)
-            {
-                var strategy = _strategyManager.GetStrategy(strategyMethod);
-                if (strategy?.IsAvailable == true)
-                {
-                    try
-                    {
-                        var result = strategy.RetrieveUserAsync().GetAwaiter().GetResult();
-                        if (result.IsSuccess && result.Value.HasValue)
-                        {
-                            _logger.LogApplicationDebug("Retrieved pending 2FA user from {Strategy}: {UserCode} ({UserType})", 
-                                strategy.StrategyName, result.Value.Value.User.Code, result.Value.Value.UserType.Value);
-                            return result.Value.Value;
-                        }
-                    }
-                    catch (Exception strategyEx)
-                    {
-                        _logger.LogApplicationDebug(strategyEx, "Strategy {Strategy} failed to retrieve 2FA user", strategy.StrategyName);
-                    }
-                }
+                _logger.LogApplicationDebug("SessionBased strategy unavailable while retrieving pending 2FA user");
+                return null;
             }
 
-            _logger.LogApplicationDebug("No pending 2FA user data found in configured strategies");
+            var result = sessionStrategy.RetrieveUserAsync().GetAwaiter().GetResult();
+            if (result.IsSuccess && result.Value.HasValue)
+            {
+                _logger.LogApplicationDebug("Retrieved pending 2FA user from SessionBased: {UserCode} ({UserType})",
+                    result.Value.Value.User.Code, result.Value.Value.UserType.Value);
+                return result.Value.Value;
+            }
+
+            _logger.LogApplicationDebug("No pending 2FA user data found in SessionBased strategy");
             return null;
         }
         catch (Exception ex)
@@ -348,44 +308,23 @@ public class SMSSessionService : ISMSSessionService
     {
         try
         {
-            _logger.LogApplicationInformation("Clearing pending 2FA user data from configured strategies");
+            _logger.LogApplicationInformation("Clearing pending 2FA user data from SessionBased strategy");
 
-            // Clear from all available strategies for complete cleanup
-            var cleared = false;
-            var strategies = new[]
+            var sessionStrategy = _strategyManager.GetStrategy(AuthenticationMethod.SessionBased);
+            if (sessionStrategy?.IsAvailable != true)
             {
-                AuthenticationMethod.CircuitBased,
-                AuthenticationMethod.SessionBased
-            };
-
-            foreach (var strategyMethod in strategies)
-            {
-                var strategy = _strategyManager.GetStrategy(strategyMethod);
-                if (strategy?.IsAvailable == true)
-                {
-                    try
-                    {
-                        var result = await strategy.ClearUserAsync();
-                        if (result.IsSuccess)
-                        {
-                            cleared = true;
-                            _logger.LogApplicationDebug("Cleared 2FA data from {Strategy}", strategy.StrategyName);
-                        }
-                    }
-                    catch (Exception strategyEx)
-                    {
-                        _logger.LogApplicationDebug(strategyEx, "Error clearing 2FA data from {Strategy}", strategy.StrategyName);
-                    }
-                }
+                _logger.LogApplicationWarning("SessionBased strategy unavailable while clearing pending 2FA data");
+                return;
             }
 
-            if (cleared)
+            var result = await sessionStrategy.ClearUserAsync();
+            if (result.IsSuccess)
             {
-                _logger.LogApplicationInformation("Pending 2FA user data cleared successfully from available strategies");
+                _logger.LogApplicationInformation("Pending 2FA user data cleared successfully from SessionBased strategy");
             }
             else
             {
-                _logger.LogApplicationWarning("No strategies available for clearing 2FA data");
+                _logger.LogApplicationWarning("Failed to clear pending 2FA user data from SessionBased strategy: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)

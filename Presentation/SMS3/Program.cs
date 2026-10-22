@@ -1,5 +1,7 @@
 using SMS_Application.Configuration;
 using System.Net;
+using System.IO;
+using Microsoft.AspNetCore.DataProtection;
 
 using SMS_Infrastructure.Configuration;
 using SMS_Infrastructure.Configuration.Extensions;
@@ -39,6 +41,18 @@ public class Program
         builder.Services.AddSignalR();
         builder.Services.AddRadzenComponents();
         builder.Services.AddHttpClient();
+
+        var dataProtectionPath = builder.Configuration["DataProtection:KeyRingPath"];
+        var dataProtectionAppName = builder.Configuration["DataProtection:ApplicationName"];
+        if (!string.IsNullOrWhiteSpace(dataProtectionPath) && !string.IsNullOrWhiteSpace(dataProtectionAppName))
+        {
+            Directory.CreateDirectory(dataProtectionPath);
+            builder.Services
+                .AddDataProtection()
+                .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionPath))
+                .SetApplicationName(dataProtectionAppName);
+        }
+
         // Register mock email sender for development/testing
         builder.Services.AddScoped<IEmailSender, SMS3.Components.Pages.SMSSystem.Services.MockEmailSender>();
         
@@ -250,6 +264,22 @@ public class Program
         
         // SESSION MUST BE BEFORE ROUTING AND AUTHENTICATION**
         app.UseSession();
+
+        // Ensure a session is established during normal HTTP requests before interactive
+        // component events attempt to write auth/session data.
+        var sessionCookieName = app.Configuration.GetValue<string>("SessionConfiguration:CookieName") ?? "SMS_Session";
+        app.Use(async (context, next) =>
+        {
+            if (!context.WebSockets.IsWebSocketRequest)
+            {
+                if (!context.Request.Cookies.ContainsKey(sessionCookieName))
+                {
+                    context.Session.SetString("SMS_SessionBootstrap", "1");
+                }
+            }
+
+            await next();
+        });
         
         app.UseRouting();
 

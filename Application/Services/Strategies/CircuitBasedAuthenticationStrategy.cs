@@ -29,6 +29,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
     private readonly ILogger<CircuitBasedAuthenticationStrategy> _logger;
     private readonly IUserInstantiationService _userInstantiationService;
     private readonly IBlazorCircuitAuthStorage _circuitAuthStorage;
+    private readonly ICircuitAuthScopeState _circuitAuthScopeState;
     private readonly AuthenticationConfiguration _config;
     private readonly IProtocolDetectionService _protocolDetectionService;
     
@@ -42,6 +43,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
         ILogger<CircuitBasedAuthenticationStrategy> logger,
         IUserInstantiationService userInstantiationService,
         IBlazorCircuitAuthStorage circuitAuthStorage,
+        ICircuitAuthScopeState circuitAuthScopeState,
         AuthenticationConfiguration config,
         IProtocolDetectionService protocolDetectionService)
     {
@@ -49,6 +51,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
         _logger = logger;
         _userInstantiationService = userInstantiationService;
         _circuitAuthStorage = circuitAuthStorage;
+        _circuitAuthScopeState = circuitAuthScopeState;
         _config = config;
         _protocolDetectionService = protocolDetectionService;
     }
@@ -98,6 +101,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
 
             _cachedCircuitId = circuitId;
             _cacheExpiry = DateTime.Now.Add(_cacheTimeout);
+            _circuitAuthScopeState.AuthStorageKey = circuitId;
 
             _logger.LogApplicationInformation("Storing user {UserCode} ({UserType}) in circuit storage with ID: {CircuitId}", user.Code, userType.Value, circuitId);
 
@@ -163,6 +167,8 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             var userCircuitKey = $"user_{user.Code}";
             userData["SMS_UserCircuitKey"] = userCircuitKey;
             _circuitAuthStorage.SetAuthData(userCircuitKey, userData);
+
+            _circuitAuthScopeState.AuthStorageKey = circuitId;
 
 
             _logger.LogApplicationInformation("User {UserCode} ({UserType}) stored successfully in circuit storage - Circuit: {CircuitId}, Fields: {FieldCount}", 
@@ -635,6 +641,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
 
             // Method 3: PRODUCTION FALLBACK - browser-scoped fallback identifier cookie
             var fallbackId = GenerateProductionFallbackId(context);
+            _logger.LogApplicationInformation("AuthStoreKeyPath=FallbackId (HttpContextPresent={HasContext})", context != null);
             _logger.LogApplicationInformation("PRODUCTION FALLBACK: Generated circuit ID: {FallbackId}", fallbackId);
             return fallbackId;
         }

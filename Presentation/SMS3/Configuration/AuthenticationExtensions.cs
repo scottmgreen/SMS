@@ -190,6 +190,7 @@ public static class AuthenticationExtensions
     {
         // **?? BLAZOR SERVER CIRCUIT AUTHENTICATION STORAGE**
         services.AddSingleton<SMS_Application.Services.IBlazorCircuitAuthStorage, SMS_Application.Services.BlazorCircuitAuthStorage>();
+        services.AddScoped<SMS_Application.Services.ICircuitAuthScopeState, SMS_Application.Services.CircuitAuthScopeState>();
 
         return services;
     }

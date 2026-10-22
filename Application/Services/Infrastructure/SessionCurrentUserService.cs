@@ -27,6 +27,7 @@ public class SessionCurrentUserService : ICurrentUserService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<SessionCurrentUserService> _logger;
     private readonly IBlazorCircuitAuthStorage _circuitAuthStorage;
+    private readonly ICircuitAuthScopeState _circuitAuthScopeState;
     private readonly ISMSSessionService _smsSessionService;
     private Dictionary<string, string>? _lastResolvedAuthData;
     private static readonly TimeSpan SingleUserFallbackMaxAge = TimeSpan.FromHours(2);
@@ -99,11 +100,13 @@ public class SessionCurrentUserService : ICurrentUserService
         IHttpContextAccessor httpContextAccessor, 
         ILogger<SessionCurrentUserService> logger,
         IBlazorCircuitAuthStorage circuitAuthStorage,
+        ICircuitAuthScopeState circuitAuthScopeState,
         ISMSSessionService smsSessionService)
     {
         _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _circuitAuthStorage = circuitAuthStorage ?? throw new ArgumentNullException(nameof(circuitAuthStorage));
+        _circuitAuthScopeState = circuitAuthScopeState ?? throw new ArgumentNullException(nameof(circuitAuthScopeState));
         _smsSessionService = smsSessionService ?? throw new ArgumentNullException(nameof(smsSessionService));
     }
 
@@ -458,8 +461,21 @@ public class SessionCurrentUserService : ICurrentUserService
 
             if (context == null)
             {
+                var scopedStorageKey = _circuitAuthScopeState.AuthStorageKey;
+                if (!string.IsNullOrWhiteSpace(scopedStorageKey))
+                {
+                    var scopedData = _circuitAuthStorage.GetAuthData(scopedStorageKey);
+                    if (scopedData != null)
+                    {
+                        _logger.LogApplicationInformation("AuthResolvePath=ScopedKey (HttpContext=null, Key={AuthKey})", scopedStorageKey);
+                        _lastResolvedAuthData = scopedData;
+                        return scopedData;
+                    }
+                }
+
                 if (_lastResolvedAuthData != null)
                 {
+                    _logger.LogApplicationInformation("AuthResolvePath=FallbackSnapshot (HttpContext=null, ScopedKeyMissingOrEmpty)");
                     return _lastResolvedAuthData;
                 }
 
@@ -526,6 +542,44 @@ public class SessionCurrentUserService : ICurrentUserService
                     _lastResolvedAuthData = sessionCookieData;
                     return sessionCookieData;
                 }
+            }
+
+            // Method 5: Session user fallback (browser/session scoped)
+            try
+            {
+                var contextSession = TryGetSession(context);
+                var sessionUserCode = contextSession?.GetString("SMS_UserCode");
+                if (!string.IsNullOrWhiteSpace(sessionUserCode))
+                {
+                    var userData = _circuitAuthStorage.GetAuthDataByUserId(sessionUserCode);
+                    if (userData != null
+                        && userData.TryGetValue("IsAuthenticated", out var sessionIsAuth)
+                        && string.Equals(sessionIsAuth, "true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogApplicationDebug("Auth source hit: session user fallback {UserCode}.", sessionUserCode);
+                        _lastResolvedAuthData = userData;
+                        return userData;
+                    }
+                }
+
+                // Method 6: Browser cookie user hint fallback
+                if (context?.Request?.Cookies.TryGetValue("SMS_UserCodeHint", out var cookieUserCode) == true
+                    && !string.IsNullOrWhiteSpace(cookieUserCode))
+                {
+                    var cookieUserData = _circuitAuthStorage.GetAuthDataByUserId(cookieUserCode);
+                    if (cookieUserData != null
+                        && cookieUserData.TryGetValue("IsAuthenticated", out var cookieIsAuth)
+                        && string.Equals(cookieIsAuth, "true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogApplicationDebug("Auth source hit: SMS_UserCodeHint cookie fallback {UserCode}.", cookieUserCode);
+                        _lastResolvedAuthData = cookieUserData;
+                        return cookieUserData;
+                    }
+                }
+            }
+            catch (Exception fallbackEx)
+            {
+                _logger.LogApplicationWarning(fallbackEx, "Error in authentication data fallback lookup");
             }
 
             if (_lastResolvedAuthData != null)

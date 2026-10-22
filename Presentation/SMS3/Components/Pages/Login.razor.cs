@@ -53,26 +53,7 @@ public partial class Login : ComponentBase
 
         try
         {
-            var existingUserCode = _currentUserService?.UserCode;
-
-            SessionTimerService.StopTimer();
-
-            if (!string.IsNullOrWhiteSpace(existingUserCode))
-            {
-                _activeUserSessionRegistry.RemoveSessionsForUser(existingUserCode);
-            }
-
-            await _currentUserService.ClearAuthentication();
             await SessionService.ClearPending2FAUserAsync();
-            await SessionService.ClearSMSSessionAsync();
-
-            var context = HttpContextAccessor.HttpContext;
-            if (context?.Response is not null && !context.Response.HasStarted)
-            {
-                context.Response.Cookies.Delete("SMS_UserCodeHint", new CookieOptions { Path = "/" });
-            }
-
-            await ClearUserHintCookieClientSideAsync();
         }
         catch (Exception ex)
         {
@@ -128,19 +109,6 @@ public partial class Login : ComponentBase
                             return;
                         }
 
-    private async Task ClearUserHintCookieClientSideAsync()
-    {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("eval",
-                "document.cookie='SMS_UserCodeHint=; path=/; max-age=0; SameSite=Lax; Secure'");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogDebug(ex, "Could not clear client-side SMS_UserCodeHint cookie.");
-        }
-    }
-                        
                         // ?? VERIFICATION: Ensure stored user matches current user (prevent contamination)
                         if (storedUser.Value.User.UserName.Value != model.Username)
                         {
@@ -173,6 +141,7 @@ public partial class Login : ComponentBase
                         return;
                     }
                 }
+
                 else
                 {
                     // No 2FA required - proceed with normal login
@@ -181,6 +150,7 @@ public partial class Login : ComponentBase
                     return;
                 }
             }
+
             else
             {
                 Logger.LogWarning("Authentication failed for user: {Username}", model.Username);
@@ -196,6 +166,19 @@ public partial class Login : ComponentBase
         {
             IsLoading = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task ClearUserHintCookieClientSideAsync()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval",
+                "document.cookie='SMS_UserCodeHint=; path=/; max-age=0; SameSite=Lax; Secure'");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogDebug(ex, "Could not clear client-side SMS_UserCodeHint cookie.");
         }
     }
 

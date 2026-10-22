@@ -69,6 +69,8 @@
 - When applying required-field validation style updates, include both StakeholderUsers and OrganizationalUsers pages consistently.
 - Use consistent naming conventions across user management pages, specifically using `_isCreateFormValid` and `_isEditFormValid` in Application, Stakeholder, and Organizational user pages.
 - Prefer using SMS_UserCode as the canonical authentication/session key and avoid relying on SMS_UserId where both keys exist.
+- Authentication/session behavior: same-user tabs in one browser may share session, but authentication must never bleed across different machines/users; one login must not take over any other machine's session.
+- Prefer a single authentication/session strategy (no hybrid fallback chain); HTTPS is available so use one established approach for auth and session management.
 
 ## Email Routing
 - Implement a hard business rule for email routing: emails must only be sent to group contacts as primary To recipients; if the recipient is not part of a group, no email should be sent via fallback methods. Allow CC/BCC as exceptions for manually added individual recipients.

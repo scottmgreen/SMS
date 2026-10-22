@@ -63,12 +63,6 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
                 return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
-            if (context.Response.HasStarted)
-            {
-                _logger.LogApplicationWarning("Response has already started - cannot write to session");
-                return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
-            }
-
             _logger.LogApplicationInformation("Storing user {UserCode} ({UserType}) in session", user.Code, userType.Value);
 
             await session.LoadAsync(cancellationToken);
@@ -284,7 +278,13 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
 
         try
         {
-            return context.Features.Get<ISessionFeature>()?.Session;
+            var featureSession = context.Features.Get<ISessionFeature>()?.Session;
+            if (featureSession is not null)
+            {
+                return featureSession;
+            }
+
+            return context.Session;
         }
         catch (InvalidOperationException)
         {
