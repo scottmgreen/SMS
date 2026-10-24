@@ -27,10 +27,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Documents\**" />
     <Compile Remove="Scripts\**" />
     <Compile Remove="SMSInterfaces\**" />
+    <EmbeddedResource Remove="Documents\**" />
     <EmbeddedResource Remove="Scripts\**" />
     <EmbeddedResource Remove="SMSInterfaces\**" />
+    <None Remove="Documents\**" />
     <None Remove="Scripts\**" />
     <None Remove="SMSInterfaces\**" />
   </ItemGroup>
@@ -87,9 +90,5 @@
 	<Using Include="System.Text.Json" />
     
 </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Documents\" />
-  </ItemGroup>
 
 </Project>

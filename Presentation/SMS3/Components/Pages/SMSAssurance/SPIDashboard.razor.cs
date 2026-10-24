@@ -41,6 +41,8 @@ public partial class SPIDashboard : ComponentBase, SMS3.Components.Shared.ISPIDa
     private List<SMS_Domain.Entities.SPIDataPointSummary>? TrendData { get; set; }
     private List<SMS_Domain.Entities.SPIDataPointSummary>? TrendTargetData { get; set; }
     private List<CategoryDataPoint>? CategoryData { get; set; }
+    private bool _refreshReceiverRegistered;
+    private bool _initialLoadCompleted;
     #endregion
 
     #region Filter Options
@@ -65,8 +67,19 @@ public partial class SPIDashboard : ComponentBase, SMS3.Components.Shared.ISPIDa
     #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
-        SMS3.Components.Shared.EventBusDispatcher.RegisterSPIDashboardRefresh(this);
+        if (!_refreshReceiverRegistered)
+        {
+            SMS3.Components.Shared.EventBusDispatcher.RegisterSPIDashboardRefresh(this);
+            _refreshReceiverRegistered = true;
+        }
+
+        if (_initialLoadCompleted)
+        {
+            return;
+        }
+
         await LoadDashboardDataAsync();
+        _initialLoadCompleted = true;
     }
     #endregion
 
@@ -265,7 +278,11 @@ public partial class SPIDashboard : ComponentBase, SMS3.Components.Shared.ISPIDa
 
     public void Dispose()
     {
-        SMS3.Components.Shared.EventBusDispatcher.UnregisterSPIDashboardRefresh(this);
+        if (_refreshReceiverRegistered)
+        {
+            SMS3.Components.Shared.EventBusDispatcher.UnregisterSPIDashboardRefresh(this);
+            _refreshReceiverRegistered = false;
+        }
     }
     #endregion
 

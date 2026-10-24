@@ -15,6 +15,7 @@ using SMS3.Hubs;
 using SMS_Domain.Events;
 using SMS_Application.Interfaces;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace SMS3;
 public class Program
@@ -39,6 +40,26 @@ public class Program
         builder.Services.AddSignalR();
         builder.Services.AddRadzenComponents();
         builder.Services.AddHttpClient();
+
+        var dataProtectionSection = builder.Configuration.GetSection("DataProtection");
+        var keyRingPath = dataProtectionSection.GetValue<string>("KeyRingPath");
+        var dataProtectionApplicationName = dataProtectionSection.GetValue<string>("ApplicationName", "PDXSMS");
+
+        if (!string.IsNullOrWhiteSpace(keyRingPath))
+        {
+            Directory.CreateDirectory(keyRingPath);
+            builder.Services
+                .AddDataProtection()
+                .PersistKeysToFileSystem(new DirectoryInfo(keyRingPath))
+                .SetApplicationName(dataProtectionApplicationName ?? "PDXSMS");
+        }
+        else
+        {
+            builder.Services
+                .AddDataProtection()
+                .SetApplicationName(dataProtectionApplicationName ?? "PDXSMS");
+        }
+
         // Register mock email sender for development/testing
         builder.Services.AddScoped<IEmailSender, SMS3.Components.Pages.SMSSystem.Services.MockEmailSender>();
         
@@ -250,6 +271,25 @@ public class Program
         
         // SESSION MUST BE BEFORE ROUTING AND AUTHENTICATION**
         app.UseSession();
+
+        // Ensure the session cookie is established on the initial HTTP pipeline before
+        // interactive Blazor events attempt to write session data.
+        app.Use(async (context, next) =>
+        {
+            if (context.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>()?.Session is { } session
+                && HttpMethods.IsGet(context.Request.Method)
+                && !context.Request.Path.StartsWithSegments("/_framework")
+                && !context.Request.Path.StartsWithSegments("/_content")
+                && !context.Request.Path.StartsWithSegments("/css")
+                && !context.Request.Path.StartsWithSegments("/js")
+                && !context.Request.Path.StartsWithSegments("/images")
+                && !context.Request.Path.StartsWithSegments("/favicon"))
+            {
+                session.SetString("SMS_SessionBootstrap", "1");
+            }
+
+            await next();
+        });
         
         app.UseRouting();
 
@@ -259,6 +299,34 @@ public class Program
 
         app.UseAntiforgery();
 
+        app.MapPost("/auth/establish-session", async (
+            AuthSessionRequest request,
+            SMS_Application.Interfaces.IAuthenticationService authenticationService,
+            ISMSSessionService sessionService,
+            CancellationToken cancellationToken) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
+            {
+                return Results.BadRequest(new AuthSessionResponse(false, false, "Username and password are required."));
+            }
+
+            var authResult = await authenticationService.AuthenticateAsync(request.Username, request.Password, cancellationToken);
+            if (!authResult.IsSuccess || authResult.User is null)
+            {
+                return Results.Ok(new AuthSessionResponse(false, false, authResult.ErrorMessage ?? "Invalid username or password."));
+            }
+
+            if (authResult.User.TwoFactorEnabled)
+            {
+                await sessionService.ClearPending2FAUserAsync();
+                await sessionService.StorePending2FAUserAsync(authResult.User, authResult.UserType);
+                return Results.Ok(new AuthSessionResponse(true, true, string.Empty));
+            }
+
+            await sessionService.CreateSMSSessionAsync(authResult.User, authResult.UserType);
+            return Results.Ok(new AuthSessionResponse(true, false, string.Empty));
+        }).AllowAnonymous();
+
         // BLAZOR UI
         app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
         app.MapHub<LiveUpdatesHub>("/hubs/live-updates");
@@ -266,15 +334,9 @@ public class Program
         // EVENTBUS SUBSCRIPTIONS 
         app.InitializeEventBus(); // Application layer handlers (Domain + Integration events)
 
-        // Ensure Blazor Presentation UI notification handler is explicitly wired
-        // so UINotificationEvent events can dispatch to Radzen popup notifications.
-        using (var scope = app.Services.CreateScope())
-        {
-            var eventBus = scope.ServiceProvider.GetRequiredService<IBaseEventBus>();
-            eventBus.SubscribeUI<UINotificationEvent, UIEventHandler>();
-            eventBus.SubscribeUI<SPIDashboardRefreshEvent, SPIDashboardRefreshEventHandler>();
-        }
-
         app.Run();
     }
+
+    private sealed record AuthSessionRequest(string Username, string Password);
+    private sealed record AuthSessionResponse(bool IsSuccess, bool RequiresTwoFactor, string ErrorMessage);
 }

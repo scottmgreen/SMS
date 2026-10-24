@@ -438,7 +438,7 @@ public partial class NavMenu
                          && (absoluteUri.Scheme == Uri.UriSchemeHttps || absoluteUri.Scheme == Uri.UriSchemeHttp))
                 {
                     _logger.LogInformation("Navigating to external URL: {Url}", value);
-                    _navigation.NavigateTo(value, forceLoad: true);
+                    _navigation.NavigateTo(value, forceLoad: false);
                 }
                 else
                 {

@@ -11,6 +11,8 @@
 - Large refactors must be done in batches with a QA build run between batches.
 - Batch cleanup must proceed directly without asking for confirmation before running scripts/commands.
 - Prioritize production stability and urgent restoration of deployed site functionality over exploratory changes.
+- Adopt current login/session and NavMenu state as the candidate baseline; if publish validation succeeds, treat it as the new baseline going forward.
+- Temporarily suppress noisy NavMenu authentication logging in console while stabilizing login/session baseline.
 
 ## Service Organization
 - All EventBus services must stay together in `Application/Services/EventBusServices`; files have been moved accordingly.
@@ -69,6 +71,8 @@
 - When applying required-field validation style updates, include both StakeholderUsers and OrganizationalUsers pages consistently.
 - Use consistent naming conventions across user management pages, specifically using `_isCreateFormValid` and `_isEditFormValid` in Application, Stakeholder, and Organizational user pages.
 - Prefer using SMS_UserCode as the canonical authentication/session key and avoid relying on SMS_UserId where both keys exist.
+- Enforce session/cookie authority only and remove fallback-based auth resolution paths (no user-key/global fallback reads).
+- For SessionCurrentUserService, enforce strict session-only reads by removing in-service cached snapshot fallback so values are returned only when session is readable in-context.
 
 ## Email Routing
 - Implement a hard business rule for email routing: emails must only be sent to group contacts as primary To recipients; if the recipient is not part of a group, no email should be sent via fallback methods. Allow CC/BCC as exceptions for manually added individual recipients.
@@ -127,7 +131,5 @@
 - When explicitly requested, remove compatibility wrappers instead of retaining them (e.g., remove SMSDepartmentError and use SMSOrganizationError only). 
 - The SMS3 project should not contain Models classes; model types should be moved out of Presentation (e.g., into Domain entities).
 - Prefer generic lock service naming: use IRecordLockLeaseCoordinator (and corresponding implementation names) instead of report-graph-specific names.
-
-## Git Commands
-- Provide lists of git commands only; do not execute commands.
-- Avoid executing git commands inside Visual Studio because it can hang; provide external cmd/PowerShell automation scripts instead.
+- For temporary cleanup in SMS3 auth baseline, prefer commenting out uncertain legacy code first rather than deleting it immediately.
+- Blazor circuit should always derive authentication state from the session store (session as sole auth source of truth).

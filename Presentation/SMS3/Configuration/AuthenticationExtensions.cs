@@ -140,7 +140,6 @@ public static class AuthenticationExtensions
         // Determine explicit settings based on protocol
         var isHttps = explicitProtocol.Equals("HTTPS", StringComparison.OrdinalIgnoreCase);
         var secureCookies = isHttps && forceEverywhere;
-        var strictSameSite = isHttps ? SameSiteMode.Strict : SameSiteMode.Lax;
 
         // Get session config (already registered above)
         var sessionConfig = new SMS_Application.Configuration.SessionConfiguration();
@@ -154,7 +153,7 @@ public static class AuthenticationExtensions
             
             // ?? EXPLICIT: Use protocol-based settings
             options.Cookie.SecurePolicy = secureCookies ? CookieSecurePolicy.Always : CookieSecurePolicy.None;
-            options.Cookie.SameSite = strictSameSite;
+            options.Cookie.SameSite = sessionConfig.SameSiteMode;
             
             options.Cookie.Name = sessionConfig.CookieName;
             options.Cookie.Path = sessionConfig.CookiePath;
@@ -175,7 +174,7 @@ public static class AuthenticationExtensions
             
             // ?? EXPLICIT: Use protocol-based settings
             options.Cookie.SecurePolicy = secureCookies ? CookieSecurePolicy.Always : CookieSecurePolicy.None;
-            options.Cookie.SameSite = strictSameSite;
+            options.Cookie.SameSite = sessionConfig.SameSiteMode;
             options.SuppressXFrameOptionsHeader = false;
         });
 
@@ -243,9 +242,8 @@ public static class AuthenticationExtensions
         services.AddScoped<SMS_Application.Interfaces.IUserCompletenessValidator, SMS_Application.Services.UserCompletenessValidator>();
         services.AddScoped<SMS_Application.Interfaces.IUserInstantiationService, SMS_Application.Services.UserInstantiationService>();
         
-        // Authentication strategy implementations
+        // Authentication strategy implementations (session authority only)
         services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategy, SessionBasedAuthenticationStrategy>();
-        services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategy, CircuitBasedAuthenticationStrategy>();
         
         // Authentication strategy manager (orchestrator)
         services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategyManager, SMS_Application.Services.AuthenticationStrategyManager>();

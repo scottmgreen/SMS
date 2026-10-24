@@ -51,6 +51,37 @@
 </div>
 </div>
 
+<script>
+window.smsAuth = window.smsAuth || {
+    establishSession: async function (username, password) {
+        try {
+            const response = await fetch('/auth/establish-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ username: username, password: password })
+            });
+
+            if (!response.ok) {
+                return { isSuccess: false, errorMessage: 'Login service unavailable. Please try again.' };
+            }
+
+            const payload = await response.json();
+            if (!payload) {
+                return { isSuccess: false, errorMessage: 'Login service returned an invalid response. Please try again.' };
+            }
+
+            return payload;
+        } catch {
+            return { isSuccess: false, errorMessage: 'An error occurred during login. Please try again.' };
+        }
+    }
+};
+</script>
+
 <style>
 /* =============================================================================
    SMS LOGIN PAGE - EXACT COLOR COMPLIANCE

@@ -19,6 +19,7 @@ public partial class MainLayout
     private const string RemoteLogoutSignalTitle = "SMS_REMOTE_LOGOUT_SIGNAL";
     private const char RemoteLogoutPayloadSeparator = '|';
     private readonly string _layoutFallbackSessionKey = $"layout:{Guid.NewGuid():N}";
+    private bool _isLogoutInProgress;
 
 [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private ISMSSessionService _sessionService { get; set; } = default!;
@@ -107,6 +108,12 @@ public partial class MainLayout
     /// </summary>
     private async Task OnLogoutRequested()
     {
+        if (_isLogoutInProgress)
+        {
+            return;
+        }
+
+        _isLogoutInProgress = true;
         var logoutStartTime = DateTime.Now;
         string currentUserName = "Unknown";
         SMSUserType userType = SMSUserType.Application;
@@ -228,11 +235,20 @@ public partial class MainLayout
                 _navigation.NavigateTo("/login", forceLoad: true);
             }
         }
+        finally
+        {
+            _isLogoutInProgress = false;
+        }
 
     }
 
     private async Task HandleRemoteLogoutSignalAsync(string initiatingSessionKey)
     {
+        if (_isLogoutInProgress)
+        {
+            return;
+        }
+
         try
         {
             var initiatingUserCode = string.Empty;
@@ -309,6 +325,18 @@ public partial class MainLayout
     {
         var context = _httpContextAccessor.HttpContext;
         var sessionId = context?.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>()?.Session?.Id;
+        if (string.IsNullOrWhiteSpace(sessionId) && context is not null)
+        {
+            try
+            {
+                sessionId = context.Session.Id;
+            }
+            catch (InvalidOperationException)
+            {
+                sessionId = null;
+            }
+        }
+
         if (!string.IsNullOrWhiteSpace(sessionId))
         {
             return $"session:{sessionId}";
