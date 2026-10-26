@@ -41,6 +41,7 @@ public partial class NavMenu
     private bool _isLogoutInitiated;
     private bool _hasRegisteredCurrentSession;
     private DateTime _lastAuthenticationSuccessUtc;
+    private readonly string _navFallbackSessionKey = $"nav:{Guid.NewGuid():N}";
     private static readonly TimeSpan AuthStateDropGuardWindow = TimeSpan.FromMinutes(2);
 
     // Environment Detection - Always production appearance
@@ -657,22 +658,46 @@ public partial class NavMenu
     private string BuildCurrentSessionKey()
     {
         var context = _httpContextAccessor.HttpContext;
+        var connectionId = context?.Connection?.Id;
         var sessionId = context?.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>()?.Session?.Id;
-        if (!string.IsNullOrWhiteSpace(sessionId))
+
+        if (!string.IsNullOrWhiteSpace(sessionId) && !string.IsNullOrWhiteSpace(connectionId))
         {
-            return $"session:{sessionId}";
+            return $"session:{sessionId}:conn:{connectionId}";
         }
 
-        var connectionId = context?.Connection?.Id;
         if (!string.IsNullOrWhiteSpace(connectionId))
         {
             return $"conn:{connectionId}";
         }
 
-        var userCode = _currentUserService?.UserCode ?? "unknown";
-        var remoteIp = context?.Connection?.RemoteIpAddress?.ToString() ?? "unknown";
-        var userAgent = context?.Request?.Headers["User-Agent"].FirstOrDefault() ?? "unknown";
-        return $"fallback:{userCode}:{remoteIp}:{userAgent.GetHashCode()}";
+        if (!string.IsNullOrWhiteSpace(sessionId))
+        {
+            return $"session:{sessionId}";
+        }
+
+        if (context is not null)
+        {
+            try
+            {
+                sessionId = context.Session.Id;
+                if (!string.IsNullOrWhiteSpace(sessionId))
+                {
+                    return $"session:{sessionId}";
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // Session unavailable in this phase; continue to deterministic per-circuit fallback.
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(connectionId))
+        {
+            return $"conn:{connectionId}";
+        }
+
+        return _navFallbackSessionKey;
     }
 
     /// <summary>

@@ -33,6 +33,59 @@
 
 <!-- EventBus Notification Display Component - Centralized notification coordination -->
 
+<script>
+window.smsLogoutSync = window.smsLogoutSync || {
+    _channelName: 'sms-logout-sync-v1',
+    _dotNetRef: null,
+    _receiverId: null,
+    _storageHandler: null,
+
+    register: function (dotNetRef) {
+        this._dotNetRef = dotNetRef;
+
+        if (this._storageHandler) {
+            return;
+        }
+
+        const self = this;
+        this._storageHandler = function (event) {
+            if (!event || event.key !== self._channelName || !event.newValue || !self._dotNetRef) {
+                return;
+            }
+
+            try {
+                const payload = JSON.parse(event.newValue);
+                if (!payload || !payload.receiverKey) {
+                    return;
+                }
+
+                self._dotNetRef.invokeMethodAsync('ReceiveBrowserLogoutAsync', payload.receiverKey)
+                    .catch(function () {
+                        // Ignore transient circuit disconnects.
+                    });
+            } catch {
+                // Ignore malformed payload.
+            }
+        };
+
+        window.addEventListener('storage', this._storageHandler);
+    },
+
+    broadcast: function (receiverKey) {
+        if (!receiverKey || !window.localStorage) {
+            return;
+        }
+
+        const payload = {
+            receiverKey: receiverKey,
+            ts: Date.now()
+        };
+
+        localStorage.setItem(this._channelName, JSON.stringify(payload));
+    }
+};
+</script>
+
 
 <div id="blazor-error-ui" class="sms-error-ui">
     <div class="sms-error-content">

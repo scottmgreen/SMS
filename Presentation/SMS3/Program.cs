@@ -276,6 +276,19 @@ public class Program
         // interactive Blazor events attempt to write session data.
         app.Use(async (context, next) =>
         {
+            if (!context.Request.Cookies.ContainsKey("SMS_MachineId") && !context.Response.HasStarted)
+            {
+                context.Response.Cookies.Append("SMS_MachineId", Guid.NewGuid().ToString("N"), new CookieOptions
+                {
+                    Path = "/",
+                    HttpOnly = true,
+                    Secure = context.Request.IsHttps,
+                    SameSite = SameSiteMode.Lax,
+                    IsEssential = true,
+                    MaxAge = TimeSpan.FromDays(365)
+                });
+            }
+
             if (context.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>()?.Session is { } session
                 && HttpMethods.IsGet(context.Request.Method)
                 && !context.Request.Path.StartsWithSegments("/_framework")
