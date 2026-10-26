@@ -184,9 +184,11 @@ public class EmailComposeDialogBase : ComponentBase
     protected async Task SendAsync()
     {
         if (IsSending) return;
+        DeferSendToQueueExecution = false;
 
         if (DeferSendToQueueExecution)
         {
+            await NotificationHelper.ShowSuccessAsync("Email approved. It has been queued for execution.");
             DialogService.Close(true);
             return;
         }

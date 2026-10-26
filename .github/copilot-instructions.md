@@ -71,8 +71,19 @@
 - When applying required-field validation style updates, include both StakeholderUsers and OrganizationalUsers pages consistently.
 - Use consistent naming conventions across user management pages, specifically using `_isCreateFormValid` and `_isEditFormValid` in Application, Stakeholder, and Organizational user pages.
 - Prefer using SMS_UserCode as the canonical authentication/session key and avoid relying on SMS_UserId where both keys exist.
-- Enforce session/cookie authority only and remove fallback-based auth resolution paths (no user-key/global fallback reads).
-- For SessionCurrentUserService, enforce strict session-only reads by removing in-service cached snapshot fallback so values are returned only when session is readable in-context.
+- Prefer using SMS_UserCode as the canonical authentication/session key and avoid relying on SMS_UserId where both keys exist.
+
+## Session Management Baseline (Critical - Test/Prod Stability)
+- Treat current login/session/NavMenu behavior as the operational baseline; prioritize deployment stability over cleanup.
+- Middleware ordering in `Presentation/SMS3/Program.cs` must preserve session establishment before routing/auth reads: `UseStaticFiles()` -> `UseSession()` -> session bootstrap middleware -> `UseRouting()` -> `UseAuthentication()` -> `UseAuthorization()`.
+- Keep `/auth/establish-session` as the login session creation endpoint and preserve current 2FA/pending-2FA flow behavior.
+- `SessionCurrentUserService.TryGetSession(...)` must read from `ISessionFeature` and return null when unavailable; do not force direct `HttpContext.Session` access that throws `InvalidOperationException` when session is not configured on a request.
+- `SessionCurrentUserService` currently includes in-memory snapshot continuity (`_sessionSnapshot` and `_sessionAuthSnapshots`) used to keep Blazor circuit/NavMenu reads stable when `HttpContext` is temporarily unavailable after successful session write.
+- `SessionBasedAuthenticationStrategy.StoreUserAsync(...)` currently populates the snapshot cache via `SessionCurrentUserService.UpsertSessionSnapshot(...)`; logout/clear paths remove snapshot entries.
+- Do not remove or refactor snapshot continuity until multi-user isolation testing is explicitly completed in Test/Prod and validated as non-regressing.
+- If changing session behavior, apply minimal patches, run QA build, and validate: login, NavMenu render, 2FA path, logout, and parallel users with different roles.
+- Session/cookie remains the authority for persisted authentication state; any continuity cache must not replace persisted session as source of truth.
+- Document the finalized session management strategy and configuration completely in this file as a required baseline for future changes, prioritizing Test/Prod stability and avoiding regressions.
 
 ## Email Routing
 - Implement a hard business rule for email routing: emails must only be sent to group contacts as primary To recipients; if the recipient is not part of a group, no email should be sent via fallback methods. Allow CC/BCC as exceptions for manually added individual recipients.

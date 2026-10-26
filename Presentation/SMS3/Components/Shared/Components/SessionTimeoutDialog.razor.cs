@@ -82,15 +82,25 @@ public partial class SessionTimeoutDialog
     {
         try
         {
-            var initialDelayMs = 1000 - (DateTime.UtcNow.Millisecond % 1000);
+            var initialDelayMs = 1000 - (DateTime.Now.Millisecond % 1000);
             if (initialDelayMs < 1000)
             {
-                await Task.Delay(initialDelayMs, cancellationToken);
+                await Task.Delay(initialDelayMs);
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
             }
 
             using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
-            while (await timer.WaitForNextTickAsync(cancellationToken))
+            while (await timer.WaitForNextTickAsync())
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
                 await InvokeAsync(() =>
                 {
                     var remaining = SessionTimerService.GetRemainingTime();

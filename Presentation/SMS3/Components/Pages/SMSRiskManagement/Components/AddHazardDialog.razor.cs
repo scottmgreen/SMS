@@ -26,6 +26,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<AddHazardDialog>? _logger { get; set; }
+    [Inject] private IConfiguration _configuration { get; set; } = default!;
 
     // Form properties
     private string NewHazardTitle { get; set; } = string.Empty;
@@ -68,6 +69,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     // JavaScript module reference - EXACTLY like HazardReporting
     private IJSObjectReference? _mapModule;
     private DotNetObjectReference<AddHazardDialog>? _dotNetRef;
+    private HazardMappingBoundsSettings _hazardMappingBounds = new();
 
     // Airport coordinates - EXACTLY like HazardReporting
     private double _airportCenterLatitude => 45.5898;
@@ -115,6 +117,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
 
     protected override void OnInitialized()
     {
+        _hazardMappingBounds = LoadHazardMappingBounds();
         InitializeDropdownOptions();
         
         // Ensure SelectedGeoLocation is properly initialized
@@ -131,6 +134,44 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         _dotNetRef = DotNetObjectReference.Create(this);
         
         _logger?.LogInformation("AddHazardDialog initialized. SelectedGeoLocation.IsValid: {IsValid}", SelectedGeoLocation.IsValid);
+    }
+
+    private HazardMappingBoundsSettings LoadHazardMappingBounds()
+    {
+        var settings = new HazardMappingBoundsSettings
+        {
+            ForceBoundsCheck = _configuration.GetValue<bool>("HazardMappingBounds:ForceBoundsCheck")
+        };
+
+        var pointsSection = _configuration.GetSection("HazardMappingBounds:FencePoints");
+        foreach (var point in pointsSection.GetChildren())
+        {
+            var latitude = point.GetValue<double?>("Latitude");
+            var longitude = point.GetValue<double?>("Longitude");
+
+            if (latitude.HasValue && longitude.HasValue)
+            {
+                settings.FencePoints.Add(new HazardMappingPoint
+                {
+                    Latitude = latitude.Value,
+                    Longitude = longitude.Value
+                });
+            }
+        }
+
+        return settings;
+    }
+
+    private sealed class HazardMappingBoundsSettings
+    {
+        public bool ForceBoundsCheck { get; set; }
+        public List<HazardMappingPoint> FencePoints { get; set; } = new();
+    }
+
+    private sealed class HazardMappingPoint
+    {
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
     }
 
     protected override async Task OnParametersSetAsync()
@@ -763,7 +804,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
             try
             {
                 // Always reinitialize the map since the DOM element is recreated
-                await _mapModule.InvokeVoidAsync("initializeMap",_airportCenterLatitude, _airportCenterLongitude, _defaultZoomLevel, _dotNetRef);
+                await _mapModule.InvokeVoidAsync("initializeMap",_airportCenterLatitude, _airportCenterLongitude, _defaultZoomLevel, _dotNetRef, _hazardMappingBounds);
 
                 _logger?.LogInformation("Map reinitialized for modal opening");
 

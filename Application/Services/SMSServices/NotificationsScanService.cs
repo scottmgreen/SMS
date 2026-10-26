@@ -609,7 +609,7 @@ public sealed class NotificationsScanService : INotificationsScanService
         Hazard? hazard,
         List<string> recipientGroups,
         int thresholdHours,
-        DateTime dueUtc)
+        DateTime dueDate)
     {
         var reportCode = report.Code?.Trim() ?? string.Empty;
         var hazardCode = hazard?.Code ?? string.Empty;
@@ -633,7 +633,7 @@ public sealed class NotificationsScanService : INotificationsScanService
                     Fields =
                     [
                         new SMSEmailField { Label = "Report Inaction Threshold", Value = $"{thresholdHours} hour(s)" },
-                        new SMSEmailField { Label = "Report Inaction Checkpoint (UTC)", Value = dueUtc.ToString("yyyy-MM-dd HH:mm:ss") },
+                        new SMSEmailField { Label = "Report Inaction Checkpoint ", Value = dueDate.ToString("yyyy-MM-dd HH:mm:ss") },
                         new SMSEmailField { Label = "Hazard Description", Value = hazardDescription, IsFullWidth = true }
                     ]
                 }
@@ -657,7 +657,7 @@ public sealed class NotificationsScanService : INotificationsScanService
                 { "ExpectedStatus", ReportStatus.ReadyForProcessing.Value },
                 { "CurrentStatus", report.Status ?? string.Empty },
                 { "StatusEscalationThresholdHours", thresholdHours },
-                { "StatusCheckDueUtc", dueUtc.ToString("O") }
+                { "StatusCheckDue", dueDate.ToString("O") }
             });
     }
 

@@ -396,12 +396,12 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
     {
         var notes = new List<string>
         {
-            $"Report submitted on {tracking.CreatedDate:yyyy-MM-dd HH:mm} UTC"
+            $"Report submitted on {tracking.CreatedDate:yyyy-MM-dd HH:mm} "
         };
 
         if (tracking.UpdatedDate.HasValue)
         {
-            notes.Add($"Last updated on {tracking.UpdatedDate:yyyy-MM-dd HH:mm} UTC");
+            notes.Add($"Last updated on {tracking.UpdatedDate:yyyy-MM-dd HH:mm} ");
         }
 
         var daysSinceSubmission = (DateTime.Now - tracking.CreatedDate).Value.Days;

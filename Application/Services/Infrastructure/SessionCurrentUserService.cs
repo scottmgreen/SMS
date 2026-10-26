@@ -340,7 +340,6 @@ public class SessionCurrentUserService : ICurrentUserService
         try
         {
             var httpContext = _httpContextAccessor.HttpContext;
-
             if (httpContext == null)
             {
                 if (_sessionSnapshot.TryGetValue(key, out var cachedValue) && !string.IsNullOrEmpty(cachedValue))
@@ -348,8 +347,6 @@ public class SessionCurrentUserService : ICurrentUserService
                     return cachedValue;
                 }
 
-                // Single-instance fallback: if exactly one active auth snapshot exists,
-                // allow circuit-only reads to continue when HttpContext is temporarily unavailable.
                 if (_sessionAuthSnapshots.Count == 1)
                 {
                     var onlySnapshot = _sessionAuthSnapshots.FirstOrDefault().Value;
@@ -510,13 +507,13 @@ public class SessionCurrentUserService : ICurrentUserService
 
         try
         {
-            var featureSession = context.Features.Get<ISessionFeature>()?.Session;
-            if (featureSession != null)
+            var sessionFeature = context.Features.Get<ISessionFeature>();
+            if (sessionFeature?.Session != null)
             {
-                return featureSession;
+                return sessionFeature.Session;
             }
 
-            return context.Session;
+            return null;
         }
         catch (InvalidOperationException)
         {

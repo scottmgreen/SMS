@@ -32,16 +32,16 @@ public class AdminLoginHelper
         _output.WriteLine("");
         
         _output.WriteLine("=== CORRECT SQL COMMAND TO RESET ADMIN PASSWORD ===");
-        _output.WriteLine("Run this SQL command against PDXSMS_V2 database:");
+        _output.WriteLine("Run this SQL command against SMS database:");
         _output.WriteLine("");
-        _output.WriteLine("USE [PDXSMS_V2]");
+        _output.WriteLine("USE [SMS]");
         _output.WriteLine("GO");
         _output.WriteLine("");
         _output.WriteLine("UPDATE [dbo].[tbld_SMSApplicationUsers]");
         _output.WriteLine($"SET [fldv_Password] = '{passwordObject.HashedValue}',");
         _output.WriteLine("    [fldv_UpdatedBy] = 'SYSTEM-RESET',");
-        _output.WriteLine("    [fldd_UpdatedDate] = GETUTCDATE(),");
-        _output.WriteLine("    [fldd_PasswordLastChanged] = GETUTCDATE()");
+        _output.WriteLine("    [fldd_UpdatedDate] = GETDATE(),");
+        _output.WriteLine("    [fldd_PasswordLastChanged] = GETDATE()");
         _output.WriteLine("WHERE [fldv_UserName] = 'admin@flypdx.com';");
         _output.WriteLine("");
         

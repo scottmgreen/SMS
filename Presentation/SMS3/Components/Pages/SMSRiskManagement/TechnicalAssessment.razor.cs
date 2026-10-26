@@ -101,6 +101,7 @@ public partial class TechnicalAssessment : ComponentBase
     public string AssessmentName => GetCurrentAssessmentName();
     public string LeadAssessorName => AvailableAssessors.FirstOrDefault(a => a.Code  == Step1.LeadAssessor)?.DisplayName ?? Step1.LeadAssessor;
     public string LeadInvestigatorName => AvailableInvestigators.FirstOrDefault()?.DisplayName ?? "Not Assigned";
+    private string SelectedLeadAssessor => Step1?.LeadAssessor ?? string.Empty;
 
     
 
@@ -155,6 +156,7 @@ public partial class TechnicalAssessment : ComponentBase
     public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     public List<SMSApplicationUser> AvailableSMSUsers { get; set; } = new();
     public List<SMSStakeholderGroup> StakeholderGroups { get; set; } = new();
+    private List<DropdownOption> LeadAssessorOptions { get; set; } = new();
 
     #endregion
 
@@ -695,11 +697,102 @@ public partial class TechnicalAssessment : ComponentBase
             if (usersResult.IsSuccess)
             {
                 AvailableAssessors = usersResult.Value?.ToList() ?? new List<SMSApplicationUser>();
+                BuildLeadAssessorOptions();
+            }
+            else
+            {
+                BuildLeadAssessorOptions();
             }
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Could not load available assessors");
+            BuildLeadAssessorOptions();
+        }
+    }
+
+    private void BuildLeadAssessorOptions()
+    {
+        LeadAssessorOptions = new List<DropdownOption>
+        {
+            new DropdownOption { Value = string.Empty, Text = string.Empty }
+        };
+
+        foreach (var assessor in AvailableAssessors)
+        {
+            LeadAssessorOptions.Add(new DropdownOption
+            {
+                Value = assessor.Code,
+                Text = assessor.DisplayName
+            });
+        }
+
+        if (!string.IsNullOrWhiteSpace(Step1?.LeadAssessor) &&
+            !LeadAssessorOptions.Any(x => string.Equals(x.Value, Step1.LeadAssessor, StringComparison.OrdinalIgnoreCase)))
+        {
+            LeadAssessorOptions.Add(new DropdownOption
+            {
+                Value = Step1.LeadAssessor,
+                Text = LeadAssessorName
+            });
+        }
+    }
+
+    private async Task OnLeadAssessorChanged(object value)
+    {
+        var selectedValue = value?.ToString() ?? string.Empty;
+
+        if (string.Equals(Step1.LeadAssessor, selectedValue, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        Step1.LeadAssessor = selectedValue;
+        MarkCurrentStepDirty();
+
+        if (TechRiskAssessment is not null)
+        {
+            await PersistLeadAssessorSelectionAsync(selectedValue);
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task PersistLeadAssessorSelectionAsync(string leadAssessorCode)
+    {
+        if (TechRiskAssessment is null)
+        {
+            return;
+        }
+
+        try
+        {
+            TechRiskAssessment.LeadAssessorId = leadAssessorCode?.Trim() ?? string.Empty;
+            TechRiskAssessment.UpdatedBy = _currentUserService?.UserCode;
+            TechRiskAssessment.UpdatedDate = DateTime.Now;
+
+            var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
+            var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
+
+            if (updateResult.IsSuccess)
+            {
+                TechRiskAssessment = updateResult.Value;
+                Step1.LeadAssessor = TechRiskAssessment.LeadAssessorId ?? string.Empty;
+                _logger.LogInformation("Lead assessor updated for assessment {AssessmentCode}: {LeadAssessorCode}",
+                    TechRiskAssessment.Code,
+                    Step1.LeadAssessor);
+                return;
+            }
+
+            _logger.LogWarning("Failed to update lead assessor for assessment {AssessmentCode}: {Error}",
+                TechRiskAssessment.Code,
+                updateResult.Error?.Message);
+            await _notificationHelper.ShowWarningAsync("Unable to persist assessor change. Please use Save Step to retry.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error persisting lead assessor change for assessment {AssessmentCode}", TechRiskAssessment.Code);
+            await _notificationHelper.ShowWarningAsync("Unable to persist assessor change. Please use Save Step to retry.");
         }
     }
     
@@ -730,6 +823,7 @@ public partial class TechnicalAssessment : ComponentBase
             if (usersResult.IsSuccess)
             {
                 AvailableAssessors = usersResult.Value?.ToList() ?? new List<SMSApplicationUser>();
+                BuildLeadAssessorOptions();
             }
 
             // Load Stakeholder Users
@@ -752,6 +846,7 @@ public partial class TechnicalAssessment : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading reference data");
+            BuildLeadAssessorOptions();
         }
     }
 

@@ -51,18 +51,32 @@
                                          AlignItems="AlignItems.Center">
                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
                                     <RadzenIcon Icon="attach_file" Style="color: var(--sms-blue-dark-bold); font-size: 0.9rem;" />
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 500;">@file.FileName</RadzenText>
+                                    <RadzenButton Text="@file.FileName"
+                                                  ButtonStyle="ButtonStyle.Base"
+                                                  Variant="Variant.Text"
+                                                  Click="@(() => OnViewFile.InvokeAsync(fileIndex))"
+                                                  title="View file"
+                                                  Style="font-weight: 500; cursor: pointer; color: var(--rz-primary); padding: 0; text-transform: none;" />
                                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">
                                         (@file.SizeDisplay)
                                     </RadzenText>
                                 </RadzenStack>
 
-                                <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                              Variant="Variant.Text"
-                                              Icon="delete"
-                                              Size="ButtonSize.ExtraSmall"
-                                              Click="@(() => OnRemoveFile.InvokeAsync(fileIndex))"
-                                              title="Remove file" />
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Base"
+                                                  Variant="Variant.Text"
+                                                  Icon="visibility"
+                                                  Size="ButtonSize.ExtraSmall"
+                                                  Click="@(() => OnViewFile.InvokeAsync(fileIndex))"
+                                                  title="View file" />
+
+                                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                                  Variant="Variant.Text"
+                                                  Icon="delete"
+                                                  Size="ButtonSize.ExtraSmall"
+                                                  Click="@(() => OnRemoveFile.InvokeAsync(fileIndex))"
+                                                  title="Remove file" />
+                                </RadzenStack>
                             </RadzenStack>
 
                             <RadzenFormField Text="File Description *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">

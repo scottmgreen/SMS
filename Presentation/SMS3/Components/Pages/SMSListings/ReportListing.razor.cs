@@ -1566,7 +1566,7 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
                 {
                     column.Item().Background("#111111").Padding(12).Text("PDX SMS Export").FontSize(16).Bold().FontColor("#FFFFFF");
                     column.Item().Background("#003F40").PaddingHorizontal(12).PaddingVertical(8).Text(title).FontSize(11).Bold().FontColor("#FFFFFF");
-                    column.Item().PaddingTop(6).Text($"Generated UTC: {DateTime.Now:yyyy-MM-dd HH:mm:ss}").FontSize(8).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+                    column.Item().PaddingTop(6).Text($"Generated : {DateTime.Now:yyyy-MM-dd HH:mm:ss}").FontSize(8).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
                 });
 
                 page.Content().PaddingTop(10).Table(table =>
@@ -1979,7 +1979,7 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
     {
         var sb = new StringBuilder();
         sb.AppendLine("PDXSMS Comprehensive Report Export Package");
-        sb.AppendLine($"Generated UTC: {DateTime.Now:O}");
+        sb.AppendLine($"Generated: {DateTime.Now:O}");
         sb.AppendLine($"Report Code: {report.Code}");
         sb.AppendLine($"Report Name: {report.Name}");
         sb.AppendLine($"Report Status: {report.Status}");
