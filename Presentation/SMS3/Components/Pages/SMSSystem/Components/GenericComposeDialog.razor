@@ -1,0 +1,125 @@
+@using Radzen
+@using Radzen.Blazor
+@using Microsoft.AspNetCore.Components.Forms
+@using SMS_Domain.Entities
+
+@inject DialogService DialogService
+@inject IEmailSender EmailSender
+
+@inherits GenericComposeDialogBase
+
+<RadzenTemplateForm Data="@Model" Submit="@HandleSendAsync" TItem="EmailNotification" class="compose-root">
+    <div class="compose-header">
+        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" class="mb-2">
+            <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+            Generic test compose dialog. SMTP sender still uses appsettings FromEmail/FromName.
+        </RadzenAlert>
+
+        <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center" class="mt-2">
+            <RadzenColumn Size="1" class="text-end">
+                <RadzenLabel>From:</RadzenLabel>
+            </RadzenColumn>
+            <RadzenColumn Size="11" class="text-start">
+                <RadzenTextBox @bind-Value="FromAddress" Placeholder="sender@domain.com" Style="width:100%;" Disabled="@PreviewOnly" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center" class="mt-2">
+            <RadzenColumn Size="1" class="text-end">
+                <RadzenLabel>To:</RadzenLabel>
+            </RadzenColumn>
+            <RadzenColumn Size="11" class="text-start">
+                <RadzenTextBox @bind-Value="ToAddressesText" Placeholder="recipient1@domain.com; recipient2@domain.com" Style="width:100%;" Disabled="@PreviewOnly" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center" class="mt-2">
+            <RadzenColumn Size="1" class="text-end">
+                <RadzenLabel>Cc:</RadzenLabel>
+            </RadzenColumn>
+            <RadzenColumn Size="11" class="text-start">
+                <RadzenTextBox @bind-Value="CcAddressesText" Placeholder="optional cc recipients" Style="width:100%;" Disabled="@PreviewOnly" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center" class="mt-2">
+            <RadzenColumn Size="1" class="text-end">
+                <RadzenLabel>Bcc:</RadzenLabel>
+            </RadzenColumn>
+            <RadzenColumn Size="11" class="text-start">
+                <RadzenTextBox @bind-Value="BccAddressesText" Placeholder="optional bcc recipients" Style="width:100%;" Disabled="@PreviewOnly" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center" class="mt-2">
+            <RadzenColumn Size="1" class="text-end">
+                <RadzenLabel>Subject:</RadzenLabel>
+            </RadzenColumn>
+            <RadzenColumn Size="11" class="text-start">
+                <RadzenTextBox @bind-Value="Model.Subject" Placeholder="Add a subject" class="subject-input" Disabled="@PreviewOnly" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center" class="mt-2">
+            <RadzenColumn Size="1" class="text-end">
+                <i class="fas fa-paperclip"></i>
+            </RadzenColumn>
+            <RadzenColumn Size="11" class="text-start">
+                @if (!PreviewOnly)
+                {
+                    <label class="rz-button rz-button-md rz-button-light rz-shade-default mb-2" for="generic-email-attachments-input">
+                        <span class="rz-button-icon-left rzi rzi-attach_file"></span>
+                        <span class="rz-button-text">Attach</span>
+                    </label>
+                    <InputFile id="generic-email-attachments-input" OnChange="@AddAttachmentAsync" multiple style="display:none" />
+                }
+
+                @if (Model.Attachments.Any())
+                {
+                    <div>
+                        @foreach (var attachment in Model.Attachments)
+                        {
+                            <RadzenBadge Text="@attachment.FileName" BadgeStyle="BadgeStyle.Base" class="me-2 mb-2" />
+                            @if (!PreviewOnly)
+                            {
+                                <RadzenButton Icon="close" Size="ButtonSize.ExtraSmall" ButtonStyle="ButtonStyle.Light" Click="@(() => RemoveAttachment(attachment))" class="me-2 mb-2" />
+                            }
+                        }
+                    </div>
+                }
+            </RadzenColumn>
+        </RadzenRow>
+    </div>
+
+    <div class="compose-editor">
+        <RadzenHtmlEditor @bind-Value="Model.BodyHtml" class="editor" Height="280px" Disabled="@PreviewOnly">
+            <RadzenHtmlEditorUndo />
+            <RadzenHtmlEditorRedo />
+            <RadzenHtmlEditorSeparator />
+            <RadzenHtmlEditorBold />
+            <RadzenHtmlEditorItalic />
+            <RadzenHtmlEditorUnderline />
+            <RadzenHtmlEditorStrikeThrough />
+            <RadzenHtmlEditorSeparator />
+            <RadzenHtmlEditorColor />
+            <RadzenHtmlEditorBackground />
+            <RadzenHtmlEditorRemoveFormat />
+        </RadzenHtmlEditor>
+    </div>
+
+    <div class="compose-actions" style="display:flex; justify-content:flex-end; align-items:center; gap:0.5rem;">
+        @if (IsSending)
+        {
+            <span class="sending-indicator">Sending…</span>
+        }
+        @if (!PreviewOnly)
+        {
+            <RadzenButton Text="Discard" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@Close" />
+            <RadzenButton Text="Send" Icon="send" ButtonStyle="ButtonStyle.Primary" Click="@HandleSendAsync" Disabled="@IsSending" />
+        }
+        else
+        {
+            <RadzenButton Text="Close" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@Close" />
+        }
+    </div>
+</RadzenTemplateForm>

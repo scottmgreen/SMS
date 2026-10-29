@@ -17,6 +17,7 @@ public partial class SessionTimeoutDialog
     
     private bool IsVisible { get; set; } = false;
     private CancellationTokenSource? _countdownCts;
+    private Task? _countdownTask;
     private TimeSpan _warningTriggeredAt = TimeSpan.Zero;
 
     protected override void OnInitialized()
@@ -74,22 +75,32 @@ public partial class SessionTimeoutDialog
         _countdownCts?.Dispose();
         _countdownCts = new CancellationTokenSource();
 
-        _ = RunSynchronizedCountdownAsync(_countdownCts.Token);
+        _countdownTask = RunSynchronizedCountdownAsync(_countdownCts.Token);
     }
 
     private async Task RunSynchronizedCountdownAsync(CancellationToken cancellationToken)
     {
         try
         {
-            var initialDelayMs = 1000 - (DateTime.UtcNow.Millisecond % 1000);
+            var initialDelayMs = 1000 - (DateTime.Now.Millisecond % 1000);
             if (initialDelayMs < 1000)
             {
-                await Task.Delay(initialDelayMs, cancellationToken);
+                await Task.Delay(initialDelayMs);
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
             }
 
             using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
-            while (await timer.WaitForNextTickAsync(cancellationToken))
+            while (await timer.WaitForNextTickAsync())
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
                 await InvokeAsync(() =>
                 {
                     var remaining = SessionTimerService.GetRemainingTime();
@@ -110,9 +121,21 @@ public partial class SessionTimeoutDialog
                 });
             }
         }
+        catch (TaskCanceledException)
+        {
+            // Expected when modal closes, session ends, or component disposes.
+        }
         catch (OperationCanceledException)
         {
             // Expected when modal closes or component disposes
+        }
+        catch (ObjectDisposedException)
+        {
+            // Expected if timer/token source is disposed during teardown.
+        }
+        catch (Exception ex)
+        {
+            Logger.LogDebug(ex, "Session timeout countdown loop ended unexpectedly.");
         }
     }
 
@@ -260,6 +283,7 @@ public partial class SessionTimeoutDialog
     {
         _countdownCts?.Cancel();
         _countdownCts?.Dispose();
+        _countdownTask = null;
         
         if (SessionTimerService != null)
         {

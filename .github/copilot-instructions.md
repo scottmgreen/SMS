@@ -11,6 +11,8 @@
 - Large refactors must be done in batches with a QA build run between batches.
 - Batch cleanup must proceed directly without asking for confirmation before running scripts/commands.
 - Prioritize production stability and urgent restoration of deployed site functionality over exploratory changes.
+- Adopt current login/session and NavMenu state as the candidate baseline; if publish validation succeeds, treat it as the new baseline going forward.
+- Temporarily suppress noisy NavMenu authentication logging in console while stabilizing login/session baseline.
 
 ## Service Organization
 - All EventBus services must stay together in `Application/Services/EventBusServices`; files have been moved accordingly.
@@ -71,6 +73,22 @@
 - Prefer using SMS_UserCode as the canonical authentication/session key and avoid relying on SMS_UserId where both keys exist.
 - Authentication/session behavior: same-user tabs in one browser may share session, but authentication must never bleed across different machines/users; one login must not take over any other machine's session.
 - Prefer a single authentication/session strategy (no hybrid fallback chain); HTTPS is available so use one established approach for auth and session management.
+- Record locking is mandatory in all scenarios; prefer using SMS_UserCode as the canonical authentication/session key and avoid relying on SMS_UserId where both keys exist.
+
+## Session Management Baseline (Critical - Test/Prod Stability)
+- Treat current login/session/NavMenu behavior as the operational baseline; prioritize deployment stability over cleanup.
+- Middleware ordering in `Presentation/SMS3/Program.cs` must preserve session establishment before routing/auth reads: `UseStaticFiles()` -> `UseSession()` -> session bootstrap middleware -> `UseRouting()` -> `UseAuthentication()` -> `UseAuthorization()`.
+- Keep `/auth/establish-session` as the login session creation endpoint and preserve current 2FA/pending-2FA flow behavior.
+- `SessionCurrentUserService.TryGetSession(...)` must read from `ISessionFeature` and return null when unavailable; do not force direct `HttpContext.Session` access that throws `InvalidOperationException` when session is not configured on a request.
+- `SessionCurrentUserService` currently includes in-memory snapshot continuity (`_sessionSnapshot` and `_sessionAuthSnapshots`) used to keep Blazor circuit/NavMenu reads stable when `HttpContext` is temporarily unavailable after successful session write.
+- `SessionBasedAuthenticationStrategy.StoreUserAsync(...)` currently populates the snapshot cache via `SessionCurrentUserService.UpsertSessionSnapshot(...)`; logout/clear paths remove snapshot entries.
+- Do not remove or refactor snapshot continuity until multi-user isolation testing is explicitly completed in Test/Prod and validated as non-regressing.
+- If changing session behavior, apply minimal patches, run QA build, and validate: login, NavMenu render, 2FA path, logout, and parallel users with different roles.
+- Session/cookie remains the authority for persisted authentication state; any continuity cache must not replace persisted session as source of truth.
+- Document the finalized session management strategy and configuration completely in this file as a required baseline for future changes, prioritizing Test/Prod stability and avoiding regressions.
+- Session/circuit management should be unified into one simplified framework with one authoritative auth flow.
+- Do not propose replacing in-memory session backing with shared distributed cache (SQL/Redis) as a remedy for this project.
+- ARR is not an available option in the user's deployment environment; do not rely on ARR-based sticky session guidance.
 
 ## Email Routing
 - Implement a hard business rule for email routing: emails must only be sent to group contacts as primary To recipients; if the recipient is not part of a group, no email should be sent via fallback methods. Allow CC/BCC as exceptions for manually added individual recipients.
@@ -129,7 +147,7 @@
 - When explicitly requested, remove compatibility wrappers instead of retaining them (e.g., remove SMSDepartmentError and use SMSOrganizationError only). 
 - The SMS3 project should not contain Models classes; model types should be moved out of Presentation (e.g., into Domain entities).
 - Prefer generic lock service naming: use IRecordLockLeaseCoordinator (and corresponding implementation names) instead of report-graph-specific names.
-
-## Git Commands
-- Provide lists of git commands only; do not execute commands.
-- Avoid executing git commands inside Visual Studio because it can hang; provide external cmd/PowerShell automation scripts instead.
+- For temporary cleanup in SMS3 auth baseline, prefer commenting out uncertain legacy code first rather than deleting it immediately.
+- Blazor circuit should always derive authentication state from the session store (session as sole auth source of truth).
+- Avoid JavaScript in Blazor unless absolutely necessary, especially in authentication/authorization login/logout design.
+- When the user is doing Git merge conflict resolution, do not trigger modernization/upgrade workflows; stay focused on merge steps only.

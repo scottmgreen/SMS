@@ -1,7 +1,6 @@
 using SMS_Application.Configuration;
+using Microsoft.AspNetCore.Http.Features;
 using System.Net;
-using System.IO;
-using Microsoft.AspNetCore.DataProtection;
 
 using SMS_Infrastructure.Configuration;
 using SMS_Infrastructure.Configuration.Extensions;
@@ -11,12 +10,18 @@ using SMS_Shared.Configuration;
 
 using SMS3.Api.Extensions;
 using SMS3.Components;
+using SMS3.Configuration.Extensions;
 using SMS3.Configuration;
 using SMS3.EventHandlers;
 using SMS3.Hubs;
+using SMS3.Security;
 using SMS_Domain.Events;
 using SMS_Application.Interfaces;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
 
 namespace SMS3;
 public class Program
@@ -42,15 +47,23 @@ public class Program
         builder.Services.AddRadzenComponents();
         builder.Services.AddHttpClient();
 
-        var dataProtectionPath = builder.Configuration["DataProtection:KeyRingPath"];
-        var dataProtectionAppName = builder.Configuration["DataProtection:ApplicationName"];
-        if (!string.IsNullOrWhiteSpace(dataProtectionPath) && !string.IsNullOrWhiteSpace(dataProtectionAppName))
+        var dataProtectionSection = builder.Configuration.GetSection("DataProtection");
+        var keyRingPath = dataProtectionSection.GetValue<string>("KeyRingPath");
+        var dataProtectionApplicationName = dataProtectionSection.GetValue<string>("ApplicationName", "PDXSMS");
+
+        if (!string.IsNullOrWhiteSpace(keyRingPath))
         {
-            Directory.CreateDirectory(dataProtectionPath);
+            Directory.CreateDirectory(keyRingPath);
             builder.Services
                 .AddDataProtection()
-                .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionPath))
-                .SetApplicationName(dataProtectionAppName);
+                .PersistKeysToFileSystem(new DirectoryInfo(keyRingPath))
+                .SetApplicationName(dataProtectionApplicationName ?? "PDXSMS");
+        }
+        else
+        {
+            builder.Services
+                .AddDataProtection()
+                .SetApplicationName(dataProtectionApplicationName ?? "PDXSMS");
         }
 
         // Register mock email sender for development/testing
@@ -265,17 +278,21 @@ public class Program
         // SESSION MUST BE BEFORE ROUTING AND AUTHENTICATION**
         app.UseSession();
 
-        // Ensure a session is established during normal HTTP requests before interactive
-        // component events attempt to write auth/session data.
-        var sessionCookieName = app.Configuration.GetValue<string>("SessionConfiguration:CookieName") ?? "SMS_Session";
+        // Ensure the session cookie is established on the initial HTTP pipeline before
+        // interactive Blazor events attempt to write session data.
         app.Use(async (context, next) =>
         {
-            if (!context.WebSockets.IsWebSocketRequest)
+            if (!context.Request.Cookies.ContainsKey("SMS_MachineId") && !context.Response.HasStarted)
             {
-                if (!context.Request.Cookies.ContainsKey(sessionCookieName))
+                context.Response.Cookies.Append("SMS_MachineId", Guid.NewGuid().ToString("N"), new CookieOptions
                 {
-                    context.Session.SetString("SMS_SessionBootstrap", "1");
-                }
+                    Path = "/",
+                    HttpOnly = true,
+                    Secure = context.Request.IsHttps,
+                    SameSite = SameSiteMode.Lax,
+                    IsEssential = true,
+                    MaxAge = TimeSpan.FromDays(365)
+                });
             }
 
             await next();
@@ -285,9 +302,193 @@ public class Program
 
         // AUTHENTICATION & AUTHORIZATION MIDDLEWARE**
         app.UseAuthentication();
+
+        // Cleanup stale cookie-auth tickets (e.g., app recycle with in-memory ticket store)
+        // so clients are returned to a clean anonymous state instead of repeated auth-failure churn.
+        app.Use(async (context, next) =>
+        {
+            if (context.Request.Cookies.ContainsKey("SMS_Auth")
+                && context.User?.Identity?.IsAuthenticated != true
+                && !context.Response.HasStarted)
+            {
+                context.Response.Cookies.Delete("SMS_Auth", new CookieOptions
+                {
+                    Path = "/",
+                    Secure = true,
+                    SameSite = SameSiteMode.Lax,
+                    HttpOnly = true,
+                    IsEssential = true
+                });
+            }
+
+            await next();
+        });
+
         app.UseAuthorization();
 
         app.UseAntiforgery();
+
+        app.MapPost("/auth/login", async (
+            HttpContext context,
+            SMS_Application.Interfaces.IAuthenticationService authenticationService,
+            ISMSSessionService sessionService,
+            CancellationToken cancellationToken) =>
+        {
+            var form = await context.Request.ReadFormAsync(cancellationToken);
+            var username = form["username"].ToString();
+            var password = form["password"].ToString();
+
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            {
+                return Results.Redirect("/login?error=Username%20and%20password%20are%20required.");
+            }
+
+            var authResult = await authenticationService.AuthenticateAsync(username, password, cancellationToken);
+            if (!authResult.IsSuccess || authResult.User is null)
+            {
+                var encoded = Uri.EscapeDataString(authResult.ErrorMessage ?? "Invalid username or password.");
+                return Results.Redirect($"/login?error={encoded}");
+            }
+
+            if (authResult.User.TwoFactorEnabled)
+            {
+                await sessionService.ClearPending2FAUserAsync();
+                await sessionService.StorePending2FAUserAsync(authResult.User, authResult.UserType);
+                return Results.Redirect("/verify-2fa");
+            }
+
+            await sessionService.CreateSMSSessionAsync(authResult.User, authResult.UserType);
+
+            var claims = new List<Claim>
+            {
+                new(ClaimTypes.NameIdentifier, authResult.User.Code),
+                new(ClaimTypes.Name, authResult.User.DisplayName ?? authResult.User.Code),
+                new("SMS_UserCode", authResult.User.Code),
+                new("IsAuthenticated", "true")
+            };
+
+            var session = context.Features.Get<ISessionFeature>()?.Session;
+            var sessionRoleCode = session?.GetString("SMS_UserRoleCode");
+            var sessionRoleName = session?.GetString("SMS_UserRoleName");
+            var sessionPermissions = session?.GetString("SMS_UserPermissions");
+
+            if (!string.IsNullOrWhiteSpace(sessionRoleCode))
+            {
+                claims.Add(new Claim("SMS_UserRoleCode", sessionRoleCode));
+            }
+
+            if (!string.IsNullOrWhiteSpace(sessionRoleName))
+            {
+                claims.Add(new Claim("SMS_UserRoleName", sessionRoleName));
+            }
+
+            if (!string.IsNullOrWhiteSpace(sessionPermissions))
+            {
+                claims.Add(new Claim("SMS_UserPermissions", sessionPermissions));
+            }
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await context.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                new AuthenticationProperties
+                {
+                    IsPersistent = false,
+                    AllowRefresh = true
+                });
+
+            return Results.Redirect("/");
+        }).AllowAnonymous();
+
+        app.MapGet("/auth/logout", async (
+            HttpContext context,
+            ISMSSessionService sessionService) =>
+        {
+            try
+            {
+                await sessionService.ClearSMSSessionAsync();
+            }
+            catch
+            {
+                // Continue with cookie sign-out even when session clear has transient failures.
+            }
+
+            await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return Results.Redirect("/pdx");
+        }).AllowAnonymous();
+
+        app.MapPost("/auth/establish-session", async (
+            AuthSessionRequest request,
+            SMS_Application.Interfaces.IAuthenticationService authenticationService,
+            ISMSSessionService sessionService,
+            CancellationToken cancellationToken) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
+            {
+                return Results.BadRequest(new AuthSessionResponse(false, false, "Username and password are required."));
+            }
+
+            var authResult = await authenticationService.AuthenticateAsync(request.Username, request.Password, cancellationToken);
+            if (!authResult.IsSuccess || authResult.User is null)
+            {
+                return Results.Ok(new AuthSessionResponse(false, false, authResult.ErrorMessage ?? "Invalid username or password."));
+            }
+
+            if (authResult.User.TwoFactorEnabled)
+            {
+                await sessionService.ClearPending2FAUserAsync();
+                await sessionService.StorePending2FAUserAsync(authResult.User, authResult.UserType);
+                return Results.Ok(new AuthSessionResponse(true, true, string.Empty));
+            }
+
+            await sessionService.CreateSMSSessionAsync(authResult.User, authResult.UserType);
+            return Results.Ok(new AuthSessionResponse(true, false, string.Empty));
+        }).AllowAnonymous();
+
+        app.MapGet("/auth/current-user", (HttpContext context) =>
+        {
+            var session = context.Features.Get<ISessionFeature>()?.Session;
+            if (session is null)
+            {
+                return Results.Ok(new CurrentUserSessionResponse(false, null));
+            }
+
+            var isAuthenticated = session.GetString("IsAuthenticated") == "true";
+            if (!isAuthenticated)
+            {
+                return Results.Ok(new CurrentUserSessionResponse(false, null));
+            }
+
+            var keys = new[]
+            {
+                "IsAuthenticated",
+                "SMS_UserCode",
+                "SMS_UserType",
+                "SMS_DisplayName",
+                "SMS_Email",
+                "SMS_FirstName",
+                "SMS_LastName",
+                "SMS_LoginTime",
+                "SMS_TwoFactorEnabled",
+                "SMS_UserRoleCode",
+                "SMS_UserRoleName",
+                "SMS_UserPermissions"
+            };
+
+            var payload = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var key in keys)
+            {
+                var value = session.GetString(key);
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    payload[key] = value;
+                }
+            }
+
+            return Results.Ok(new CurrentUserSessionResponse(true, payload));
+        }).AllowAnonymous();
 
         // BLAZOR UI
         app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
@@ -296,15 +497,10 @@ public class Program
         // EVENTBUS SUBSCRIPTIONS 
         app.InitializeEventBus(); // Application layer handlers (Domain + Integration events)
 
-        // Ensure Blazor Presentation UI notification handler is explicitly wired
-        // so UINotificationEvent events can dispatch to Radzen popup notifications.
-        using (var scope = app.Services.CreateScope())
-        {
-            var eventBus = scope.ServiceProvider.GetRequiredService<IBaseEventBus>();
-            eventBus.SubscribeUI<UINotificationEvent, UIEventHandler>();
-            eventBus.SubscribeUI<SPIDashboardRefreshEvent, SPIDashboardRefreshEventHandler>();
-        }
-
         app.Run();
     }
+
+    private sealed record AuthSessionRequest(string Username, string Password);
+    private sealed record AuthSessionResponse(bool IsSuccess, bool RequiresTwoFactor, string ErrorMessage);
+    private sealed record CurrentUserSessionResponse(bool IsAuthenticated, Dictionary<string, string>? AuthValues);
 }

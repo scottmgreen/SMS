@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using Radzen;
 using Radzen.Blazor;
@@ -19,8 +22,12 @@ namespace SMS3.Components.Layout;
 
 public partial class NavMenu
 {
+    private const bool EnableSessionTimer = false;
+    private const bool EnableActivityTracking = false;
 
 [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider _authenticationStateProvider { get; set; } = default!;
+    [Inject] private IHttpClientFactory _httpClientFactory { get; set; } = default!;
     [Inject] private SessionTimerService _sessionTimerService { get; set; } = default!;
     [Inject] private IEventQueueService _eventQueueService { get; set; } = default!;
     [Inject] private IActiveUserSessionRegistry _activeUserSessionRegistry { get; set; } = default!;
@@ -40,8 +47,17 @@ public partial class NavMenu
     private bool _isFullyAuthenticated;
     private bool _isLogoutInitiated;
     private bool _hasRegisteredCurrentSession;
+    private bool _isNavigationInProgress;
+    private bool _hasAuthenticatedCircuitPrincipal;
+    private bool _hasPerformedRestrictedRouteRedirect;
     private DateTime _lastAuthenticationSuccessUtc;
+    private DateTime _lastServerAuthHydrationAttemptUtc;
+    private bool _isServerAuthHydrationInProgress;
+    private readonly string _navFallbackSessionKey = $"nav:{Guid.NewGuid():N}";
     private static readonly TimeSpan AuthStateDropGuardWindow = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan ServerAuthHydrationRetryInterval = TimeSpan.FromSeconds(2);
+    private bool? _lastLoggedAuthState;
+    private bool ShowSessionTimerInNav => EnableSessionTimer && _configuration.GetValue<bool>("FeatureManagement:ShowSessionTimerInNav", true);
 
     // Environment Detection - Always production appearance
     private string BrandCssClass => "";
@@ -101,25 +117,34 @@ public partial class NavMenu
 
     protected override async Task OnInitializedAsync()
     {
+        _navigation.RegisterLocationChangingHandler(OnLocationChangingAsync);
         _navigation.LocationChanged += OnLocationChanged;
         _dotNetRef = DotNetObjectReference.Create(this);
 
         try
         {
             _logger.LogDebug("NavMenu OnInitializedAsync - Checking authentication state");
+            await HydrateCurrentUserFromPrincipalAsync();
+            await HydrateCurrentUserFromServerAsync();
             _isFullyAuthenticated = await ResolveAuthenticationStateAsync();
             
             // Single check - no loops
             if (_isFullyAuthenticated)
             {
-                _sessionTimerService.StartTimer();
+                if (EnableSessionTimer)
+                {
+                    _sessionTimerService.StartTimer();
+                }
                 RefreshActiveUserSessions();
                 await LoadPendingIntegrationEventCountAsync();
                 NavigateToDefaultPageIfAuthenticatedOnRestrictedPage();
                 _logger.LogDebug("NavMenu initialized with session timer for user: {UserCode}", _currentUserService.UserCode);
             }
 
-            _notificationPollingTask ??= PollPendingIntegrationEventCountAsync(_cancellationTokenSource.Token);
+            if (_isFullyAuthenticated)
+            {
+                _notificationPollingTask ??= PollPendingIntegrationEventCountAsync(_cancellationTokenSource.Token);
+            }
         }
         catch (Exception ex)
         {
@@ -134,21 +159,24 @@ public partial class NavMenu
         {
             var wasFullyAuthenticated = _isFullyAuthenticated;
 
-            await RegisterActivityTrackingAsync();
+            if (EnableActivityTracking)
+            {
+                await RegisterActivityTrackingAsync();
+            }
 
             if (!_isFullyAuthenticated)
             {
                 await RefreshAuthenticationStateAsync();
 
-                if (!_isFullyAuthenticated)
-                {
-                    _ = EnsureAuthenticationRecoveredAsync();
-                }
+                // No retry loop on first render; auth resolves from principal/session when available.
             }
 
             if (_isFullyAuthenticated)
             {
-                _sessionTimerService.StartTimer();
+                if (EnableSessionTimer)
+                {
+                    _sessionTimerService.StartTimer();
+                }
                 RefreshActiveUserSessions();
                 await LoadPendingIntegrationEventCountAsync();
                 NavigateToDefaultPageIfAuthenticatedOnRestrictedPage();
@@ -159,13 +187,21 @@ public partial class NavMenu
                 await InvokeAsync(StateHasChanged);
             }
 
-            _notificationPollingTask ??= PollPendingIntegrationEventCountAsync(_cancellationTokenSource.Token);
+            if (_isFullyAuthenticated)
+            {
+                _notificationPollingTask ??= PollPendingIntegrationEventCountAsync(_cancellationTokenSource.Token);
+            }
         }
     }
 
     [JSInvokable]
     public void ReportClientActivity()
     {
+        if (!EnableActivityTracking)
+        {
+            return;
+        }
+
         if (_currentUserService?.IsFullyAuthenticated != true)
         {
             return;
@@ -196,55 +232,39 @@ public partial class NavMenu
     {
         _ = InvokeAsync(async () =>
         {
-            await RefreshAuthenticationStateAsync();
+            _isNavigationInProgress = true;
+            await HydrateCurrentUserFromPrincipalAsync();
+            await HydrateCurrentUserFromServerAsync();
 
-            if (!_isFullyAuthenticated && !IsOnRestrictedPage)
-            {
-                _ = EnsureAuthenticationRecoveredAsync();
-            }
+            await RefreshAuthenticationStateAsync();
 
             RefreshActiveUserSessions();
             _ = LoadPendingIntegrationEventCountAsync();
+            _isNavigationInProgress = false;
             StateHasChanged();
         });
     }
 
-    private async Task EnsureAuthenticationRecoveredAsync()
+    private ValueTask OnLocationChangingAsync(Microsoft.AspNetCore.Components.Routing.LocationChangingContext context)
     {
-        if (IsOnRestrictedPage || _isFullyAuthenticated)
-        {
-            return;
-        }
-
-        const int recoveryAttempts = 10;
-        const int recoveryDelayMs = 500;
-
-        for (var attempt = 0; attempt < recoveryAttempts && !_isFullyAuthenticated; attempt++)
-        {
-            try
-            {
-                await Task.Delay(recoveryDelayMs, _cancellationTokenSource.Token);
-                await RefreshAuthenticationStateAsync();
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogDebug(ex, "NavMenu auth recovery attempt failed at attempt {Attempt}", attempt + 1);
-            }
-        }
+        _isNavigationInProgress = true;
+        return ValueTask.CompletedTask;
     }
-    
+
     protected override async Task OnParametersSetAsync()
     {
-        await RefreshAuthenticationStateAsync();
+        if (_isFullyAuthenticated)
+        {
+            await RefreshAuthenticationStateAsync();
+        }
 
         // Update session activity when parameters change - only for fully authenticated users
         if (_isFullyAuthenticated)
         {
-            _sessionTimerService.UpdateActivity();
+            if (EnableSessionTimer)
+            {
+                _sessionTimerService.UpdateActivity();
+            }
             RegisterCurrentUserActivity();
             RefreshActiveUserSessions();
                 await LoadPendingIntegrationEventCountAsync();
@@ -294,7 +314,7 @@ public partial class NavMenu
 
                 if (!_isFullyAuthenticated)
                 {
-                    await RefreshAuthenticationStateAsync();
+                    continue;
                 }
 
                 RefreshActiveUserSessions();
@@ -324,7 +344,7 @@ public partial class NavMenu
 
     private void NavigateToNotificationManagement()
     {
-        if (_isFullyAuthenticated)
+        if (_isFullyAuthenticated && EnableSessionTimer)
         {
             _sessionTimerService.UpdateActivity();
         }
@@ -438,7 +458,7 @@ public partial class NavMenu
                          && (absoluteUri.Scheme == Uri.UriSchemeHttps || absoluteUri.Scheme == Uri.UriSchemeHttp))
                 {
                     _logger.LogInformation("Navigating to external URL: {Url}", value);
-                    _navigation.NavigateTo(value, forceLoad: true);
+                    _navigation.NavigateTo(value, forceLoad: false);
                 }
                 else
                 {
@@ -657,22 +677,46 @@ public partial class NavMenu
     private string BuildCurrentSessionKey()
     {
         var context = _httpContextAccessor.HttpContext;
+        var connectionId = context?.Connection?.Id;
         var sessionId = context?.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>()?.Session?.Id;
-        if (!string.IsNullOrWhiteSpace(sessionId))
+
+        if (!string.IsNullOrWhiteSpace(sessionId) && !string.IsNullOrWhiteSpace(connectionId))
         {
-            return $"session:{sessionId}";
+            return $"session:{sessionId}:conn:{connectionId}";
         }
 
-        var connectionId = context?.Connection?.Id;
         if (!string.IsNullOrWhiteSpace(connectionId))
         {
             return $"conn:{connectionId}";
         }
 
-        var userCode = _currentUserService?.UserCode ?? "unknown";
-        var remoteIp = context?.Connection?.RemoteIpAddress?.ToString() ?? "unknown";
-        var userAgent = context?.Request?.Headers["User-Agent"].FirstOrDefault() ?? "unknown";
-        return $"fallback:{userCode}:{remoteIp}:{userAgent.GetHashCode()}";
+        if (!string.IsNullOrWhiteSpace(sessionId))
+        {
+            return $"session:{sessionId}";
+        }
+
+        if (context is not null)
+        {
+            try
+            {
+                sessionId = context.Session.Id;
+                if (!string.IsNullOrWhiteSpace(sessionId))
+                {
+                    return $"session:{sessionId}";
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // Session unavailable in this phase; continue to deterministic per-circuit fallback.
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(connectionId))
+        {
+            return $"conn:{connectionId}";
+        }
+
+        return _navFallbackSessionKey;
     }
 
     /// <summary>
@@ -683,7 +727,10 @@ public partial class NavMenu
         // Update session activity - only for fully authenticated users
         if (_isFullyAuthenticated)
         {
-            _sessionTimerService.UpdateActivity();
+            if (EnableSessionTimer)
+            {
+                _sessionTimerService.UpdateActivity();
+            }
         }
 
         _logger.LogInformation("Navigating to About page via secure navigation");
@@ -720,14 +767,25 @@ public partial class NavMenu
     public void Dispose()
     {
         _navigation.LocationChanged -= OnLocationChanged;
-        _sessionTimerService?.StopTimer();
+        if (EnableSessionTimer)
+        {
+            _sessionTimerService?.StopTimer();
+        }
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource?.Dispose();
         _dotNetRef?.Dispose();
     }
 
-    // Hide all menu items on PDX and Login pages
-    private bool IsOnRestrictedPage => _navigation.Uri.Contains("/pdx") || IsObfuscatedLogin();
+    // Hide all menu items on anonymous entry pages.
+    private bool IsOnRestrictedPage => _navigation.Uri.Contains("/pdx")
+        || _navigation.Uri.Contains("/login")
+        || IsObfuscatedLogin();
+
+    // Fundamentally stable gate: on protected routes, render nav when either full session auth
+    // is ready OR the cookie principal is already authenticated for this request/circuit.
+    private bool ShouldRenderAuthenticatedNav => _isFullyAuthenticated
+        || _hasAuthenticatedCircuitPrincipal
+        || HasAuthenticatedServerPrincipal();
 
     
     private string CreateHazardReportMenuValue
@@ -746,13 +804,8 @@ public partial class NavMenu
 
     private async Task RefreshAuthenticationStateAsync()
     {
-        _logger.LogInformation("NavMenu auth refresh start. FullyAuth={IsFullyAuthenticated}, Auth={IsAuthenticated}, Pending2FA={IsPending2FA}, UserCode={UserCode}, Uri={Uri}",
-            _currentUserService?.IsFullyAuthenticated,
-            _currentUserService?.IsAuthenticated,
-            _currentUserService?.IsPending2FAVerification,
-            _currentUserService?.UserCode,
-            _navigation.Uri);
-
+        await HydrateCurrentUserFromPrincipalAsync();
+        await HydrateCurrentUserFromServerAsync();
         var resolvedState = await ResolveAuthenticationStateAsync();
 
         // Stabilize authenticated nav state: avoid dropping to anonymous due transient auth resolution misses.
@@ -764,6 +817,7 @@ public partial class NavMenu
 
         if (resolvedState == _isFullyAuthenticated)
         {
+            LogAuthStateTransition(_isFullyAuthenticated);
             return;
         }
 
@@ -771,7 +825,13 @@ public partial class NavMenu
 
         if (_isFullyAuthenticated)
         {
-            _sessionTimerService.StartTimer();
+            if (EnableSessionTimer)
+            {
+                _sessionTimerService.StartTimer();
+            }
+
+            _notificationPollingTask ??= PollPendingIntegrationEventCountAsync(_cancellationTokenSource.Token);
+
             RegisterCurrentUserActivity();
             RefreshActiveUserSessions();
             await LoadPendingIntegrationEventCountAsync();
@@ -783,9 +843,7 @@ public partial class NavMenu
             _activeUserSessions = [];
         }
 
-        _logger.LogInformation("NavMenu auth refresh changed state. ResolvedFullyAuth={ResolvedState}, CurrentUserCode={UserCode}",
-            _isFullyAuthenticated,
-            _currentUserService?.UserCode);
+        LogAuthStateTransition(_isFullyAuthenticated);
     }
 
     private void NavigateToDefaultPageIfAuthenticatedOnRestrictedPage()
@@ -795,72 +853,213 @@ public partial class NavMenu
             return;
         }
 
-        try
-        {
-            _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing", forceLoad: false);
-        }
-        catch (NavigationException ex)
-        {
-            _logger.LogDebug(ex, "Navigation exception while redirecting authenticated user off restricted page.");
-        }
+        // Login flow now performs server-side redirect. Avoid issuing a second client-side navigation
+        // from the current circuit while it may be disposing.
+        _logger.LogDebug("Skipping NavMenu restricted-page auto-redirect; login completion is handled server-side.");
     }
 
     private async Task<bool> ResolveAuthenticationStateAsync()
     {
-        _logger.LogInformation("NavMenu auth resolve start. FullyAuth={IsFullyAuthenticated}, Auth={IsAuthenticated}, Pending2FA={IsPending2FA}, UserCode={UserCode}, Uri={Uri}",
-            _currentUserService?.IsFullyAuthenticated,
-            _currentUserService?.IsAuthenticated,
-            _currentUserService?.IsPending2FAVerification,
-            _currentUserService?.UserCode,
-            _navigation.Uri);
-
         if (_currentUserService?.IsFullyAuthenticated == true)
         {
             _lastAuthenticationSuccessUtc = DateTime.UtcNow;
-            _logger.LogInformation("NavMenu auth resolve succeeded immediately for user {UserCode}.", _currentUserService?.UserCode);
             return true;
         }
 
-        if (IsOnRestrictedPage)
+        _hasAuthenticatedCircuitPrincipal = await HasAuthenticatedCircuitPrincipalAsync();
+
+        if (_hasAuthenticatedCircuitPrincipal && HasServerBackedAuthSnapshot())
         {
-            return false;
+            _lastAuthenticationSuccessUtc = DateTime.UtcNow;
+            return true;
         }
-
-        const int attempts = 16;
-        const int delayMs = 125;
-
-        for (var attempt = 0; attempt < attempts; attempt++)
-        {
-            await Task.Delay(delayMs);
-
-            if (_currentUserService?.IsFullyAuthenticated == true)
-            {
-                _lastAuthenticationSuccessUtc = DateTime.UtcNow;
-                _logger.LogInformation("NavMenu auth resolve succeeded on retry {Attempt} for user {UserCode}.", attempt + 1, _currentUserService?.UserCode);
-                return true;
-            }
-        }
-
-        if (!_isLogoutInitiated && _isFullyAuthenticated && _lastAuthenticationSuccessUtc != default)
-        {
-            var elapsedSinceSuccess = DateTime.UtcNow - _lastAuthenticationSuccessUtc;
-            if (elapsedSinceSuccess <= AuthStateDropGuardWindow)
-            {
-                _logger.LogWarning("NavMenu auth drop blocked by guard window ({ElapsedSeconds}s <= {GuardSeconds}s).",
-                    elapsedSinceSuccess.TotalSeconds,
-                    AuthStateDropGuardWindow.TotalSeconds);
-                return true;
-            }
-        }
-
-        _logger.LogWarning("NavMenu auth resolve failed after retries. Auth={IsAuthenticated}, Pending2FA={IsPending2FA}, UserCode={UserCode}, Uri={Uri}",
-            _currentUserService?.IsAuthenticated,
-            _currentUserService?.IsPending2FAVerification,
-            _currentUserService?.UserCode,
-            _navigation.Uri);
 
         return false;
     }
+
+    private async Task HydrateCurrentUserFromPrincipalAsync()
+    {
+        if (_currentUserService is not SessionCurrentUserService sessionCurrentUserService)
+        {
+            return;
+        }
+
+        AuthenticationState authState;
+        try
+        {
+            authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+        }
+        catch
+        {
+            return;
+        }
+
+        var user = authState.User;
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        var payload = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["IsAuthenticated"] = "true"
+        };
+
+        static void AddIfNotEmpty(Dictionary<string, string> target, string key, string? value)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                target[key] = value;
+            }
+        }
+
+        AddIfNotEmpty(payload, "SMS_UserCode", user.FindFirstValue("SMS_UserCode") ?? user.FindFirstValue(ClaimTypes.NameIdentifier));
+        AddIfNotEmpty(payload, "SMS_UserType", user.FindFirstValue("SMS_UserType"));
+        AddIfNotEmpty(payload, "SMS_DisplayName", user.FindFirstValue(ClaimTypes.Name));
+        AddIfNotEmpty(payload, "SMS_UserRoleCode", user.FindFirstValue("SMS_UserRoleCode"));
+        AddIfNotEmpty(payload, "SMS_UserRoleName", user.FindFirstValue("SMS_UserRoleName"));
+        AddIfNotEmpty(payload, "SMS_UserPermissions", user.FindFirstValue("SMS_UserPermissions"));
+
+        sessionCurrentUserService.HydrateFromAuthPayload(payload);
+    }
+
+    private async Task HydrateCurrentUserFromServerAsync()
+    {
+        if (_currentUserService is not SessionCurrentUserService sessionCurrentUserService)
+        {
+            return;
+        }
+
+        if (_isServerAuthHydrationInProgress)
+        {
+            return;
+        }
+
+        if (!HasAuthenticatedServerPrincipal() || HasServerBackedAuthSnapshot())
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        if (now - _lastServerAuthHydrationAttemptUtc < ServerAuthHydrationRetryInterval)
+        {
+            return;
+        }
+
+        _lastServerAuthHydrationAttemptUtc = now;
+        _isServerAuthHydrationInProgress = true;
+
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            var uri = _navigation.ToAbsoluteUri("/auth/current-user");
+            using var response = await client.GetAsync(uri);
+            if (!response.IsSuccessStatusCode)
+            {
+                return;
+            }
+
+            await using var stream = await response.Content.ReadAsStreamAsync();
+            using var json = await JsonDocument.ParseAsync(stream);
+            var root = json.RootElement;
+
+            if (!root.TryGetProperty("isAuthenticated", out var isAuthenticatedElement)
+                || isAuthenticatedElement.ValueKind != JsonValueKind.True)
+            {
+                return;
+            }
+
+            if (!root.TryGetProperty("authValues", out var authValuesElement)
+                || authValuesElement.ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            var payload = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var prop in authValuesElement.EnumerateObject())
+            {
+                if (prop.Value.ValueKind != JsonValueKind.String)
+                {
+                    continue;
+                }
+
+                var value = prop.Value.GetString();
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    payload[prop.Name] = value;
+                }
+            }
+
+            if (payload.Count > 0)
+            {
+                sessionCurrentUserService.HydrateFromAuthPayload(payload);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "NavMenu could not hydrate auth snapshot from /auth/current-user.");
+        }
+        finally
+        {
+            _isServerAuthHydrationInProgress = false;
+        }
+    }
+
+    private void LogAuthStateTransition(bool isAuthenticated)
+    {
+        if (_lastLoggedAuthState == isAuthenticated)
+        {
+            return;
+        }
+
+        _lastLoggedAuthState = isAuthenticated;
+        _logger.LogInformation("NavMenu auth state transition: FullyAuth={IsFullyAuthenticated}, UserCode={UserCode}, Uri={Uri}",
+            isAuthenticated,
+            _currentUserService?.UserCode,
+            _navigation.Uri);
+    }
+
+    private bool HasAuthenticatedServerPrincipal()
+    {
+        if (_hasAuthenticatedCircuitPrincipal)
+        {
+            return true;
+        }
+
+        var contextPrincipal = _httpContextAccessor.HttpContext?.User;
+        if (contextPrincipal?.Identity?.IsAuthenticated == true)
+        {
+            return true;
+        }
+
+        var threadPrincipal = Thread.CurrentPrincipal as ClaimsPrincipal;
+        return threadPrincipal?.Identity?.IsAuthenticated == true;
+    }
+
+    private async Task<bool> HasAuthenticatedCircuitPrincipalAsync()
+    {
+        try
+        {
+            var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+            return authState.User?.Identity?.IsAuthenticated == true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private bool HasServerBackedAuthSnapshot()
+    {
+        if (!string.IsNullOrWhiteSpace(_currentUserService?.UserRoleCode)
+            && _currentUserService?.Permissions?.Count > 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
 }
 
 

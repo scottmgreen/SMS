@@ -45,8 +45,7 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
     public string StrategyName => "Session-Based Authentication";
     public AuthenticationMethod Method => AuthenticationMethod.SessionBased;
 
-    public bool IsAvailable => TryGetSession() != null &&
-                              _protocolDetectionService.CanUseSessionAuth();
+    public bool IsAvailable => _protocolDetectionService.CanUseSessionAuth();
 
     /// <summary>
     /// Store complete user authentication data in HTTP Session
@@ -59,7 +58,19 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             var session = TryGetSession(context);
             if (session == null)
             {
-                _logger.LogApplicationWarning("Session not available for SessionBasedAuthenticationStrategy");
+                var hasContext = context != null;
+                var isHttps = context?.Request.IsHttps;
+                var path = context?.Request.Path.Value ?? "(none)";
+                var responseStarted = context?.Response.HasStarted;
+                var hasSessionFeature = context?.Features.Get<ISessionFeature>()?.Session != null;
+
+                _logger.LogApplicationWarning(
+                    "Session not available for SessionBasedAuthenticationStrategy. Context={HasContext}, Path={Path}, IsHttps={IsHttps}, ResponseStarted={ResponseStarted}, SessionFeature={HasSessionFeature}",
+                    hasContext,
+                    path,
+                    isHttps,
+                    responseStarted,
+                    hasSessionFeature);
                 return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
@@ -79,6 +90,14 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             // Add strategy identifier
             session.SetString("SMS_AuthMethod", "Session");
             session.SetString("SMS_AuthStrategy", StrategyName);
+
+            var snapshotData = new Dictionary<string, string>(userData, StringComparer.Ordinal)
+            {
+                ["SMS_AuthMethod"] = "Session",
+                ["SMS_AuthStrategy"] = StrategyName
+            };
+
+            SessionCurrentUserService.UpsertSessionSnapshot(session.Id, snapshotData);
 
             await session.CommitAsync(cancellationToken);
 
@@ -192,6 +211,7 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             _logger.LogApplicationInformation("??? Clearing user {UserCode} from session", userCode ?? "Unknown");
 
             session.Clear();
+            SessionCurrentUserService.RemoveSessionSnapshot(session.Id);
             
             _logger.LogApplicationInformation("Session cleared successfully for user {UserCode}", userCode ?? "Unknown");
             return Result.Success(true);
@@ -279,7 +299,7 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
         try
         {
             var featureSession = context.Features.Get<ISessionFeature>()?.Session;
-            if (featureSession is not null)
+            if (featureSession != null)
             {
                 return featureSession;
             }

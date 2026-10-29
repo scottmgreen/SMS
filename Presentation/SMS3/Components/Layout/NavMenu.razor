@@ -30,7 +30,7 @@
 
         <!-- Navigation Links -->
         <div class="collapse navbar-collapse" id="navbarNav">
-            @if (_isFullyAuthenticated)
+            @if (ShouldRenderAuthenticatedNav)
             {
                 <div class="navbar-nav d-flex flex-row align-items-center me-auto">
                     
@@ -82,43 +82,47 @@
                     SMS_Listings_RiskAssessments
 
                      -->
-                    <div class="nav-item me-3">
-                        <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                            <RadzenMenuItem Text="Listings" Icon="list" class="sms-menu-item">
-                                @if (_currentUserService.CanRead("SMS_Listings_Reports"))
-                                {
-                                    <RadzenMenuItem Text="Reports" Value='"/SMSListings/Reports"' Icon="assignment"></RadzenMenuItem>
-                                    <RadzenMenuItem Text="Report Validations" Value='"/SMSListings/ReportValidations"' Icon="assignment"></RadzenMenuItem>
-                                    
-                                }
-                                @if (_currentUserService.CanRead("SMS_Listings_Hazards"))
-                                {
-                                    <RadzenMenuItem Text="Hazards" Value='"/SMSListings/Hazards"' Icon="warning"></RadzenMenuItem> 
-                                }
-                                @if (_currentUserService.CanRead("SMS_Listings_RiskAssessments"))
-                                {
-                                    <RadzenMenuItem Text="Risk Assessments" Value='"/SMSListings/RiskAssessments"' Icon="assessment"></RadzenMenuItem> 
-                                }
-                                @if (_currentUserService.CanRead("SMS_Listings_Mitigations"))
-                                {
-                                    <RadzenMenuItem Text="Mitigations" Value='"/SMSListings/Mitigations"' Icon="security"></RadzenMenuItem>
-                                }
-                                @if (_currentUserService.CanRead("SMS_Listings_Investigations"))
-                                {
-                                    <RadzenMenuItem Text="Investigations" Value='"/SMSListings/Investigations"' Icon="search"></RadzenMenuItem>
-                                }
-                                @if (_currentUserService.CanRead("SMS_Listings_HazardLocations"))
-                                {
-                                    <RadzenMenuItem Text="Hazard Locations" Value='"/SMSListings/HazardLocations"' Icon="place"></RadzenMenuItem>
-                                }
-                                @if (_currentUserService.CanRead("SMS_Listings_HazardFiles"))
-                                {
-                                    <RadzenMenuItem Text="Hazard Files" Value='"/SMSListings/HazardFiles"' Icon="attach_file"></RadzenMenuItem>
-                                }
-                                
-                            </RadzenMenuItem>
-                        </RadzenMenu>
-                    </div>
+                    @if (_currentUserService.CanRead("SMS_Listings_Hazards"))
+                    {
+                        <div class="nav-item me-3">
+                            <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
+                                <RadzenMenuItem Text="Listings" Icon="list" class="sms-menu-item">
+                                    @if (_currentUserService.CanRead("SMS_Listings_Reports"))
+                                    {
+                                        <RadzenMenuItem Text="Reports" Value='"/SMSListings/Reports"' Icon="assignment"></RadzenMenuItem>
+                                        <RadzenMenuItem Text="Report Validations" Value='"/SMSListings/ReportValidations"' Icon="assignment"></RadzenMenuItem>
+
+                                    }
+                                    @if (_currentUserService.CanRead("SMS_Listings_Hazards"))
+                                    {
+                                        <RadzenMenuItem Text="Hazards" Value='"/SMSListings/Hazards"' Icon="warning"></RadzenMenuItem>
+                                    }
+                                    @if (_currentUserService.CanRead("SMS_Listings_RiskAssessments"))
+                                    {
+                                        <RadzenMenuItem Text="Risk Assessments" Value='"/SMSListings/RiskAssessments"' Icon="assessment"></RadzenMenuItem>
+                                    }
+                                    @if (_currentUserService.CanRead("SMS_Listings_Mitigations"))
+                                    {
+                                        <RadzenMenuItem Text="Mitigations" Value='"/SMSListings/Mitigations"' Icon="security"></RadzenMenuItem>
+                                    }
+                                    @if (_currentUserService.CanRead("SMS_Listings_Investigations"))
+                                    {
+                                        <RadzenMenuItem Text="Investigations" Value='"/SMSListings/Investigations"' Icon="search"></RadzenMenuItem>
+                                    }
+                                    @if (_currentUserService.CanRead("SMS_Listings_HazardLocations"))
+                                    {
+                                        <RadzenMenuItem Text="Hazard Locations" Value='"/SMSListings/HazardLocations"' Icon="place"></RadzenMenuItem>
+                                    }
+                                    @if (_currentUserService.CanRead("SMS_Listings_HazardFiles"))
+                                    {
+                                        <RadzenMenuItem Text="Hazard Files" Value='"/SMSListings/HazardFiles"' Icon="attach_file"></RadzenMenuItem>
+                                    }
+
+                                </RadzenMenuItem>
+                            </RadzenMenu>
+                        </div>
+                    }
+                    
 
                     <!-- SMS Assurance Menu -->
                     @if (_currentUserService.CanRead("SMS_Assurance"))
@@ -264,11 +268,14 @@
                
                 <div class="navbar-nav ms-auto d-flex flex-row align-items-right">
 
-                    <div class="nav-item me-2">
-                        <SessionTimer OnSessionExpired="@OnSessionTimerExpired"
-                                      OnSessionWarning="@OnSessionWarning"
-                                      ShowTimer='@(_configuration.GetValue<bool>("FeatureManagement:ShowSessionTimerInNav", true))' />
-                    </div>
+                    @if (ShowSessionTimerInNav)
+                    {
+                        <div class="nav-item me-2">
+                            <SessionTimer OnSessionExpired="@OnSessionTimerExpired"
+                                          OnSessionWarning="@OnSessionWarning"
+                                          ShowTimer='@ShowSessionTimerInNav' />
+                        </div>
+                    }
 
 
 

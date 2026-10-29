@@ -395,11 +395,51 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
     {
         try
         {
-            var userCode = await GetCurrentUserIdAsync(cancellationToken) ?? "Unknown";
-            _logger.LogApplicationInformation("??? Clearing user {UserCode} from circuit storage", userCode);
+            var context = _httpContextAccessor.HttpContext;
+
+            // Resolve potential user codes BEFORE clearing anything so we can remove all user-scoped keys.
+            var userCodesToClear = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            var userCode = await GetCurrentUserIdAsync(cancellationToken) ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(userCode) && !string.Equals(userCode, "Unknown", StringComparison.OrdinalIgnoreCase))
+            {
+                userCodesToClear.Add(userCode);
+            }
+
+            var contextUserCode = context?.Items["SMS_UserCode"]?.ToString();
+            if (!string.IsNullOrWhiteSpace(contextUserCode))
+            {
+                userCodesToClear.Add(contextUserCode);
+            }
+
+            var cookieUserCode = context?.Request?.Cookies["SMS_UserCodeHint"];
+            if (!string.IsNullOrWhiteSpace(cookieUserCode))
+            {
+                userCodesToClear.Add(cookieUserCode);
+            }
+
+            if (context is not null)
+            {
+                try
+                {
+                    if (context.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>()?.Session is not null)
+                    {
+                        var sessionUserCode = context.Session.GetString("SMS_UserCode");
+                        if (!string.IsNullOrWhiteSpace(sessionUserCode))
+                        {
+                            userCodesToClear.Add(sessionUserCode);
+                        }
+                    }
+                }
+                catch (InvalidOperationException)
+                {
+                    // Session unavailable on this request path.
+                }
+            }
+
+            _logger.LogApplicationInformation("??? Clearing circuit auth data for {UserCodeCount} resolved user key(s)", userCodesToClear.Count);
 
             // Method 1: Clear by stored circuit ID
-            var context = _httpContextAccessor.HttpContext;
             if (context?.Items.TryGetValue("SMS_CIRCUIT_ID", out var storedCircuitId) == true && storedCircuitId != null)
             {
                 var circuitId = storedCircuitId.ToString();
@@ -412,14 +452,37 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             if (!string.IsNullOrEmpty(currentCircuitId))
             {
                 _circuitAuthStorage.ClearAuthData(currentCircuitId);
+                _circuitAuthStorage.ClearAuthData($"circuit_{currentCircuitId}");
+                _circuitAuthStorage.ClearAuthData($"{currentCircuitId}_auth");
                 _logger.LogApplicationDebug("??? Cleared circuit data by current ID: {CircuitId}", currentCircuitId);
             }
 
-            // Method 3: Clear by user ID
-            _circuitAuthStorage.ClearAuthDataByUserId(userCode);
-            _logger.LogApplicationDebug("??? Cleared circuit data by user ID: {UserCode}", userCode);
+            // Method 3: Clear by cookie-derived stable keys.
+            if (context?.Request?.Cookies.TryGetValue("SMS_Session", out var sessionCookieValue) == true
+                && !string.IsNullOrWhiteSpace(sessionCookieValue))
+            {
+                var sessionCookieKey = $"sessioncookie_{sessionCookieValue}";
+                _circuitAuthStorage.ClearAuthData(sessionCookieKey);
+                _logger.LogApplicationDebug("??? Cleared circuit data by session cookie key: {SessionCookieKey}", sessionCookieKey);
+            }
 
-            // Method 4: Clear context items
+            if (context?.Request?.Cookies.TryGetValue("SMS_CircuitFallbackId", out var fallbackId) == true
+                && !string.IsNullOrWhiteSpace(fallbackId))
+            {
+                var fallbackKey = $"fallback_{fallbackId}";
+                _circuitAuthStorage.ClearAuthData(fallbackKey);
+                _logger.LogApplicationDebug("??? Cleared circuit data by fallback key: {FallbackKey}", fallbackKey);
+            }
+
+            // Method 4: Clear by all resolved user IDs.
+            foreach (var resolvedUserCode in userCodesToClear)
+            {
+                _circuitAuthStorage.ClearAuthDataByUserId(resolvedUserCode);
+                _circuitAuthStorage.ClearAuthData($"user_{resolvedUserCode}");
+                _logger.LogApplicationDebug("??? Cleared circuit data by user ID: {UserCode}", resolvedUserCode);
+            }
+
+            // Method 5: Clear context items
             if (context != null)
             {
                 var keysToRemove = context.Items.Keys
@@ -435,7 +498,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
                 _logger.LogApplicationDebug("??? Cleared {Count} context items", keysToRemove.Count);
             }
 
-            _logger.LogApplicationInformation("Circuit storage cleared successfully for user {UserCode}", userCode);
+            _logger.LogApplicationInformation("Circuit storage cleared successfully");
             return Result.Success(true);
         }
         catch (Exception ex)

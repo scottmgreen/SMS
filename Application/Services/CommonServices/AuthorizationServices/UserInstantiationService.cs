@@ -225,6 +225,25 @@ public class UserInstantiationService : IUserInstantiationService
     {
         try
         {
+            var permissionPairs = new List<string>();
+            var permissionCount = 0;
+
+            if (user.UserRole?.Permissions != null && user.UserRole.Permissions.Any())
+            {
+                foreach (var perm in user.UserRole.Permissions)
+                {
+                    var actions = new List<string>();
+                    if (perm.Create) actions.Add("Create");
+                    if (perm.Read) actions.Add("Read");
+                    if (perm.Update) actions.Add("Update");
+                    if (perm.Delete) actions.Add("Delete");
+
+                    permissionPairs.Add($"{perm.SMSModule}:{string.Join(",", actions)}");
+                }
+
+                permissionCount = user.UserRole.Permissions.Count;
+            }
+
             var userData = new Dictionary<string, string>
             {
                 ["SMS_UserCode"] = user.Code,
@@ -236,69 +255,12 @@ public class UserInstantiationService : IUserInstantiationService
                 ["IsAuthenticated"] = "true",
                 ["SMS_LoginTime"] = DateTime.Now.ToString("O"),
                 ["SMS_TwoFactorEnabled"] = user.TwoFactorEnabled.ToString(),
-                ["SMS_TwoFactorSecretKey"] = user.TwoFactorSecretKey ?? string.Empty,
-                ["SMS_FailedTwoFactorAttempts"] = user.FailedTwoFactorAttempts.ToString(),
-                ["SMS_LastLoginDate"] = user.LastLoginDate?.ToString("O") ?? string.Empty,
-                ["SMS_IsActive"] = user.IsActive.ToString(),
-                ["SMS_SerializedAt"] = DateTime.Now.ToString("O"),
-                ["SMS_CompletenessScore"] = _completenessValidator.GetCompletenessScore(user, userType).ToString()
+                ["SMS_UserRoleCode"] = user.UserRole?.Code ?? string.Empty,
+                ["SMS_UserRoleName"] = user.UserRole?.Name ?? string.Empty,
+                ["SMS_UserPermissions"] = string.Join("|", permissionPairs)
             };
 
-            // ?? SERIALIZE COMPLETE ROLE INFORMATION
-            if (user.UserRole != null)
-            {
-                userData["SMS_UserRoleCode"] = user.UserRole.Code ?? string.Empty;
-                userData["SMS_UserRoleName"] = user.UserRole.Name ?? string.Empty;
-                
-                // Serialize permissions as JSON for complete data preservation
-                if (user.UserRole.Permissions != null && user.UserRole.Permissions.Any())
-                {
-                    var permissionData = user.UserRole.Permissions.Select(p => new
-                    {
-                        Module = p.SMSModule,
-                        Create = p.Create,
-                        Read = p.Read,
-                        Update = p.Update,
-                        Delete = p.Delete,
-                        Code = p.Code
-                    }).ToList();
-
-                    userData["SMS_UserPermissionsJson"] = JsonSerializer.Serialize(permissionData);
-
-                    // Also store in legacy format for compatibility
-                    var permissionPairs = new List<string>();
-                    foreach (var perm in user.UserRole.Permissions)
-                    {
-                        var actions = new List<string>();
-                        if (perm.Create) actions.Add("Create");
-                        if (perm.Read) actions.Add("Read");
-                        if (perm.Update) actions.Add("Update");
-                        if (perm.Delete) actions.Add("Delete");
-                        
-                        permissionPairs.Add($"{perm.SMSModule}:{string.Join(",", actions)}");
-                    }
-                    userData["SMS_UserPermissions"] = string.Join("|", permissionPairs);
-                    
-                    _logger.LogApplicationInformation("Serialized {PermissionCount} permissions for user {UserCode}", user.UserRole.Permissions.Count, user.Code);
-                }
-            }
-
-            // Add user type-specific data
-            switch (userType.Value.ToUpperInvariant())
-            {
-                case "APPLICATION" when user is SMSApplicationUser appUser:
-                    userData["SMS_ApplicationUserCode"] = appUser.Code ?? string.Empty;
-                    break;
-                case "ORGANIZATIONAL" when user is SMSOrganizationalUser orgUser:
-                    userData["SMS_Department"] = orgUser.Organization ?? string.Empty;
-                    userData["SMS_Position"] = orgUser.Position ?? string.Empty;
-                    userData["SMS_OrganizationLevel"] = orgUser.OrganizationLevel ?? string.Empty;
-                    break;
-                case "STAKEHOLDER" when user is SMSStakeholderUser stakeholderUser:
-                    userData["SMS_Organization"] = stakeholderUser.Organization ?? string.Empty;
-                    userData["SMS_StakeholderType"] = stakeholderUser.StakeholderType ?? string.Empty;
-                    break;
-            }
+            _logger.LogApplicationInformation("Serialized minimal auth payload with {PermissionCount} permissions for user {UserCode}", permissionCount, user.Code);
 
             _logger.LogApplicationInformation("Complete user serialization successful for {UserCode} ({UserType}) - {DataCount} fields", user.Code, userType.Value, userData.Count);
 
@@ -618,6 +580,14 @@ public class UserInstantiationService : IUserInstantiationService
                         {
                             ParseLegacyPermissions(user.UserRole, legacyPermissions, roleCode);
                         }
+                    }
+                }
+                else
+                {
+                    var legacyPermissions = userData.GetValueOrDefault("SMS_UserPermissions", "");
+                    if (!string.IsNullOrEmpty(legacyPermissions))
+                    {
+                        ParseLegacyPermissions(user.UserRole, legacyPermissions, roleCode);
                     }
                 }
             }

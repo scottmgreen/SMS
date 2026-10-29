@@ -19,6 +19,7 @@ public partial class UploadFileSection
     [Parameter] public string AcceptedFileExtensions { get; set; } = ".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt";
     [Parameter] public int MaxFileSize { get; set; } = 10485760;
     [Parameter] public EventCallback<UploadChangeEventArgs> OnInputFileChange { get; set; }
+    [Parameter] public EventCallback<int> OnViewFile { get; set; }
     [Parameter] public EventCallback<int> OnRemoveFile { get; set; }
     [Parameter] public EventCallback OnClearAllFiles { get; set; }
     [Parameter] public EventCallback OnFilesChanged { get; set; }

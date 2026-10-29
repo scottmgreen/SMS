@@ -382,6 +382,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
     private IJSObjectReference? _mapModule;
     private DotNetObjectReference<HazardReporting>? _dotNetRef;
+    private HazardMappingBoundsSettings _hazardMappingBounds = new();
     private bool _isMapEditModeEnabled;
     private decimal _mapOriginalLatitude;
     private decimal _mapOriginalLongitude;
@@ -396,6 +397,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        _hazardMappingBounds = LoadHazardMappingBounds();
         InitializeDropdownOptions();
 
         // Check for edit mode parameters
@@ -409,6 +411,44 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
         // Create DotNet reference for JavaScript callbacks
         _dotNetRef = DotNetObjectReference.Create(this);
+    }
+
+    private HazardMappingBoundsSettings LoadHazardMappingBounds()
+    {
+        var settings = new HazardMappingBoundsSettings
+        {
+            ForceBoundsCheck = _configuration.GetValue<bool>("HazardMappingBounds:ForceBoundsCheck")
+        };
+
+        var pointsSection = _configuration.GetSection("HazardMappingBounds:FencePoints");
+        foreach (var point in pointsSection.GetChildren())
+        {
+            var latitude = point.GetValue<double?>("Latitude");
+            var longitude = point.GetValue<double?>("Longitude");
+
+            if (latitude.HasValue && longitude.HasValue)
+            {
+                settings.FencePoints.Add(new HazardMappingPoint
+                {
+                    Latitude = latitude.Value,
+                    Longitude = longitude.Value
+                });
+            }
+        }
+
+        return settings;
+    }
+
+    private sealed class HazardMappingBoundsSettings
+    {
+        public bool ForceBoundsCheck { get; set; }
+        public List<HazardMappingPoint> FencePoints { get; set; } = new();
+    }
+
+    private sealed class HazardMappingPoint
+    {
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -1152,6 +1192,48 @@ public partial class HazardReporting : ComponentBase, IDisposable
         return $"{file.Description.Trim()} {fileName}";
     }
 
+    public async Task ViewFile(int index)
+    {
+        if (index < 0 || index >= AttachedFiles.Count)
+        {
+            return;
+        }
+
+        var file = AttachedFiles[index];
+
+        try
+        {
+            if (ShouldUseStoredExternalPath(file))
+            {
+                var resolvedPath = ResolveExternalFilePath(file.FilePath);
+                if (!string.IsNullOrWhiteSpace(resolvedPath))
+                {
+                    await _jsRuntime.InvokeVoidAsync("open", resolvedPath, "_blank");
+                    await _notificationHelper.ShowInfoAsync($"Opened '{file.FileName}' in a new tab");
+                    return;
+                }
+            }
+
+            if (file.Data is { Length: > 0 })
+            {
+                var base64Data = Convert.ToBase64String(file.Data);
+                var contentType = string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType;
+                var dataUrl = $"data:{contentType};base64,{base64Data}";
+
+                await _jsRuntime.InvokeVoidAsync("open", dataUrl, "_blank");
+                await _notificationHelper.ShowInfoAsync($"Opened '{file.FileName}' in a new tab");
+                return;
+            }
+
+            await _notificationHelper.ShowErrorAsync("File content is unavailable. The file cannot be opened.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error opening attached file: {FileName}", file.FileName);
+            await _notificationHelper.ShowErrorAsync($"Error opening file: {ex.Message}");
+        }
+    }
+
     #endregion
 
     #region Location Methods
@@ -1191,7 +1273,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             try
             {
                 // Always reinitialize the map since the DOM element is recreated
-            await _mapModule.InvokeVoidAsync("initializeMap",_airportCenterLatitude, _airportCenterLongitude, _defaultZoomLevel, _dotNetRef);
+            await _mapModule.InvokeVoidAsync("initializeMap",_airportCenterLatitude, _airportCenterLongitude, _defaultZoomLevel, _dotNetRef, _hazardMappingBounds);
 
                 _logger.LogInformation("Map reinitialized for modal opening");
 
@@ -1218,7 +1300,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     _logger.LogInformation("Existing location restored: {Lat}, {Lng}", mapLat, mapLng);
 
                     StateHasChanged();
-                }
+}
             }
             catch (Exception ex)
             {

@@ -8,24 +8,25 @@ let map = null;
 let selectedMarker = null;
 let dotNetRef = null;
 let pdxOverlayLayer = null;
+let boundsFenceLayer = null;
 const PDX_SMS_TILE_URL = 'https://cdn.portofportland.com/maps/sms_260702/{z}/{x}/{y}.png';
 const PDX_SMS_FALLBACK_ZOOM = 16;
 const PDX_SMS_NATIVE_ZOOM = 20;
 const STANDARD_MAX_ZOOM = 19;
 
-// Airport boundaries (PDX)
-const AIRPORT_BOUNDS = {
-    minLat: 45.580,
-    maxLat: 45.595,
-    minLng: -122.610,
-    maxLng: -122.580
+const DEFAULT_BOUNDS_CONFIG = {
+    forceBoundsCheck: false,
+    fencePoints: []
 };
+
+let mapBoundsConfig = { ...DEFAULT_BOUNDS_CONFIG };
 
 /**
  * Initialize the interactive map
  */
-export function initializeMap(centerLat, centerLng, zoomLevel, dotNetReference) {
+export function initializeMap(centerLat, centerLng, zoomLevel, dotNetReference, boundsConfig) {
     dotNetRef = dotNetReference;
+    mapBoundsConfig = normalizeBoundsConfig(boundsConfig);
     
     try {
         // Always remove existing map if it exists to prevent conflicts
@@ -34,13 +35,14 @@ export function initializeMap(centerLat, centerLng, zoomLevel, dotNetReference) 
             map = null;
             selectedMarker = null;
             pdxOverlayLayer = null;
+            boundsFenceLayer = null;
         }
 
         // Wait for DOM element to be available
         const mapContainer = document.getElementById('hazardLocationMap');
         if (!mapContainer) {
             console.error('Map container not found - retrying in 100ms');
-            setTimeout(() => initializeMap(centerLat, centerLng, zoomLevel, dotNetReference), 100);
+            setTimeout(() => initializeMap(centerLat, centerLng, zoomLevel, dotNetReference, boundsConfig), 100);
             return;
         }
 
@@ -123,10 +125,15 @@ export function initializeMap(centerLat, centerLng, zoomLevel, dotNetReference) 
                     pdxSmsMap.addTo(map);
                 }
                 pdxSmsMap.bringToFront();
+                if (boundsFenceLayer) {
+                    boundsFenceLayer.bringToFront();
+                }
             } catch (overlayError) {
                 console.warn('Unable to enforce required PDX SMS overlay.', overlayError);
             }
         });
+
+        drawBoundsFence();
 
         // Add click event listener
         map.on('click', onMapClick);
@@ -136,6 +143,30 @@ export function initializeMap(centerLat, centerLng, zoomLevel, dotNetReference) 
     } catch (error) {
         console.error('Error initializing map:', error);
     }
+}
+
+function drawBoundsFence() {
+    if (!map || !Array.isArray(mapBoundsConfig.fencePoints) || mapBoundsConfig.fencePoints.length < 3) {
+        return;
+    }
+
+    const latLngPoints = mapBoundsConfig.fencePoints.map(point => [point.latitude, point.longitude]);
+
+    boundsFenceLayer = L.polygon(latLngPoints, {
+        color: '#ff0000',
+        weight: 2,
+        opacity: 0.9,
+        fillColor: '#ff0000',
+        fillOpacity: 0.08,
+        dashArray: '6,4'
+    }).addTo(map);
+
+    boundsFenceLayer.bindTooltip('Hazard Mapping Bounds', {
+        sticky: true,
+        direction: 'top'
+    });
+
+    boundsFenceLayer.bringToFront();
 }
 
 /**
@@ -201,10 +232,71 @@ function setMapLocation(lat, lng, description) {
  * Check if coordinates are within PDX airport bounds
  */
 function isWithinBounds(lat, lng) {
-    return lat >= AIRPORT_BOUNDS.minLat && 
-           lat <= AIRPORT_BOUNDS.maxLat && 
-           lng >= AIRPORT_BOUNDS.minLng && 
-           lng <= AIRPORT_BOUNDS.maxLng;
+    if (!mapBoundsConfig.forceBoundsCheck) {
+        return true;
+    }
+
+    if (!Array.isArray(mapBoundsConfig.fencePoints) || mapBoundsConfig.fencePoints.length < 3) {
+        console.warn('ForceBoundsCheck is enabled but HazardMappingBounds.FencePoints is missing or invalid.');
+        return false;
+    }
+
+    return isPointInPolygon(lat, lng, mapBoundsConfig.fencePoints);
+}
+
+function normalizeBoundsConfig(boundsConfig) {
+    if (!boundsConfig || typeof boundsConfig !== 'object') {
+        return { ...DEFAULT_BOUNDS_CONFIG };
+    }
+
+    const forceBoundsCheck = Boolean(boundsConfig.forceBoundsCheck);
+    const inputFencePoints = Array.isArray(boundsConfig.fencePoints) ? boundsConfig.fencePoints : [];
+    const fencePoints = inputFencePoints
+        .map(point => {
+            if (!point || typeof point !== 'object') {
+                return null;
+            }
+
+            const latitudeValue = point.latitude ?? point.Latitude;
+            const longitudeValue = point.longitude ?? point.Longitude;
+
+            const latitude = Number(latitudeValue);
+            const longitude = Number(longitudeValue);
+
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+                return null;
+            }
+
+            return { latitude, longitude };
+        })
+        .filter(point => point !== null);
+
+    return {
+        forceBoundsCheck,
+        fencePoints
+    };
+}
+
+function isPointInPolygon(lat, lng, polygonPoints) {
+    let isInside = false;
+    const x = lng;
+    const y = lat;
+
+    for (let i = 0, j = polygonPoints.length - 1; i < polygonPoints.length; j = i++) {
+        const xi = polygonPoints[i].longitude;
+        const yi = polygonPoints[i].latitude;
+        const xj = polygonPoints[j].longitude;
+        const yj = polygonPoints[j].latitude;
+
+        const intersects = ((yi > y) !== (yj > y)) &&
+            (x < ((xj - xi) * (y - yi)) / ((yj - yi) || Number.EPSILON) + xi);
+
+        if (intersects) {
+            isInside = !isInside;
+        }
+    }
+
+    return isInside;
 }
 
 /**

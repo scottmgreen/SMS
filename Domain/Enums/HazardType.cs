@@ -103,17 +103,17 @@ public abstract class HazardType : BaseEnum<HazardType>
     /// <summary>Poor lighting conditions</summary>
     public static readonly HazardType PoorLighting = new PoorLightingType();
 
-    /// <summary>Slip hazard</summary>
-    public static readonly HazardType Slip = new SlipType();
-
-    /// <summary>Trip hazard</summary>
-    public static readonly HazardType Trip = new TripType();
-
-    /// <summary>Fall hazard</summary>
-    public static readonly HazardType Fall = new FallType();
+    /// <summary>Slip, trip, and fall hazard</summary>
+    public static readonly HazardType SlipTripFall = new SlipTripFallType();
 
     /// <summary>Other physical hazard</summary>
     public static readonly HazardType PhysicalOther = new PhysicalOtherType();
+
+
+
+
+
+
 
     #endregion
 
@@ -438,23 +438,9 @@ public abstract class HazardType : BaseEnum<HazardType>
         }
     }
 
-    private sealed class SlipType : HazardType
+    private sealed class SlipTripFallType : HazardType
     {
-        public SlipType() : base("SLIP", "Slip", "Slip hazard", "PHYSICAL")
-        {
-        }
-    }
-
-    private sealed class TripType : HazardType
-    {
-        public TripType() : base("TRIP", "Trip", "Trip hazard", "PHYSICAL")
-        {
-        }
-    }
-
-    private sealed class FallType : HazardType
-    {
-        public FallType() : base("FALL", "Fall", "Fall hazard", "PHYSICAL")
+        public SlipTripFallType() : base("SLIP_TRIP_FALL", "Slip/Trip/Fall", "Slip, trip, and fall hazard", "PHYSICAL")
         {
         }
     }

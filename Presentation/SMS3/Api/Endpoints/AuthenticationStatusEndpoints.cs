@@ -64,6 +64,7 @@ public static class AuthenticationStatusEndpoints
     /// </summary>
     private static async Task<IResult> GetAuthenticationStatus(
         IAuthenticationStrategyManager strategyManager,
+        ICurrentUserService currentUserService,
         ILogger<Program> logger)
     {
         try
@@ -81,8 +82,8 @@ public static class AuthenticationStatusEndpoints
                 IsAuthenticated = isAuthenticated,
                 CurrentUserId = currentUserId,
                 CurrentUserName = currentUserName,
-                StrategyStatus = status,
-                ValidationResults = await strategyManager.ValidateAllStrategiesAsync()
+                CurrentUserServiceType = currentUserService.GetType().Name,
+                StrategyStatus = status
             };
 
             return Results.Ok(result);
@@ -173,25 +174,21 @@ public static class AuthenticationStatusEndpoints
     {
         try
         {
-            logger.LogInformation("Validating all authentication strategies");
-
-            var strategies = strategyManager.GetAllStrategies().ToList();
-            var validationResults = await strategyManager.ValidateAllStrategiesAsync();
+            logger.LogInformation("Returning effective authentication strategy status");
+            var status = await strategyManager.GetStrategyStatusAsync();
 
             var result = new
             {
                 Timestamp = DateTime.Now,
-                TotalStrategies = strategies.Count,
-                AvailableStrategies = strategies.Where(s => s.IsAvailable).Count(),
-                StrategyDetails = strategies.Select(s => new
+                RuntimePath = "SessionBased",
+                EffectiveStrategy = new
                 {
-                    Name = s.StrategyName,
-                    Method = s.Method.ToString(),
-                    IsAvailable = s.IsAvailable,
-                    StorageInfo = s.GetStorageInfo(),
-                    IsValid = validationResults.GetValueOrDefault(s.Method, false)
-                }).ToList(),
-                ValidationResults = validationResults
+                    Name = strategyManager.PrimaryStrategy.StrategyName,
+                    Method = strategyManager.PrimaryStrategy.Method.ToString(),
+                    IsAvailable = strategyManager.PrimaryStrategy.IsAvailable,
+                    StorageInfo = strategyManager.PrimaryStrategy.GetStorageInfo()
+                },
+                StrategyStatus = status
             };
 
             return Results.Ok(result);

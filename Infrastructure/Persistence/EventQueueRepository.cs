@@ -97,14 +97,14 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
             using (SqlCommand updateCmd = new(
                 @"UPDATE dbo.tbld_EventQueue
                      SET fldi_Status = 1,
-                         fldd_ProcessingStartedDate = GETUTCDATE(),
+                         fldd_ProcessingStartedDate = GETDATE(),
                          fldv_LockedBy = @pWorker,
-                         fldd_LockExpiresDate = DATEADD(SECOND, @pLockSeconds, GETUTCDATE()),
+                         fldd_LockExpiresDate = DATEADD(SECOND, @pLockSeconds, GETDATE()),
                          fldv_UpdatedBy = @pWorker,
-                         fldd_UpdatedDate = GETUTCDATE()
+                         fldd_UpdatedDate = GETDATE()
                    WHERE fldv_Code = @pCode
                      AND fldi_Status = 0
-                     AND (fldd_NextAttemptDate IS NULL OR fldd_NextAttemptDate <= GETUTCDATE());", sql))
+                     AND (fldd_NextAttemptDate IS NULL OR fldd_NextAttemptDate <= GETDATE());", sql))
             {
                 updateCmd.CommandType = CommandType.Text;
                 updateCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCode, queueCode));

@@ -33,8 +33,8 @@ private bool IsProcessing { get; set; } = false;
             // Simulate processing delay for better UX
             await Task.Delay(500);
             
-            // Navigate directly to login page - 2FA will be handled there if enabled
-            Navigation.NavigateToSecure("/login");
+            // Navigate directly to login page with full load to avoid secure-route circuit churn pre-auth.
+            Navigation.NavigateTo("/login", forceLoad: true);
         }
         catch (Exception ex)
         {

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using Radzen;
 using SMS3.Components.Layout;
 using SMS3.Components.Shared;
@@ -16,24 +17,29 @@ namespace SMS3.Components.Layout;
 
 public partial class MainLayout
 {
+    private const bool EnableCrossTabLogoutSync = true;
     private const string RemoteLogoutSignalTitle = "SMS_REMOTE_LOGOUT_SIGNAL";
     private const char RemoteLogoutPayloadSeparator = '|';
+    private readonly string _layoutReceiverSessionKey = $"layout-receiver:{Guid.NewGuid():N}";
     private readonly string _layoutFallbackSessionKey = $"layout:{Guid.NewGuid():N}";
+    private bool _isLogoutInProgress;
+    private DotNetObjectReference<MainLayout>? _dotNetRef;
 
-[Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private ISMSSessionService _sessionService { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private IWebHostEnvironment _environment { get; set; } = default!;
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<MainLayout> _logger { get; set; } = default!;
     [Inject] private NotificationService _notificationService { get; set; } = default!;
-[Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     [Inject] private IHttpContextAccessor _httpContextAccessor { get; set; } = default!;
     [Inject] private IActiveUserSessionRegistry _activeUserSessionRegistry { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
-        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
+        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, _layoutReceiverSessionKey);
         await Task.CompletedTask;
     }
 
@@ -44,7 +50,7 @@ public partial class MainLayout
             _activeUserSessionRegistry.RefreshActivity(BuildCurrentSessionKey());
         }
 
-        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
+        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, _layoutReceiverSessionKey);
         await Task.CompletedTask;
     }
 
@@ -52,7 +58,48 @@ public partial class MainLayout
     {
         if (firstRender)
         {
-            // MainLayout first render complete
+            if (!EnableCrossTabLogoutSync)
+            {
+                return;
+            }
+
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("smsLogoutSync.register", _dotNetRef);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Could not register browser logout sync listener.");
+            }
+        }
+    }
+
+    [JSInvokable]
+    public async Task ReceiveBrowserLogoutAsync(string initiatingReceiverSessionKey)
+    {
+        if (_isLogoutInProgress)
+        {
+            return;
+        }
+
+        if (string.Equals(_layoutReceiverSessionKey, initiatingReceiverSessionKey, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        try
+        {
+            var currentSessionKey = BuildCurrentSessionKey();
+            _activeUserSessionRegistry.RemoveSession(currentSessionKey);
+            await _currentUserService.ClearAuthentication();
+            await _sessionService.ClearSMSSessionAsync();
+
+            _navigation.NavigateTo("/pdx", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to apply browser logout sync signal.");
         }
     }
 
@@ -107,21 +154,21 @@ public partial class MainLayout
     /// </summary>
     private async Task OnLogoutRequested()
     {
+        if (_isLogoutInProgress)
+        {
+            return;
+        }
+
+        _isLogoutInProgress = true;
         var logoutStartTime = DateTime.Now;
         string currentUserName = "Unknown";
         SMSUserType userType = SMSUserType.Application;
         string sessionId = "Unknown";
         TimeSpan sessionDuration = TimeSpan.Zero;
-        var initiatingSessionKey = BuildCurrentSessionKey();
-        var initiatingUserCode = _currentUserService?.UserCode ?? string.Empty;
+        var currentSessionKey = BuildCurrentSessionKey();
 
         try
         {
-            if (!await ConfirmMultiSessionLogoutAsync(initiatingUserCode, initiatingSessionKey))
-            {
-                return;
-            }
-
             // Get current user info BEFORE clearing session authentication
             if (_currentUserService.IsAuthenticated)
             {
@@ -150,16 +197,34 @@ public partial class MainLayout
 
             _logger.LogInformation("Starting logout process for user: {UserName}", currentUserName);
 
+            try
+            {
+                if (EnableCrossTabLogoutSync)
+                {
+                    await JSRuntime.InvokeVoidAsync("smsLogoutSync.broadcast", _layoutReceiverSessionKey);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Could not broadcast browser logout sync signal.");
+            }
+
+            var initiatingUserCode = _currentUserService?.UserCode ?? string.Empty;
+            var machineScopeId = ResolveMachineScopeId();
             if (!string.IsNullOrWhiteSpace(initiatingUserCode))
             {
-                var remoteLogoutPayload = $"{initiatingUserCode}{RemoteLogoutPayloadSeparator}{initiatingSessionKey}";
+                var remoteLogoutPayload = string.Join(
+                    RemoteLogoutPayloadSeparator,
+                    initiatingUserCode,
+                    _layoutReceiverSessionKey,
+                    machineScopeId ?? string.Empty,
+                    currentSessionKey);
+
                 await EventBusDispatcher.DispatchNotificationAsync(
                     NotificationSeverity.Info,
                     RemoteLogoutSignalTitle,
                     remoteLogoutPayload,
                     duration: 0);
-
-                await WaitForOtherSessionsToLogoutAsync(initiatingUserCode, initiatingSessionKey, TimeSpan.FromSeconds(3));
             }
 
             // ?? Record logout audit BEFORE clearing authentication (and wait for it)
@@ -184,9 +249,7 @@ public partial class MainLayout
             }
 
             // **?? CLEAR SESSION-BASED AUTHENTICATION - Replaces static authentication**
-            var sessionKey = BuildCurrentSessionKey();
-            _activeUserSessionRegistry.RemoveSession(sessionKey);
-            _activeUserSessionRegistry.RemoveSessionsForUser(_currentUserService?.UserCode ?? string.Empty);
+            _activeUserSessionRegistry.RemoveSession(currentSessionKey);
 
             await _currentUserService.ClearAuthentication();
             await _sessionService.ClearSMSSessionAsync();
@@ -199,8 +262,8 @@ public partial class MainLayout
             
             _logger.LogInformation("Session authentication cleared for user: {UserName}", currentUserName);
             
-            // Navigate to login after logout
-            _navigation.NavigateTo("/pdx", forceLoad: true);
+            // Force server-side cookie sign-out + pre-login landing state
+            _navigation.NavigateTo("/auth/logout", forceLoad: true);
         }
         catch (Exception ex)
         {
@@ -209,7 +272,7 @@ public partial class MainLayout
             // Still try to clear authentication and redirect even if audit fails
             try
             {
-                _activeUserSessionRegistry.RemoveSessionsForUser(_currentUserService?.UserCode ?? string.Empty);
+                _activeUserSessionRegistry.RemoveSession(currentSessionKey);
                 await _currentUserService.ClearAuthentication();
                 await _sessionService.ClearSMSSessionAsync();
 
@@ -218,69 +281,89 @@ public partial class MainLayout
                 {
                     TryDeleteCookieIfPossible(context, "SMS_UserCodeHint", new CookieOptions { Path = "/" });
                 }
-                // Force navigation to login page
-                _navigation.NavigateTo("/login", forceLoad: true);
+                // Force server-side sign-out path even on cleanup errors
+                _navigation.NavigateTo("/auth/logout", forceLoad: true);
             }
             catch (Exception clearEx)
             {
                 _logger.LogError(clearEx, "Critical: Failed to clear session authentication during logout");
-                // Force navigation to login even on clear error
-                _navigation.NavigateTo("/login", forceLoad: true);
+                // Final fallback still uses server sign-out endpoint
+                _navigation.NavigateTo("/auth/logout", forceLoad: true);
             }
+        }
+        finally
+        {
+            _isLogoutInProgress = false;
         }
 
     }
 
-    private async Task HandleRemoteLogoutSignalAsync(string initiatingSessionKey)
+    private async Task HandleRemoteLogoutSignalAsync(string payload)
     {
+        if (_isLogoutInProgress || string.IsNullOrWhiteSpace(payload))
+        {
+            return;
+        }
+
         try
         {
-            var initiatingUserCode = string.Empty;
-            var signalSessionKey = initiatingSessionKey;
-
-            if (!string.IsNullOrWhiteSpace(initiatingSessionKey))
+            var segments = payload.Split(RemoteLogoutPayloadSeparator, StringSplitOptions.TrimEntries);
+            if (segments.Length < 3)
             {
-                var separatorIndex = initiatingSessionKey.IndexOf(RemoteLogoutPayloadSeparator);
-                if (separatorIndex > 0 && separatorIndex < initiatingSessionKey.Length - 1)
-                {
-                    initiatingUserCode = initiatingSessionKey[..separatorIndex];
-                    signalSessionKey = initiatingSessionKey[(separatorIndex + 1)..];
-                }
+                return;
             }
 
-            var currentSessionKey = BuildCurrentSessionKey();
+            var signalUserCode = segments[0];
+            var initiatingReceiverSessionKey = segments[1];
+            var signalMachineScopeId = segments[2];
+            var initiatingSessionKey = segments.Length >= 4 ? segments[3] : string.Empty;
 
-            if (!string.IsNullOrWhiteSpace(initiatingUserCode))
+            var currentSessionKey = BuildCurrentSessionKey();
+            if (string.Equals(_layoutReceiverSessionKey, initiatingReceiverSessionKey, StringComparison.Ordinal))
             {
-                var currentUserCode = ResolveUserCodeForSession(currentSessionKey);
-                if (!string.IsNullOrWhiteSpace(currentUserCode)
-                    && !string.Equals(currentUserCode, initiatingUserCode, StringComparison.OrdinalIgnoreCase))
+                return;
+            }
+
+            var currentUserCode = ResolveCurrentUserCode(currentSessionKey);
+            if (!string.IsNullOrWhiteSpace(signalUserCode)
+                && !string.IsNullOrWhiteSpace(currentUserCode)
+                && !string.Equals(signalUserCode, currentUserCode, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var currentMachineScopeId = ResolveMachineScopeId();
+            if (!string.IsNullOrWhiteSpace(currentMachineScopeId)
+                && !string.IsNullOrWhiteSpace(signalMachineScopeId)
+                && !string.Equals(currentMachineScopeId, signalMachineScopeId, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(currentMachineScopeId) || string.IsNullOrWhiteSpace(signalMachineScopeId))
+            {
+                var currentSessionId = TryExtractSessionId(currentSessionKey);
+                var initiatingSessionId = TryExtractSessionId(initiatingSessionKey);
+                if (string.IsNullOrWhiteSpace(currentSessionId)
+                    || string.IsNullOrWhiteSpace(initiatingSessionId)
+                    || !string.Equals(currentSessionId, initiatingSessionId, StringComparison.Ordinal))
                 {
                     return;
                 }
             }
 
-            if (string.Equals(currentSessionKey, signalSessionKey, StringComparison.Ordinal))
-            {
-                return;
-            }
+            _logger.LogInformation("Remote logout signal received for same machine/user. Logging out this session.");
 
-            _logger.LogInformation("Remote logout signal received. Clearing local session for user {UserCode}.", _currentUserService?.UserCode);
+            _isLogoutInProgress = true;
             _activeUserSessionRegistry.RemoveSession(currentSessionKey);
             await _currentUserService.ClearAuthentication();
             await _sessionService.ClearSMSSessionAsync();
-
-            var context = _httpContextAccessor.HttpContext;
-            if (context is not null)
-            {
-                TryDeleteCookieIfPossible(context, "SMS_UserCodeHint", new CookieOptions { Path = "/" });
-            }
 
             await InvokeAsync(() =>
             {
                 try
                 {
-                    _navigation.NavigateTo("/pdx", forceLoad: true);
+                    _navigation.NavigateTo("/auth/logout", forceLoad: true);
                 }
                 catch (NavigationException ex)
                 {
@@ -292,6 +375,55 @@ public partial class MainLayout
         {
             _logger.LogError(ex, "Failed to process remote logout signal.");
         }
+        finally
+        {
+            _isLogoutInProgress = false;
+        }
+    }
+
+    private string ResolveMachineScopeId()
+    {
+        var context = _httpContextAccessor.HttpContext;
+        if (context is null)
+        {
+            return string.Empty;
+        }
+
+        return context.Request.Cookies.TryGetValue("SMS_MachineId", out var machineId)
+            ? machineId?.Trim() ?? string.Empty
+            : string.Empty;
+    }
+
+    private string ResolveCurrentUserCode(string currentSessionKey)
+    {
+        var userCode = _currentUserService?.UserCode ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(userCode))
+        {
+            return userCode;
+        }
+
+        return _activeUserSessionRegistry
+            .GetActiveSessions()
+            .FirstOrDefault(x => string.Equals(x.SessionKey, currentSessionKey, StringComparison.OrdinalIgnoreCase))
+            ?.UserCode
+            ?? string.Empty;
+    }
+
+    private static string TryExtractSessionId(string sessionKey)
+    {
+        if (string.IsNullOrWhiteSpace(sessionKey) || !sessionKey.StartsWith("session:", StringComparison.OrdinalIgnoreCase))
+        {
+            return string.Empty;
+        }
+
+        var remainder = sessionKey["session:".Length..];
+        var connMarkerIndex = remainder.IndexOf(":conn:", StringComparison.OrdinalIgnoreCase);
+        if (connMarkerIndex > 0)
+        {
+            return remainder[..connMarkerIndex];
+        }
+
+        return remainder;
     }
 
     private void TryDeleteCookieIfPossible(HttpContext context, string cookieName, CookieOptions cookieOptions)
@@ -308,94 +440,39 @@ public partial class MainLayout
     private string BuildCurrentSessionKey()
     {
         var context = _httpContextAccessor.HttpContext;
+        var connectionId = context?.Connection?.Id;
         var sessionId = context?.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>()?.Session?.Id;
-        if (!string.IsNullOrWhiteSpace(sessionId))
+
+        if (!string.IsNullOrWhiteSpace(sessionId) && !string.IsNullOrWhiteSpace(connectionId))
         {
-            return $"session:{sessionId}";
+            return $"session:{sessionId}:conn:{connectionId}";
         }
 
-        var connectionId = context?.Connection?.Id;
         if (!string.IsNullOrWhiteSpace(connectionId))
         {
             return $"conn:{connectionId}";
         }
 
+        if (string.IsNullOrWhiteSpace(sessionId) && context is not null)
+        {
+            try
+            {
+                sessionId = context.Session.Id;
+            }
+            catch (InvalidOperationException)
+            {
+                sessionId = null;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(sessionId))
+        {
+            return $"session:{sessionId}";
+        }
+
         return _layoutFallbackSessionKey;
     }
 
-    private string ResolveUserCodeForSession(string sessionKey)
-    {
-        var currentUserCode = _currentUserService?.UserCode ?? string.Empty;
-        if (!string.IsNullOrWhiteSpace(currentUserCode))
-        {
-            return currentUserCode;
-        }
-
-        if (string.IsNullOrWhiteSpace(sessionKey))
-        {
-            return string.Empty;
-        }
-
-        return _activeUserSessionRegistry
-            .GetActiveSessions()
-            .FirstOrDefault(x => string.Equals(x.SessionKey, sessionKey, StringComparison.OrdinalIgnoreCase))
-            ?.UserCode
-            ?? string.Empty;
-    }
-
-    private async Task<bool> ConfirmMultiSessionLogoutAsync(string userCode, string currentSessionKey)
-    {
-        if (string.IsNullOrWhiteSpace(userCode))
-        {
-            return true;
-        }
-
-        var otherSessionCount = _activeUserSessionRegistry
-            .GetActiveSessions()
-            .Count(x => string.Equals(x.UserCode, userCode, StringComparison.OrdinalIgnoreCase)
-                        && !string.Equals(x.SessionKey, currentSessionKey, StringComparison.OrdinalIgnoreCase));
-
-        var displayedOtherSessionCount = Math.Max(0, otherSessionCount + 1);
-        var confirmMessage = displayedOtherSessionCount <= 1
-            ? "This action will end your current session. Continue?"
-            : $"This action will end this session and {displayedOtherSessionCount} other active session(s). Continue?";
-
-        var confirmed = await _dialogService.Confirm(
-            confirmMessage,
-            "Confirm Logoff",
-            new ConfirmOptions
-            {
-                OkButtonText = "Log Off All",
-                CancelButtonText = "Cancel"
-            });
-
-        return confirmed == true;
-    }
-
-    private async Task WaitForOtherSessionsToLogoutAsync(string userCode, string currentSessionKey, TimeSpan timeout)
-    {
-        if (string.IsNullOrWhiteSpace(userCode) || timeout <= TimeSpan.Zero)
-        {
-            return;
-        }
-
-        var timeoutAt = DateTime.UtcNow.Add(timeout);
-
-        while (DateTime.UtcNow < timeoutAt)
-        {
-            var hasOtherSessions = _activeUserSessionRegistry
-                .GetActiveSessions()
-                .Any(x => string.Equals(x.UserCode, userCode, StringComparison.OrdinalIgnoreCase)
-                          && !string.Equals(x.SessionKey, currentSessionKey, StringComparison.OrdinalIgnoreCase));
-
-            if (!hasOtherSessions)
-            {
-                return;
-            }
-
-            await Task.Delay(100);
-        }
-    }
 }
 
 

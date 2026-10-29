@@ -15,7 +15,7 @@
 <PageTitle>Technical Assessment - SMS3</PageTitle>
 
 <!-- SMS Page Header using reusable component -->
-<PageHeader Title="Technical Assessment" 
+<PageHeader Title="Risk Assessment" 
            Subtitle="@($"{AssessmentName}")"
            Icon="fas fa-cogs" />
 
@@ -60,13 +60,18 @@
                         </RadzenStack>
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="4">
-                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                            Lead Assessor :
-                            @if (!string.IsNullOrWhiteSpace(LeadAssessorName))
-                            {
-                               <RadzenBadge Text="@LeadAssessorName" IsPill="true" BadgeStyle="BadgeStyle.Success" />
-                            }
-                        </RadzenStack>
+                        <RadzenFormField Text="Assigned Assessor" Variant="Variant.Outlined" Style="width: 50%; min-width: 220px; margin-left: auto;">
+                            <RadzenDropDown TValue="string"
+                                            Value="@SelectedLeadAssessor"
+                                            Data="@LeadAssessorOptions"
+                                            TextProperty="Text"
+                                            ValueProperty="Value"
+                                            Placeholder=""
+                                            AllowClear="true"
+                                            Disabled="@IsSaving"
+                                            Change="@OnLeadAssessorChanged"
+                                            Style="width: 100%;" />
+                        </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
             </RadzenCard>

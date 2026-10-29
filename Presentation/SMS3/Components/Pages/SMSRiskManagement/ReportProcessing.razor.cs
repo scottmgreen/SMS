@@ -76,6 +76,8 @@ public partial class ReportProcessing : ComponentBase, IEventReceiver, IDisposab
     private bool _showDescriptionModal { get; set; } = false;
     private string _selectedDescription { get; set; } = string.Empty;
     private string _selectedReportId { get; set; } = string.Empty;
+    private bool _dispatcherRegistered;
+    private bool _initialLoadCompleted;
     private readonly HashSet<string> _lockedRecordKeys = new(StringComparer.OrdinalIgnoreCase);
     private string _activeRecordLockKey = string.Empty;
     private string _activeReportCode = string.Empty;
@@ -90,9 +92,20 @@ public partial class ReportProcessing : ComponentBase, IEventReceiver, IDisposab
 
     protected override async Task OnInitializedAsync()
     {
-        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
+        if (!_dispatcherRegistered)
+        {
+            EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
+            _dispatcherRegistered = true;
+        }
+
+        if (_initialLoadCompleted)
+        {
+            return;
+        }
+
         HydrateLockedRecordKeys();
         await LoadDataAsync();
+        _initialLoadCompleted = true;
     }
 
     private void HydrateLockedRecordKeys()
@@ -118,7 +131,12 @@ public partial class ReportProcessing : ComponentBase, IEventReceiver, IDisposab
 
 public void Dispose()
 {
-    EventBusDispatcher.Unregister(this);
+    if (_dispatcherRegistered)
+    {
+        EventBusDispatcher.Unregister(this);
+        _dispatcherRegistered = false;
+    }
+
     _recordLockLeaseCoordinator.StopHeartbeat(BuildCurrentSessionKey());
     if (!_holdRecordLockAcrossNavigation)
     {
@@ -280,29 +298,17 @@ private string BuildCurrentSessionKey()
     /// <summary>
     /// ?? Load organizational users who can approve mitigations
     /// </summary>
-    private async Task LoadAvailableApprovers()
+    private async Task LoadAvailableApprovers(IEnumerable<SMSOrganizationalUser> organizationalUsers)
     {
         try
         {
-            var usersQuery = new GetAllSMSOrganizationalUsersQuery(); // You may need to adjust this query name
-            var usersResult = await _mediator.SendAsync(usersQuery, CancellationToken.None);
+            _availableApprovers = organizationalUsers
+            .Where(u => u.IsActive)
+            .ToList();
 
-            if (usersResult.IsSuccess && usersResult.Value is not null)
-            {
-                _availableApprovers = usersResult.Value
-                .Where(u => u.IsActive)
-                .ToList();
+            await LoadApproverGroupAuthorityAsync(_availableApprovers);
 
-                await LoadApproverGroupAuthorityAsync(_availableApprovers);
-
-                _logger.LogInformation("Loaded {Count} available approvers", _availableApprovers.Count);
-            }
-            else
-            {
-                _logger.LogWarning("Failed to load approvers: {Error}", usersResult.Error?.Message);
-                _availableApprovers = new List<SMSOrganizationalUser>();
-                _userGroupAuthorityByUserCode.Clear();
-            }
+            _logger.LogInformation("Loaded {Count} available approvers", _availableApprovers.Count);
         }
         catch (Exception ex)
         {
@@ -361,8 +367,9 @@ private string BuildCurrentSessionKey()
         try
         {
             _isLoading = true;
-            await LoadUserDisplayMapAsync();
-            await LoadAvailableApprovers();
+            var organizationalUsers = await LoadOrganizationalUsersAsync();
+            await LoadUserDisplayMapAsync(organizationalUsers);
+            await LoadAvailableApprovers(organizationalUsers);
 
 
             // Load core entities using CQRS - ENHANCED to include Investigations and Interviews
@@ -394,7 +401,15 @@ private string BuildCurrentSessionKey()
         }
     }
 
-    private async Task LoadUserDisplayMapAsync()
+    private async Task<List<SMSOrganizationalUser>> LoadOrganizationalUsersAsync()
+    {
+        var orgUsersResult = await _mediator.SendAsync(new GetAllSMSOrganizationalUsersQuery(), CancellationToken.None);
+        return orgUsersResult.IsSuccess && orgUsersResult.Value is not null
+            ? orgUsersResult.Value.ToList()
+            : new List<SMSOrganizationalUser>();
+    }
+
+    private async Task LoadUserDisplayMapAsync(IEnumerable<SMSOrganizationalUser> organizationalUsers)
     {
         _userIdToFullName.Clear();
 
@@ -427,32 +442,28 @@ private string BuildCurrentSessionKey()
             }
         }
 
-        var orgUsersResult = await _mediator.SendAsync(new GetAllSMSOrganizationalUsersQuery(), CancellationToken.None);
-        if (orgUsersResult.IsSuccess && orgUsersResult.Value is not null)
+        foreach (var user in organizationalUsers)
         {
-            foreach (var user in orgUsersResult.Value)
+            var fullName = string.Join(" ", new[]
             {
-                var fullName = string.Join(" ", new[]
-                {
-                    user.FirstName?.Value?.Trim() ?? string.Empty,
-                    user.LastName?.Value?.Trim() ?? string.Empty
-                }.Where(x => !string.IsNullOrWhiteSpace(x)));
+                user.FirstName?.Value?.Trim() ?? string.Empty,
+                user.LastName?.Value?.Trim() ?? string.Empty
+            }.Where(x => !string.IsNullOrWhiteSpace(x)));
 
-                if (string.IsNullOrWhiteSpace(fullName))
-                {
-                    continue;
-                }
+            if (string.IsNullOrWhiteSpace(fullName))
+            {
+                continue;
+            }
 
-                if (!string.IsNullOrWhiteSpace(user.Code))
-                {
-                    _userIdToFullName[user.Code] = fullName;
-                }
+            if (!string.IsNullOrWhiteSpace(user.Code))
+            {
+                _userIdToFullName[user.Code] = fullName;
+            }
 
-                var userName = user.UserName?.Value?.Trim();
-                if (!string.IsNullOrWhiteSpace(userName))
-                {
-                    _userIdToFullName[userName] = fullName;
-                }
+            var userName = user.UserName?.Value?.Trim();
+            if (!string.IsNullOrWhiteSpace(userName))
+            {
+                _userIdToFullName[userName] = fullName;
             }
         }
     }

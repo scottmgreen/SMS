@@ -833,7 +833,7 @@ namespace SMS3.Api.Services
                 thresholdHours = 48;
             }
 
-            var dueUtc = DateTime.Now.AddHours(thresholdHours);
+            var dueDate = DateTime.Now.AddHours(thresholdHours);
 
             var configuredMode = _configuration.GetValue<string>("NotificationEvents:HazardSubmissionStatusEscalation:Channels:Email:ExecutionMode");
             var executionMode = Enum.TryParse<EventExecutionMode>(configuredMode, ignoreCase: true, out var parsedMode)
@@ -847,7 +847,7 @@ namespace SMS3.Api.Services
                 hazardDescription,
                 geoLocation,
                 locationDescription,
-                dueUtc,
+                dueDate,
                 thresholdHours);
 
             var escalationEvent = new EmailNotificationEvent(
@@ -860,13 +860,13 @@ namespace SMS3.Api.Services
                 workflowType: "HazardSubmissionStatusEscalation",
                 relatedEntityType: "Report",
                 relatedEntityId: createdHazard.ReportCode,
-                scheduledDelivery: dueUtc,
+                scheduledDelivery: dueDate,
                 emailMetadata: new Dictionary<string, object>
                 {
                     { "HazardCode", createdHazard.Code },
                     { "ReportCode", createdHazard.ReportCode ?? string.Empty },
                     { "ExpectedStatus", ReportStatus.ReadyForProcessing.Value },
-                    { "StatusCheckDueUtc", dueUtc.ToString("O") },
+                    { "StatusCheckDue", dueDate.ToString("O") },
                     { "StatusEscalationThresholdHours", thresholdHours },
                     { "GeoLocation", geoLocation },
                     { "LocationDescription", locationDescription }
@@ -922,7 +922,7 @@ namespace SMS3.Api.Services
             string? hazardDescription,
             string geoLocation,
             string locationDescription,
-            DateTime dueUtc,
+            DateTime dueDate,
             int thresholdHours)
         {
             var logoUrl = $"{baseUri.TrimEnd('/')}/images/PDX_SMSEmailLogo.png";
@@ -935,7 +935,7 @@ namespace SMS3.Api.Services
                     new SMSEmailField { Label = "Report ID", Value = createdHazard.ReportCode ?? string.Empty },
                     new SMSEmailField { Label = "Hazard ID", Value = createdHazard.Code },
                     new SMSEmailField { Label = "Current Required Status", Value = ReportStatus.ReadyForProcessing.Value },
-                    new SMSEmailField { Label = "Report Status Checkpoint (UTC)", Value = dueUtc.ToString("yyyy-MM-dd HH:mm:ss") }
+                    new SMSEmailField { Label = "Report Status Checkpoint ", Value = dueDate.ToString("yyyy-MM-dd HH:mm:ss") }
                 ],
                 sections:
                 [

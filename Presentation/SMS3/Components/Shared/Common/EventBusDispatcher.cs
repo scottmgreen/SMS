@@ -52,6 +52,7 @@ public static class EventBusDispatcher
     {
         lock (_lock)
         {
+            _spiDashboardRefreshReceivers.RemoveAll(x => ReferenceEquals(x, receiver));
             _spiDashboardRefreshReceivers.Add(receiver);
         }
     }

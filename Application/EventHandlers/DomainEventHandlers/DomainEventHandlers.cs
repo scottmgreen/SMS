@@ -331,7 +331,7 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
                 <li><strong>Priority:</strong> <span class='priority'>{domainEvent.Priority}</span></li>
                 <li><strong>Location:</strong> {domainEvent.LocationArea}</li>
                 <li><strong>Reported By:</strong> {domainEvent.CreatedBy}</li>
-                <li><strong>Date:</strong> {domainEvent.CreatedDate:yyyy-MM-dd HH:mm} UTC</li>
+                <li><strong>Date:</strong> {domainEvent.CreatedDate:yyyy-MM-dd HH:mm} </li>
                 <li><strong>Report Code:</strong> {domainEvent.ReportCode}</li>
             </ul>
 
@@ -343,7 +343,7 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
 
         <div class='footer'>
             <p><strong>SMS Safety Management System</strong> - Automated Notification<br/>
-            Event ID: {domainEvent.EventId} | Generated: {DateTime.Now:yyyy-MM-dd HH:mm} UTC</p>
+            Event ID: {domainEvent.EventId} | Generated: {DateTime.Now:yyyy-MM-dd HH:mm}</p>
         </div>
     </div>
 </body>
