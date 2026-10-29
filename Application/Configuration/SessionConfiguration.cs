@@ -55,7 +55,7 @@ public class SessionConfiguration
     /// Valid values: "None", "Lax", "Strict"
     /// </summary>
     [RegularExpression("^(None|Lax|Strict)$", ErrorMessage = "SameSite must be 'None', 'Lax', or 'Strict'")]
-    public string SameSite { get; set; } = "Strict";
+    public string SameSite { get; set; } = "Lax";
 
     /// <summary>
     /// Custom session cookie name (default: "SMS_Session")
@@ -91,13 +91,7 @@ public class SessionConfiguration
     /// <summary>
     /// Convert SameSite string to enum for ASP.NET Core session configuration
     /// </summary>
-    public SameSiteMode SameSiteMode => SameSite switch
-    {
-        "None" => Microsoft.AspNetCore.Http.SameSiteMode.None,
-        "Lax" => Microsoft.AspNetCore.Http.SameSiteMode.Lax,
-        "Strict" => Microsoft.AspNetCore.Http.SameSiteMode.Strict,
-        _ => Microsoft.AspNetCore.Http.SameSiteMode.Strict // Default to most secure
-    };
+    public SameSiteMode SameSiteMode => Microsoft.AspNetCore.Http.SameSiteMode.Lax;
 
     /// <summary>
     /// Get CookieSecurePolicy based on SecureCookies setting and development mode

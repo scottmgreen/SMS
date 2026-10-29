@@ -116,11 +116,11 @@ public partial class TechnicalAssessment : ComponentBase
         // For Step 5, emphasize it's the Residual stage
         if (CurrentStep == 5)
         {
-            return $"Hazard Report: {ReportId} Risk Assessment: {TechRiskAssessment?.Code} - Residual Stage";
+            return $"Hazard Report: {ReportId} Risk Assessment: {TechRiskAssessment?.Code} ";
         }
 
         // For Steps 1-4, show Technical stage
-        return $"Hazard Report: {ReportId} Risk Assessment: {TechRiskAssessment?.Code} - Technical Stage";
+        return $"Hazard Report: {ReportId} Risk Assessment: {TechRiskAssessment?.Code} ";
     }
     public string GetStepName(int stepNumber)
     {

@@ -16,71 +16,39 @@
         </div>
     }
 
-    <RadzenTemplateForm TItem="LoginFormModel" Data="@LoginModel" Submit="@HandleLoginAsync">
+    <form method="post" action="/auth/login" data-enhance="false">
         <div class="mb-3">
-            <label class="form-label sms-form-label">
+            <label class="form-label sms-form-label" for="login-username">
                 <i class="fas fa-user me-2"></i> User Name
             </label>
-            <RadzenTextBox @bind-Value="@LoginModel.Username" 
-                           Name="Username" 
-                           Placeholder="Enter your user name"
-                           Class="sms-form-input" />
-            <RadzenRequiredValidator Component="Username" Text="User name is required" Class="sms-validation-error" />
+            <input id="login-username"
+                   name="username"
+                   type="text"
+                   autocomplete="username"
+                   required
+                   placeholder="Enter your user name"
+                   class="sms-form-input" />
         </div>
-        
+
         <div class="mb-3">
-            <label class="form-label sms-form-label">
+            <label class="form-label sms-form-label" for="login-password">
                 <i class="fas fa-lock me-2"></i> Password
             </label>
-            <RadzenPassword @bind-Value="@LoginModel.Password" 
-                            Name="Password" 
-                            Placeholder="Enter your password"
-                            Class="sms-form-input" />
-            <RadzenRequiredValidator Component="Password" Text="Password is required" Class="sms-validation-error" />
+            <input id="login-password"
+                   name="password"
+                   type="password"
+                   autocomplete="current-password"
+                   required
+                   placeholder="Enter your password"
+                   class="sms-form-input" />
         </div>
-        
+
         <div class="d-grid mb-3">
-            <RadzenButton ButtonType="ButtonType.Submit" 
-                          ButtonStyle="ButtonStyle.Dark" 
-                          Text="@(IsLoading ? "Signing in..." : "Access SMS Portal")"
-                          Disabled="@IsLoading" 
-                          Size="ButtonSize.Large"
-                          Class="sms-login-button" />
+            <button type="submit" class="sms-login-button btn btn-dark btn-lg">Access SMS Portal</button>
         </div>
-    </RadzenTemplateForm>
+    </form>
 </div>
 </div>
-
-<script>
-window.smsAuth = window.smsAuth || {
-    establishSession: async function (username, password) {
-        try {
-            const response = await fetch('/auth/establish-session', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({ username: username, password: password })
-            });
-
-            if (!response.ok) {
-                return { isSuccess: false, errorMessage: 'Login service unavailable. Please try again.' };
-            }
-
-            const payload = await response.json();
-            if (!payload) {
-                return { isSuccess: false, errorMessage: 'Login service returned an invalid response. Please try again.' };
-            }
-
-            return payload;
-        } catch {
-            return { isSuccess: false, errorMessage: 'An error occurred during login. Please try again.' };
-        }
-    }
-};
-</script>
 
 <style>
 /* =============================================================================

@@ -1,6 +1,8 @@
 using SMS_Application.Strategies;
 
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.Caching.Memory;
 using SMS_Application.Configuration;
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
@@ -219,6 +221,32 @@ public static class AuthenticationExtensions
                 options.Cookie.SameSite = sessionConfig.SameSiteMode;
                 options.Cookie.IsEssential = true;
                 options.Cookie.Path = "/";
+                options.SessionStore = new MemoryCacheTicketStore(sessionConfig.IdleTimeout);
+                options.Events = new CookieAuthenticationEvents
+                {
+                    OnRedirectToLogin = context =>
+                    {
+                        if (IsBlazorTransportRequest(context.Request))
+                        {
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            return Task.CompletedTask;
+                        }
+
+                        context.Response.Redirect(context.RedirectUri);
+                        return Task.CompletedTask;
+                    },
+                    OnRedirectToAccessDenied = context =>
+                    {
+                        if (IsBlazorTransportRequest(context.Request))
+                        {
+                            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                            return Task.CompletedTask;
+                        }
+
+                        context.Response.Redirect(context.RedirectUri);
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
         // **?? AUTHORIZATION**
@@ -265,5 +293,77 @@ public static class AuthenticationExtensions
         services.AddSingleton<ISecureRoutingService, SecureRoutingService>();
 
         return services;
+    }
+
+    private static bool IsBlazorTransportRequest(HttpRequest request)
+    {
+        if (request.Path.StartsWithSegments("/_blazor", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (request.Headers.TryGetValue("Accept", out var acceptValues)
+            && acceptValues.Any(v => v.Contains("text/event-stream", StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        return request.Headers.TryGetValue("Connection", out var connectionValues)
+            && connectionValues.Any(v => v.Contains("upgrade", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private sealed class MemoryCacheTicketStore : ITicketStore
+    {
+        private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
+        private readonly TimeSpan _defaultLifetime;
+
+        public MemoryCacheTicketStore(TimeSpan defaultLifetime)
+        {
+            _defaultLifetime = defaultLifetime <= TimeSpan.Zero ? TimeSpan.FromHours(1) : defaultLifetime;
+        }
+
+        public Task<string> StoreAsync(AuthenticationTicket ticket)
+        {
+            var key = BuildKey();
+            SetTicket(key, ticket);
+            return Task.FromResult(key);
+        }
+
+        public Task RenewAsync(string key, AuthenticationTicket ticket)
+        {
+            SetTicket(key, ticket);
+            return Task.CompletedTask;
+        }
+
+        public Task<AuthenticationTicket?> RetrieveAsync(string key)
+        {
+            _cache.TryGetValue(key, out AuthenticationTicket? ticket);
+            return Task.FromResult(ticket);
+        }
+
+        public Task RemoveAsync(string key)
+        {
+            _cache.Remove(key);
+            return Task.CompletedTask;
+        }
+
+        private void SetTicket(string key, AuthenticationTicket ticket)
+        {
+            var expiresUtc = ticket.Properties.ExpiresUtc;
+            var options = new MemoryCacheEntryOptions();
+
+            if (expiresUtc.HasValue)
+            {
+                options.SetAbsoluteExpiration(expiresUtc.Value);
+            }
+            else
+            {
+                options.SetAbsoluteExpiration(_defaultLifetime);
+            }
+
+            _cache.Set(key, ticket, options);
+        }
+
+        private static string BuildKey() => $"sms-auth-ticket:{Guid.NewGuid():N}";
     }
 }

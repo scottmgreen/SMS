@@ -26,11 +26,6 @@ public interface IAuthenticationStrategyManager
     IAuthenticationStrategy PrimaryStrategy { get; }
 
     /// <summary>
-    /// Get the currently configured fallback authentication strategy
-    /// </summary>
-    IAuthenticationStrategy? FallbackStrategy { get; }
-
-    /// <summary>
     /// Store user using the configured authentication strategy chain
     /// </summary>
     Task<Result<bool>> StoreUserAsync(BaseUser user, SMSUserType userType, CancellationToken cancellationToken = default);
@@ -61,27 +56,8 @@ public interface IAuthenticationStrategyManager
     Task<string?> GetCurrentUserDisplayNameAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Get authentication strategy by method type
-    /// </summary>
-    IAuthenticationStrategy? GetStrategy(AuthenticationMethod method);
-
-    /// <summary>
-    /// Get all available authentication strategies
-    /// </summary>
-    IEnumerable<IAuthenticationStrategy> GetAllStrategies();
-
-    /// <summary>
     /// Get status information about all strategies for debugging
     /// </summary>
     Task<Dictionary<string, object>> GetStrategyStatusAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Validate authentication data across all strategies
-    /// </summary>
-    Task<Dictionary<AuthenticationMethod, bool>> ValidateAllStrategiesAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Force refresh of strategy configuration
-    /// </summary>
-    void RefreshConfiguration();
 }

@@ -8,7 +8,6 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using SMS_Application.Configuration;
 using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
@@ -24,42 +23,19 @@ namespace SMS_Application.Services;
 public class AuthenticationStrategyManager : IAuthenticationStrategyManager
 {
     private readonly ILogger<AuthenticationStrategyManager> _logger;
-    private readonly IOptionsMonitor<AuthenticationConfiguration> _configOptions;
-    private readonly Dictionary<AuthenticationMethod, IAuthenticationStrategy> _strategies;
-    private AuthenticationConfiguration _config;
+    private readonly IAuthenticationStrategy _strategy;
 
     public AuthenticationStrategyManager(
         ILogger<AuthenticationStrategyManager> logger,
-        IOptionsMonitor<AuthenticationConfiguration> configOptions,
-        IEnumerable<IAuthenticationStrategy> strategies)
+        IAuthenticationStrategy strategy)
     {
         _logger = logger;
-        _configOptions = configOptions;
-        _config = configOptions.CurrentValue;
-        
-        // Build strategy dictionary
-        _strategies = strategies.ToDictionary(s => s.Method, s => s);
-        
-        _logger.LogApplicationDebug("AuthenticationStrategyManager initialized with {StrategyCount} strategies: {Strategies}", 
-            _strategies.Count, string.Join(", ", _strategies.Keys));
+        _strategy = strategy;
 
-        // Log configuration
-        _logger.LogApplicationDebug("Authentication Configuration: {ConfigSummary}", _config.GetConfigurationSummary());
-
-        // Subscribe to configuration changes
-        _configOptions.OnChange(config =>
-        {
-            _config = config;
-            _logger.LogApplicationDebug("Authentication configuration updated: {ConfigSummary}", config.GetConfigurationSummary());
-        });
+        _logger.LogApplicationDebug("AuthenticationStrategyManager initialized with strategy: {Strategy}", _strategy.StrategyName);
     }
 
-    public IAuthenticationStrategy PrimaryStrategy => GetStrategy(_config.PreferredMethod) 
-        ?? throw new InvalidOperationException($"Primary authentication strategy '{_config.PreferredMethod}' not available");
-
-    public IAuthenticationStrategy? FallbackStrategy => _config.EnableFallbackChain 
-        ? GetStrategy(_config.FallbackMethod) 
-        : null;
+    public IAuthenticationStrategy PrimaryStrategy => _strategy;
 
     /// <summary>
     /// Store user using the configured authentication strategy chain
@@ -68,118 +44,29 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
     {
         try
         {
-            _logger.LogApplicationInformation("Storing user {UserCode} ({UserType}) using strategy chain", user.Code, userType.Value);
+            _logger.LogApplicationInformation("Storing user {UserCode} ({UserType}) using unified strategy", user.Code, userType.Value);
 
-            // Try primary strategy first
-            var primaryStrategy = GetStrategy(_config.PreferredMethod);
-            if (primaryStrategy?.IsAvailable == true)
+            if (!_strategy.IsAvailable)
             {
-                var primaryResult = await primaryStrategy.StoreUserAsync(user, userType, cancellationToken);
-                if (primaryResult.IsSuccess)
-                {
-                    // Keep fallback strategy in sync so Blazor circuit-based requests can
-                    // still resolve authentication/permissions when HttpContext session
-                    // is not available during interactive rendering.
-                    if (_config.EnableFallbackChain && _config.FallbackMethod != _config.PreferredMethod)
-                    {
-                        var fallbackForSync = GetStrategy(_config.FallbackMethod);
-                        if (fallbackForSync?.IsAvailable == true)
-                        {
-                            try
-                            {
-                                var fallbackSyncResult = await fallbackForSync.StoreUserAsync(user, userType, cancellationToken);
-                                if (!fallbackSyncResult.IsSuccess)
-                                {
-                                    _logger.LogApplicationWarning(
-                                        "Fallback sync store failed for user {UserCode} on strategy {Strategy}: {Error}",
-                                        user.Code,
-                                        fallbackForSync.StrategyName,
-                                        fallbackSyncResult.Error?.Message);
-                                }
-                            }
-                            catch (Exception syncEx)
-                            {
-                                _logger.LogApplicationWarning(syncEx,
-                                    "Fallback sync store threw for user {UserCode} on strategy {Strategy}",
-                                    user.Code,
-                                    fallbackForSync.StrategyName);
-                            }
-                        }
-                    }
-
-                    if (_config.LogAuthenticationDecisions)
-                    {
-                        _logger.LogApplicationInformation("User {UserCode} stored successfully using primary strategy: {Strategy}", 
-                            user.Code, primaryStrategy.StrategyName);
-                    }
-                    return primaryResult;
-                }
-                else
-                {
-                    _logger.LogApplicationWarning("Primary strategy failed for user {UserCode}: {Error}", user.Code, primaryResult.Error?.Message);
-                }
-            }
-            else
-            {
-                _logger.LogApplicationWarning("Primary strategy {Method} not available for user {UserCode}", _config.PreferredMethod, user.Code);
-            }
-
-            // Try fallback strategy if enabled
-            if (_config.EnableFallbackChain)
-            {
-                var fallbackStrategy = GetStrategy(_config.FallbackMethod);
-                if (fallbackStrategy?.IsAvailable == true)
-                {
-                    var fallbackResult = await fallbackStrategy.StoreUserAsync(user, userType, cancellationToken);
-                    if (fallbackResult.IsSuccess)
-                    {
-                        _logger.LogApplicationInformation("User {UserCode} stored successfully using fallback strategy: {Strategy}", 
-                            user.Code, fallbackStrategy.StrategyName);
-                        return fallbackResult;
-                    }
-                    else
-                    {
-                        _logger.LogApplicationError("Fallback strategy also failed for user {UserCode}: {Error}", user.Code, fallbackResult.Error?.Message);
-                    }
-                }
-                else
-                {
-                    _logger.LogApplicationWarning("Fallback strategy {Method} not available for user {UserCode}", _config.FallbackMethod, user.Code);
-                }
-            }
-
-            // If strict mode, fail here
-            if (_config.StrictMode)
-            {
-                var error = "Authentication storage failed in strict mode - no fallback attempted";
-                _logger.LogApplicationError("{Error} for user {UserCode}", error, user.Code);
+                _logger.LogApplicationError("No available authentication strategy to store user {UserCode}", user.Code);
                 return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
-            // Last resort: try any available PERSISTENT strategy
-            // ContextBased is request-scoped and can create false-success logins across navigations.
-            foreach (var strategy in _strategies.Values.Where(s => s.IsAvailable && 
-                s.Method != _config.PreferredMethod && s.Method != _config.FallbackMethod &&
-                s.Method != AuthenticationMethod.ContextBased))
+            var result = await _strategy.StoreUserAsync(user, userType, cancellationToken);
+            if (!result.IsSuccess)
             {
-                try
-                {
-                    var lastResortResult = await strategy.StoreUserAsync(user, userType, cancellationToken);
-                    if (lastResortResult.IsSuccess)
-                    {
-                        _logger.LogApplicationWarning("User {UserCode} stored using last resort strategy: {Strategy}", 
-                            user.Code, strategy.StrategyName);
-                        return lastResortResult;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogApplicationDebug(ex, "Last resort strategy {Strategy} failed for user {UserCode}", strategy.StrategyName, user.Code);
-                }
+                _logger.LogApplicationWarning("Authentication strategy failed to store user {UserCode} using {Strategy}: {Error}",
+                    user.Code,
+                    _strategy.StrategyName,
+                    result.Error?.Message);
+                return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
-            _logger.LogApplicationError("All authentication strategies failed for user {UserCode}", user.Code);
-            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+            _logger.LogApplicationInformation("User {UserCode} stored successfully using strategy: {Strategy}",
+                user.Code,
+                _strategy.StrategyName);
+
+            return result;
         }
         catch (Exception ex)
         {
@@ -195,67 +82,20 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
     {
         try
         {
-            _logger.LogApplicationDebug("Retrieving user using strategy chain");
+            _logger.LogApplicationDebug("Retrieving user using unified strategy");
 
-            // Try primary strategy first
-            var primaryStrategy = GetStrategy(_config.PreferredMethod);
-            if (primaryStrategy?.IsAvailable == true)
+            if (!_strategy.IsAvailable)
             {
-                var primaryResult = await primaryStrategy.RetrieveUserAsync(cancellationToken);
-                if (primaryResult.IsSuccess && primaryResult.Value.HasValue)
-                {
-                    if (_config.LogAuthenticationDecisions)
-                    {
-                        _logger.LogApplicationDebug("User retrieved using primary strategy: {Strategy}", primaryStrategy.StrategyName);
-                    }
-                    return primaryResult;
-                }
-            }
-
-            // Try fallback strategy if enabled
-            if (_config.EnableFallbackChain)
-            {
-                var fallbackStrategy = GetStrategy(_config.FallbackMethod);
-                if (fallbackStrategy?.IsAvailable == true)
-                {
-                    var fallbackResult = await fallbackStrategy.RetrieveUserAsync(cancellationToken);
-                    if (fallbackResult.IsSuccess && fallbackResult.Value.HasValue)
-                    {
-                        _logger.LogApplicationDebug("User retrieved using fallback strategy: {Strategy}", fallbackStrategy.StrategyName);
-                        return fallbackResult;
-                    }
-                }
-            }
-
-            // If strict mode, return null here
-            if (_config.StrictMode)
-            {
-                _logger.LogApplicationDebug("No user found in strict mode - no additional fallback attempted");
                 return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
-            // Last resort: try any available PERSISTENT strategy
-            foreach (var strategy in _strategies.Values.Where(s => s.IsAvailable && 
-                s.Method != _config.PreferredMethod && s.Method != _config.FallbackMethod &&
-                s.Method != AuthenticationMethod.ContextBased))
+            var result = await _strategy.RetrieveUserAsync(cancellationToken);
+            if (result.IsSuccess && result.Value.HasValue)
             {
-                try
-                {
-                    var lastResortResult = await strategy.RetrieveUserAsync(cancellationToken);
-                    if (lastResortResult.IsSuccess && lastResortResult.Value.HasValue)
-                    {
-                        _logger.LogApplicationDebug("User retrieved using last resort strategy: {Strategy}", strategy.StrategyName);
-                        return lastResortResult;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogApplicationDebug(ex, "Last resort strategy {Strategy} failed during retrieval", strategy.StrategyName);
-                }
+                _logger.LogApplicationDebug("User retrieved using strategy: {Strategy}", _strategy.StrategyName);
             }
 
-            _logger.LogApplicationDebug("No authenticated user found in any strategy");
-            return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+            return result;
         }
         catch (Exception ex)
         {
@@ -271,42 +111,25 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
     {
         try
         {
-            _logger.LogApplicationInformation("??? Clearing user from all authentication strategies");
+            _logger.LogApplicationInformation("??? Clearing user from authentication strategy");
 
-            var clearResults = new List<(string Strategy, bool Success, string? Error)>();
-
-            // Clear from all available strategies
-            foreach (var strategy in _strategies.Values.Where(s => s.IsAvailable))
+            if (!_strategy.IsAvailable)
             {
-                try
-                {
-                    var result = await strategy.ClearUserAsync(cancellationToken);
-                    clearResults.Add((strategy.StrategyName, result.IsSuccess, result.Error?.Message));
-                    
-                    if (result.IsSuccess)
-                    {
-                        _logger.LogApplicationDebug("User cleared from strategy: {Strategy}", strategy.StrategyName);
-                    }
-                    else
-                    {
-                        _logger.LogApplicationWarning("Failed to clear user from strategy {Strategy}: {Error}", 
-                            strategy.StrategyName, result.Error?.Message);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogApplicationError(ex, "Error clearing user from strategy: {Strategy}", strategy.StrategyName);
-                    clearResults.Add((strategy.StrategyName, false, ex.Message));
-                }
+                _logger.LogApplicationWarning("No available authentication strategy while clearing user");
+                return Result<bool>.Success(true);
             }
 
-            var successCount = clearResults.Count(r => r.Success);
-            var totalCount = clearResults.Count;
+            var result = await _strategy.ClearUserAsync(cancellationToken);
+            if (result.IsSuccess)
+            {
+                _logger.LogApplicationInformation("User clearing completed using strategy: {Strategy}", _strategy.StrategyName);
+                return Result<bool>.Success(true);
+            }
 
-            _logger.LogApplicationInformation("User clearing completed - Success: {Success}/{Total} strategies", successCount, totalCount);
-
-            // Return success if at least one strategy succeeded
-            return Result<bool>.Success(successCount > 0);
+            _logger.LogApplicationWarning("Failed to clear user from strategy {Strategy}: {Error}",
+                _strategy.StrategyName,
+                result.Error?.Message);
+            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
         catch (Exception ex)
         {
@@ -323,67 +146,14 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
     {
         try
         {
-            _logger.LogApplicationDebug("IsUserAuthenticatedAsync - Starting strategy chain check");
-            
-            // Check primary strategy first
-            var primaryStrategy = GetStrategy(_config.PreferredMethod);
-            _logger.LogApplicationDebug("Primary strategy ({Method}): Available={IsAvailable}", _config.PreferredMethod, primaryStrategy?.IsAvailable);
-            
-            if (primaryStrategy?.IsAvailable == true)
+            _logger.LogApplicationDebug("IsUserAuthenticatedAsync - checking unified strategy");
+
+            if (!_strategy.IsAvailable)
             {
-                var primaryResult = await primaryStrategy.IsUserAuthenticatedAsync(cancellationToken);
-                _logger.LogApplicationDebug("Primary strategy result: {Result}", primaryResult);
-                if (primaryResult)
-                {
-                    _logger.LogApplicationDebug("User authenticated via primary strategy: {Strategy}", primaryStrategy.StrategyName);
-                    return true;
-                }
+                return false;
             }
 
-            // Check fallback strategy if enabled
-            if (_config.EnableFallbackChain)
-            {
-                var fallbackStrategy = GetStrategy(_config.FallbackMethod);
-                _logger.LogApplicationDebug("Fallback strategy ({Method}): Available={IsAvailable}", _config.FallbackMethod, fallbackStrategy?.IsAvailable);
-                
-                if (fallbackStrategy?.IsAvailable == true)
-                {
-                    var fallbackResult = await fallbackStrategy.IsUserAuthenticatedAsync(cancellationToken);
-                    _logger.LogApplicationDebug("Fallback strategy result: {Result}", fallbackResult);
-                    if (fallbackResult)
-                    {
-                        _logger.LogApplicationDebug("User authenticated via fallback strategy: {Strategy}", fallbackStrategy.StrategyName);
-                        return true;
-                    }
-                }
-            }
-
-            // If not in strict mode, check other strategies
-            if (!_config.StrictMode)
-            {
-                _logger.LogApplicationDebug("Checking other strategies (not strict mode)");
-                foreach (var strategy in _strategies.Values.Where(s => s.IsAvailable && 
-                    s.Method != _config.PreferredMethod && s.Method != _config.FallbackMethod))
-                {
-                    try
-                    {
-                        var otherResult = await strategy.IsUserAuthenticatedAsync(cancellationToken);
-                        _logger.LogApplicationDebug("Other strategy {Strategy} result: {Result}", strategy.StrategyName, otherResult);
-                        if (otherResult)
-                        {
-                            _logger.LogApplicationDebug("User authenticated via other strategy: {Strategy}", strategy.StrategyName);
-                            return true;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogApplicationWarning(ex, "Error checking authentication in strategy {Strategy}", strategy.StrategyName);
-                    }
-                }
-            }
-
-            _logger.LogApplicationDebug("No authentication found in any strategy");
-            return false;
+            return await _strategy.IsUserAuthenticatedAsync(cancellationToken);
         }
         catch (Exception ex)
         {
@@ -425,22 +195,6 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
     }
 
     /// <summary>
-    /// Get authentication strategy by method type
-    /// </summary>
-    public IAuthenticationStrategy? GetStrategy(AuthenticationMethod method)
-    {
-        return _strategies.TryGetValue(method, out var strategy) ? strategy : null;
-    }
-
-    /// <summary>
-    /// Get all available authentication strategies
-    /// </summary>
-    public IEnumerable<IAuthenticationStrategy> GetAllStrategies()
-    {
-        return _strategies.Values;
-    }
-
-    /// <summary>
     /// Get status information about all strategies for debugging
     /// </summary>
     public async Task<Dictionary<string, object>> GetStrategyStatusAsync(CancellationToken cancellationToken = default)
@@ -449,38 +203,13 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
 
         try
         {
-            status["Configuration"] = _config.GetConfigurationSummary();
             status["PrimaryStrategy"] = PrimaryStrategy.StrategyName;
-            status["FallbackStrategy"] = FallbackStrategy?.StrategyName ?? "None";
-            status["FallbackEnabled"] = _config.EnableFallbackChain;
-            status["StrictMode"] = _config.StrictMode;
-
-            var strategyDetails = new Dictionary<string, object>();
-            foreach (var strategy in _strategies.Values)
-            {
-                var details = new Dictionary<string, object>
-                {
-                    ["Name"] = strategy.StrategyName,
-                    ["Method"] = strategy.Method.ToString(),
-                    ["Available"] = strategy.IsAvailable,
-                    ["StorageInfo"] = strategy.GetStorageInfo()
-                };
-
-                try
-                {
-                    details["IsAuthenticated"] = await strategy.IsUserAuthenticatedAsync(cancellationToken);
-                    details["IsValid"] = await strategy.ValidateStoredDataAsync(cancellationToken);
-                    details["CurrentUserId"] = await strategy.GetCurrentUserIdAsync(cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    details["Error"] = ex.Message;
-                }
-
-                strategyDetails[strategy.Method.ToString()] = details;
-            }
-
-            status["Strategies"] = strategyDetails;
+            status["Method"] = PrimaryStrategy.Method.ToString();
+            status["Available"] = PrimaryStrategy.IsAvailable;
+            status["StorageInfo"] = PrimaryStrategy.GetStorageInfo();
+            status["IsAuthenticated"] = await PrimaryStrategy.IsUserAuthenticatedAsync(cancellationToken);
+            status["IsValid"] = await PrimaryStrategy.ValidateStoredDataAsync(cancellationToken);
+            status["CurrentUserId"] = await PrimaryStrategy.GetCurrentUserIdAsync(cancellationToken);
         }
         catch (Exception ex)
         {
@@ -488,38 +217,6 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
         }
 
         return status;
-    }
-
-    /// <summary>
-    /// Validate authentication data across all strategies
-    /// </summary>
-    public async Task<Dictionary<AuthenticationMethod, bool>> ValidateAllStrategiesAsync(CancellationToken cancellationToken = default)
-    {
-        var results = new Dictionary<AuthenticationMethod, bool>();
-
-        foreach (var strategy in _strategies.Values)
-        {
-            try
-            {
-                results[strategy.Method] = strategy.IsAvailable && await strategy.ValidateStoredDataAsync(cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogApplicationDebug(ex, "Error validating strategy {Strategy}", strategy.StrategyName);
-                results[strategy.Method] = false;
-            }
-        }
-
-        return results;
-    }
-
-    /// <summary>
-    /// Force refresh of strategy configuration
-    /// </summary>
-    public void RefreshConfiguration()
-    {
-        _config = _configOptions.CurrentValue;
-        _logger.LogApplicationInformation("Authentication configuration refreshed: {ConfigSummary}", _config.GetConfigurationSummary());
     }
 }
 

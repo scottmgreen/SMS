@@ -7,13 +7,10 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Application.Common;
-using SMS_Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.Extensions.Logging;
-using SMS_Application.Interfaces;
-using System.Collections.Concurrent;
+using System.Security.Claims;
+using System.Threading;
 
 namespace SMS_Application.Services;
 
@@ -26,10 +23,17 @@ namespace SMS_Application.Services;
 public class SessionCurrentUserService : ICurrentUserService
 {
     private static readonly ConcurrentDictionary<string, Dictionary<string, string>> _sessionAuthSnapshots = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, Dictionary<string, string>> _userAuthSnapshots = new(StringComparer.OrdinalIgnoreCase);
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<SessionCurrentUserService> _logger;
     private readonly ISMSSessionService _smsSessionService;
     private readonly Dictionary<string, string> _sessionSnapshot = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> _lastReadSourceByKey = new(StringComparer.Ordinal);
+    private readonly object _permissionsCacheLock = new();
+    private string? _cachedPermissionsRaw;
+    private string? _cachedPermissionsRoleCode;
+    private List<SMSUserRolePermission>? _cachedPermissions;
+    private bool? _lastLoggedPending2FaState;
 
     public SessionCurrentUserService(
         IHttpContextAccessor httpContextAccessor, 
@@ -60,6 +64,22 @@ public class SessionCurrentUserService : ICurrentUserService
 
                 return existing;
             });
+
+        if (values.TryGetValue("SMS_UserCode", out var userCode) && !string.IsNullOrWhiteSpace(userCode))
+        {
+            _userAuthSnapshots.AddOrUpdate(
+                userCode,
+                _ => new Dictionary<string, string>(values, StringComparer.Ordinal),
+                (_, existing) =>
+                {
+                    foreach (var kvp in values)
+                    {
+                        existing[kvp.Key] = kvp.Value;
+                    }
+
+                    return existing;
+                });
+        }
     }
 
     public static void RemoveSessionSnapshot(string? sessionId)
@@ -69,12 +89,93 @@ public class SessionCurrentUserService : ICurrentUserService
             return;
         }
 
-        _sessionAuthSnapshots.TryRemove(sessionId, out _);
+        if (_sessionAuthSnapshots.TryRemove(sessionId, out var removedSnapshot)
+            && removedSnapshot != null
+            && removedSnapshot.TryGetValue("SMS_UserCode", out var userCode)
+            && !string.IsNullOrWhiteSpace(userCode))
+        {
+            _userAuthSnapshots.TryRemove(userCode, out _);
+        }
     }
 
     public static void ClearAllSessionSnapshots()
     {
         _sessionAuthSnapshots.Clear();
+        _userAuthSnapshots.Clear();
+    }
+
+    public void HydrateFromAuthPayload(IReadOnlyDictionary<string, string> values)
+    {
+        if (values == null || values.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var kvp in values)
+        {
+            if (!string.IsNullOrWhiteSpace(kvp.Key) && !string.IsNullOrWhiteSpace(kvp.Value))
+            {
+                _sessionSnapshot[kvp.Key] = kvp.Value;
+            }
+        }
+    }
+
+    public sealed class AuthStateDiagnostics
+    {
+        public bool SessionAvailable { get; init; }
+        public string? SessionId { get; init; }
+        public bool SessionHasIsAuthenticated { get; init; }
+        public bool SessionHasPermissions { get; init; }
+        public bool LocalSnapshotHasIsAuthenticated { get; init; }
+        public bool LocalSnapshotHasPermissions { get; init; }
+        public bool ConcurrentSnapshotHasIsAuthenticated { get; init; }
+        public bool ConcurrentSnapshotHasPermissions { get; init; }
+        public int ConcurrentSnapshotFieldCount { get; init; }
+        public string IsAuthenticatedReadSource { get; init; } = "none";
+        public string PermissionsReadSource { get; init; } = "none";
+    }
+
+    public AuthStateDiagnostics GetAuthStateDiagnostics()
+    {
+        var context = _httpContextAccessor.HttpContext;
+        var session = TryGetSession(context);
+        var sessionId = session?.Id;
+
+        var sessionHasIsAuthenticated = !string.IsNullOrWhiteSpace(session?.GetString("IsAuthenticated"));
+        var sessionHasPermissions = !string.IsNullOrWhiteSpace(session?.GetString("SMS_UserPermissions"));
+
+        var localSnapshotHasIsAuthenticated = _sessionSnapshot.TryGetValue("IsAuthenticated", out var localAuth)
+                                            && !string.IsNullOrWhiteSpace(localAuth);
+        var localSnapshotHasPermissions = _sessionSnapshot.TryGetValue("SMS_UserPermissions", out var localPerms)
+                                        && !string.IsNullOrWhiteSpace(localPerms);
+
+        var concurrentSnapshotHasIsAuthenticated = false;
+        var concurrentSnapshotHasPermissions = false;
+        var concurrentSnapshotFieldCount = 0;
+
+        if (!string.IsNullOrWhiteSpace(sessionId) && _sessionAuthSnapshots.TryGetValue(sessionId, out var concurrentSnapshot))
+        {
+            concurrentSnapshotFieldCount = concurrentSnapshot.Count;
+            concurrentSnapshotHasIsAuthenticated = concurrentSnapshot.TryGetValue("IsAuthenticated", out var concurrentAuth)
+                                                && !string.IsNullOrWhiteSpace(concurrentAuth);
+            concurrentSnapshotHasPermissions = concurrentSnapshot.TryGetValue("SMS_UserPermissions", out var concurrentPerms)
+                                            && !string.IsNullOrWhiteSpace(concurrentPerms);
+        }
+
+        return new AuthStateDiagnostics
+        {
+            SessionAvailable = session != null,
+            SessionId = sessionId,
+            SessionHasIsAuthenticated = sessionHasIsAuthenticated,
+            SessionHasPermissions = sessionHasPermissions,
+            LocalSnapshotHasIsAuthenticated = localSnapshotHasIsAuthenticated,
+            LocalSnapshotHasPermissions = localSnapshotHasPermissions,
+            ConcurrentSnapshotHasIsAuthenticated = concurrentSnapshotHasIsAuthenticated,
+            ConcurrentSnapshotHasPermissions = concurrentSnapshotHasPermissions,
+            ConcurrentSnapshotFieldCount = concurrentSnapshotFieldCount,
+            IsAuthenticatedReadSource = _lastReadSourceByKey.TryGetValue("IsAuthenticated", out var authSource) ? authSource : "none",
+            PermissionsReadSource = _lastReadSourceByKey.TryGetValue("SMS_UserPermissions", out var permSource) ? permSource : "none"
+        };
     }
 
     #region Basic Auth Properties - Direct from Session
@@ -83,7 +184,35 @@ public class SessionCurrentUserService : ICurrentUserService
     { 
         get 
         { 
-            return SafeGetSessionBool("IsAuthenticated");
+            if (SafeGetSessionBool("IsAuthenticated"))
+            {
+                return true;
+            }
+
+            if (!HasAuthenticatedPrincipal())
+            {
+                return false;
+            }
+
+            var hasAuthenticatedClaim = string.Equals(
+                GetPrincipalClaimValue(_httpContextAccessor.HttpContext, "IsAuthenticated"),
+                "true",
+                StringComparison.OrdinalIgnoreCase);
+
+            if (!hasAuthenticatedClaim)
+            {
+                return false;
+            }
+
+            var hasUserCode = !string.IsNullOrWhiteSpace(SafeGetSessionString("SMS_UserCode"));
+            if (!hasUserCode)
+            {
+                return false;
+            }
+
+            var hasRole = !string.IsNullOrWhiteSpace(SafeGetSessionString("SMS_UserRoleCode"));
+            var hasPermissions = !string.IsNullOrWhiteSpace(SafeGetSessionString("SMS_UserPermissions"));
+            return hasRole || hasPermissions;
         } 
     }
 
@@ -203,15 +332,13 @@ public class SessionCurrentUserService : ICurrentUserService
                 // If IsAuthenticated is true, we should NOT be in pending 2FA state
                 if (IsAuthenticated)
                 {
-                    _logger.LogApplicationDebug("User is authenticated - checking if truly pending or fully authenticated");
-                    
                     // Check for specific pending 2FA markers (not full auth data)
                     var context = _httpContextAccessor.HttpContext;
                     if (context?.Items.ContainsKey("Pending2FA_UserData") == true || 
                         context?.Items.ContainsKey("Pending2FA_UserType") == true ||
                         context?.Items.ContainsKey("Pending2FA_StoredAt") == true)
                     {
-                        _logger.LogApplicationDebug("Found pending 2FA markers in HttpContext - user is pending 2FA verification");
+                        LogPending2FaTransition(true);
                         return true;
                     }
 
@@ -220,17 +347,17 @@ public class SessionCurrentUserService : ICurrentUserService
                     var pending2FAStoredAt = SafeGetSessionString("Pending2FA_StoredAt");
                     if (!string.IsNullOrEmpty(pending2FAData) || !string.IsNullOrEmpty(pending2FAStoredAt))
                     {
-                        _logger.LogApplicationDebug("Found pending 2FA markers in session - user is pending 2FA verification");
+                        LogPending2FaTransition(true);
                         return true;
                     }
 
                     // If user is authenticated but no pending 2FA markers found, they are fully authenticated
-                    _logger.LogApplicationDebug("User is authenticated with no pending 2FA markers - fully authenticated");
+                    LogPending2FaTransition(false);
                     return false;
                 }
 
                 // User is not authenticated at all, so definitely not pending 2FA
-                _logger.LogApplicationDebug("User is not authenticated - not pending 2FA verification");
+                LogPending2FaTransition(false);
                 return false;
             }
             catch (Exception ex)
@@ -342,21 +469,32 @@ public class SessionCurrentUserService : ICurrentUserService
             var httpContext = _httpContextAccessor.HttpContext;
             if (httpContext == null)
             {
-                if (_sessionSnapshot.TryGetValue(key, out var cachedValue) && !string.IsNullOrEmpty(cachedValue))
+                if (_sessionSnapshot.TryGetValue(key, out var scopedValue) && !string.IsNullOrEmpty(scopedValue))
                 {
-                    return cachedValue;
+                    _lastReadSourceByKey[key] = "snapshot-local";
+                    return scopedValue;
                 }
 
-                if (_sessionAuthSnapshots.Count == 1)
+                var ambientUserCode = GetPrincipalClaimValue(null, "SMS_UserCode");
+                if (!string.IsNullOrWhiteSpace(ambientUserCode)
+                    && _userAuthSnapshots.TryGetValue(ambientUserCode, out var userSnapshot)
+                    && userSnapshot.TryGetValue(key, out var userSnapshotValue)
+                    && !string.IsNullOrWhiteSpace(userSnapshotValue))
                 {
-                    var onlySnapshot = _sessionAuthSnapshots.FirstOrDefault().Value;
-                    if (onlySnapshot is not null && onlySnapshot.TryGetValue(key, out var globalValue) && !string.IsNullOrEmpty(globalValue))
-                    {
-                        _sessionSnapshot[key] = globalValue;
-                        return globalValue;
-                    }
+                    _sessionSnapshot[key] = userSnapshotValue;
+                    _lastReadSourceByKey[key] = "snapshot-user";
+                    return userSnapshotValue;
                 }
 
+                var principalClaimValue = GetPrincipalClaimValue(null, key);
+                if (!string.IsNullOrWhiteSpace(principalClaimValue))
+                {
+                    _sessionSnapshot[key] = principalClaimValue;
+                    _lastReadSourceByKey[key] = "claims";
+                    return principalClaimValue;
+                }
+
+                _lastReadSourceByKey[key] = "none";
                 return null;
             }
 
@@ -383,6 +521,7 @@ public class SessionCurrentUserService : ICurrentUserService
                                 });
                         }
 
+                        _lastReadSourceByKey[key] = "session";
                         return sessionValue;
                     }
                 }
@@ -392,6 +531,36 @@ public class SessionCurrentUserService : ICurrentUserService
                 }
             }
 
+            if (session != null && !string.IsNullOrWhiteSpace(session.Id) && _sessionAuthSnapshots.TryGetValue(session.Id, out var cachedSessionValues))
+            {
+                if (cachedSessionValues.TryGetValue(key, out var sessionCachedValue) && !string.IsNullOrEmpty(sessionCachedValue))
+                {
+                    _sessionSnapshot[key] = sessionCachedValue;
+                    _lastReadSourceByKey[key] = "snapshot-concurrent";
+                    return sessionCachedValue;
+                }
+            }
+
+            var userCode = GetPrincipalClaimValue(httpContext, "SMS_UserCode");
+            if (!string.IsNullOrWhiteSpace(userCode)
+                && _userAuthSnapshots.TryGetValue(userCode, out var userSnapshotByCode)
+                && userSnapshotByCode.TryGetValue(key, out var userSnapshotByCodeValue)
+                && !string.IsNullOrWhiteSpace(userSnapshotByCodeValue))
+            {
+                _sessionSnapshot[key] = userSnapshotByCodeValue;
+                _lastReadSourceByKey[key] = "snapshot-user";
+                return userSnapshotByCodeValue;
+            }
+
+            var claimValue = GetPrincipalClaimValue(httpContext, key);
+            if (!string.IsNullOrWhiteSpace(claimValue))
+            {
+                _sessionSnapshot[key] = claimValue;
+                _lastReadSourceByKey[key] = "claims";
+                return claimValue;
+            }
+
+            _lastReadSourceByKey[key] = "none";
             return null;
         }
         catch (Exception ex)
@@ -432,10 +601,25 @@ public class SessionCurrentUserService : ICurrentUserService
             
             if (string.IsNullOrEmpty(permissionsString) || string.IsNullOrEmpty(userRoleCode))
             {
+                lock (_permissionsCacheLock)
+                {
+                    _cachedPermissionsRaw = null;
+                    _cachedPermissionsRoleCode = null;
+                    _cachedPermissions = null;
+                }
+
                 return new List<SMSUserRolePermission>();
             }
 
-            _logger.LogApplicationDebug("Reconstructing permissions from session for user role: {UserRoleCode}", userRoleCode);
+            lock (_permissionsCacheLock)
+            {
+                if (string.Equals(_cachedPermissionsRaw, permissionsString, StringComparison.Ordinal)
+                    && string.Equals(_cachedPermissionsRoleCode, userRoleCode, StringComparison.Ordinal)
+                    && _cachedPermissions is not null)
+                {
+                    return _cachedPermissions;
+                }
+            }
 
             // Parse the permission strings using IDENTICAL logic from SMSSessionService
             var permissions = new List<SMSUserRolePermission>();
@@ -466,7 +650,13 @@ public class SessionCurrentUserService : ICurrentUserService
                 }
             }
             
-            _logger.LogApplicationDebug("Reconstructed {PermissionCount} permissions from session", permissions.Count);
+            lock (_permissionsCacheLock)
+            {
+                _cachedPermissionsRaw = permissionsString;
+                _cachedPermissionsRoleCode = userRoleCode;
+                _cachedPermissions = permissions;
+            }
+
             return permissions;
         }
         catch (Exception ex)
@@ -474,6 +664,35 @@ public class SessionCurrentUserService : ICurrentUserService
             _logger.LogApplicationDebug(ex, "Error reconstructing permissions from session - returning empty list");
             return new List<SMSUserRolePermission>();
         }
+    }
+
+    private bool HasAuthenticatedPrincipal()
+    {
+        var context = _httpContextAccessor.HttpContext;
+        if (context?.User?.Identity?.IsAuthenticated == true)
+        {
+            return true;
+        }
+
+        var principalCurrent = ClaimsPrincipal.Current;
+        if (principalCurrent?.Identity?.IsAuthenticated == true)
+        {
+            return true;
+        }
+
+        var threadPrincipal = Thread.CurrentPrincipal as ClaimsPrincipal;
+        return threadPrincipal?.Identity?.IsAuthenticated == true;
+    }
+
+    private void LogPending2FaTransition(bool isPending)
+    {
+        if (_lastLoggedPending2FaState == isPending)
+        {
+            return;
+        }
+
+        _lastLoggedPending2FaState = isPending;
+        _logger.LogApplicationInformation("Current user pending-2FA state transition: IsPending2FA={IsPending2FA}, UserCode={UserCode}", isPending, UserCode);
     }
 
     #endregion
@@ -525,6 +744,37 @@ public class SessionCurrentUserService : ICurrentUserService
     /// LEGACY: Reconstruct SMSUserRolePermission objects from session string data
     /// </summary>
     private List<SMSUserRolePermission> ReconstructPermissionsFromSession() => SafeReconstructPermissionsFromSession();
+
+    private static string? GetPrincipalClaimValue(HttpContext? context, string key)
+    {
+        var user = context?.User;
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            user = ClaimsPrincipal.Current;
+        }
+
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            user = Thread.CurrentPrincipal as ClaimsPrincipal;
+        }
+
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            return null;
+        }
+
+        return key switch
+        {
+            "IsAuthenticated" => "true",
+            "SMS_UserCode" => user.FindFirstValue("SMS_UserCode") ?? user.FindFirstValue(ClaimTypes.NameIdentifier),
+            "SMS_UserType" => user.FindFirstValue("SMS_UserType"),
+            "SMS_DisplayName" => user.FindFirstValue(ClaimTypes.Name),
+            "SMS_UserRoleCode" => user.FindFirstValue("SMS_UserRoleCode"),
+            "SMS_UserRoleName" => user.FindFirstValue("SMS_UserRoleName"),
+            "SMS_UserPermissions" => user.FindFirstValue("SMS_UserPermissions"),
+            _ => null
+        };
+    }
 
     #endregion
 }

@@ -17,6 +17,7 @@ namespace SMS3.Components.Layout;
 
 public partial class MainLayout
 {
+    private const bool EnableCrossTabLogoutSync = true;
     private const string RemoteLogoutSignalTitle = "SMS_REMOTE_LOGOUT_SIGNAL";
     private const char RemoteLogoutPayloadSeparator = '|';
     private readonly string _layoutReceiverSessionKey = $"layout-receiver:{Guid.NewGuid():N}";
@@ -57,6 +58,11 @@ public partial class MainLayout
     {
         if (firstRender)
         {
+            if (!EnableCrossTabLogoutSync)
+            {
+                return;
+            }
+
             _dotNetRef ??= DotNetObjectReference.Create(this);
             try
             {
@@ -193,7 +199,10 @@ public partial class MainLayout
 
             try
             {
-                await JSRuntime.InvokeVoidAsync("smsLogoutSync.broadcast", _layoutReceiverSessionKey);
+                if (EnableCrossTabLogoutSync)
+                {
+                    await JSRuntime.InvokeVoidAsync("smsLogoutSync.broadcast", _layoutReceiverSessionKey);
+                }
             }
             catch (Exception ex)
             {
@@ -253,8 +262,8 @@ public partial class MainLayout
             
             _logger.LogInformation("Session authentication cleared for user: {UserName}", currentUserName);
             
-            // Navigate to login after logout
-            _navigation.NavigateTo("/pdx", forceLoad: true);
+            // Force server-side cookie sign-out + pre-login landing state
+            _navigation.NavigateTo("/auth/logout", forceLoad: true);
         }
         catch (Exception ex)
         {
@@ -272,14 +281,14 @@ public partial class MainLayout
                 {
                     TryDeleteCookieIfPossible(context, "SMS_UserCodeHint", new CookieOptions { Path = "/" });
                 }
-                // Force navigation to login page
-                _navigation.NavigateTo("/login", forceLoad: true);
+                // Force server-side sign-out path even on cleanup errors
+                _navigation.NavigateTo("/auth/logout", forceLoad: true);
             }
             catch (Exception clearEx)
             {
                 _logger.LogError(clearEx, "Critical: Failed to clear session authentication during logout");
-                // Force navigation to login even on clear error
-                _navigation.NavigateTo("/login", forceLoad: true);
+                // Final fallback still uses server sign-out endpoint
+                _navigation.NavigateTo("/auth/logout", forceLoad: true);
             }
         }
         finally
@@ -354,7 +363,7 @@ public partial class MainLayout
             {
                 try
                 {
-                    _navigation.NavigateTo("/pdx", forceLoad: true);
+                    _navigation.NavigateTo("/auth/logout", forceLoad: true);
                 }
                 catch (NavigationException ex)
                 {

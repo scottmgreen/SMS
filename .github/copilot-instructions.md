@@ -71,7 +71,7 @@
 - When applying required-field validation style updates, include both StakeholderUsers and OrganizationalUsers pages consistently.
 - Use consistent naming conventions across user management pages, specifically using `_isCreateFormValid` and `_isEditFormValid` in Application, Stakeholder, and Organizational user pages.
 - Prefer using SMS_UserCode as the canonical authentication/session key and avoid relying on SMS_UserId where both keys exist.
-- Prefer using SMS_UserCode as the canonical authentication/session key and avoid relying on SMS_UserId where both keys exist.
+- Record locking is mandatory in all scenarios; prefer using SMS_UserCode as the canonical authentication/session key and avoid relying on SMS_UserId where both keys exist.
 
 ## Session Management Baseline (Critical - Test/Prod Stability)
 - Treat current login/session/NavMenu behavior as the operational baseline; prioritize deployment stability over cleanup.
@@ -84,6 +84,9 @@
 - If changing session behavior, apply minimal patches, run QA build, and validate: login, NavMenu render, 2FA path, logout, and parallel users with different roles.
 - Session/cookie remains the authority for persisted authentication state; any continuity cache must not replace persisted session as source of truth.
 - Document the finalized session management strategy and configuration completely in this file as a required baseline for future changes, prioritizing Test/Prod stability and avoiding regressions.
+- Session/circuit management should be unified into one simplified framework with one authoritative auth flow.
+- Do not propose replacing in-memory session backing with shared distributed cache (SQL/Redis) as a remedy for this project.
+- ARR is not an available option in the user's deployment environment; do not rely on ARR-based sticky session guidance.
 
 ## Email Routing
 - Implement a hard business rule for email routing: emails must only be sent to group contacts as primary To recipients; if the recipient is not part of a group, no email should be sent via fallback methods. Allow CC/BCC as exceptions for manually added individual recipients.
@@ -144,3 +147,4 @@
 - Prefer generic lock service naming: use IRecordLockLeaseCoordinator (and corresponding implementation names) instead of report-graph-specific names.
 - For temporary cleanup in SMS3 auth baseline, prefer commenting out uncertain legacy code first rather than deleting it immediately.
 - Blazor circuit should always derive authentication state from the session store (session as sole auth source of truth).
+- Avoid JavaScript in Blazor unless absolutely necessary, especially in authentication/authorization login/logout design.
