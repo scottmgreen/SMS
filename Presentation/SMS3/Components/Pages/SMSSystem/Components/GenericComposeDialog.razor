@@ -10,11 +10,7 @@
 
 <RadzenTemplateForm Data="@Model" Submit="@HandleSendAsync" TItem="EmailNotification" class="compose-root">
     <div class="compose-header">
-        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" class="mb-2">
-            <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
-            Generic test compose dialog. SMTP sender still uses appsettings FromEmail/FromName.
-        </RadzenAlert>
-
+        
         <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center" class="mt-2">
             <RadzenColumn Size="1" class="text-end">
                 <RadzenLabel>From:</RadzenLabel>

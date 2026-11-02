@@ -13,11 +13,15 @@
 <PageTitle>Application User Management - SMS3</PageTitle>
 <!-- SMS Page Header -->
 <PageHeader Title="Application User Management"
-            Subtitle="@($"Manage SMS Application Users ({@ApplicationUsersList.Count()})")"
+            Subtitle="@($"Manage SMS Application Users ({FilteredApplicationUsers.Count()}) | Inactive: {InactiveUserCount}")"
             Icon="fas fa-user-tie">
             <AdditionalContent>
                 <div class="d-flex justify-content-end align-items-center w-100">
                     <div class="d-flex gap-2">
+                        <div class="d-flex align-items-center me-2">
+                            <RadzenCheckBox @bind-Value="@_showInactiveUsers" Name="ShowInactiveUsers" TValue="bool" />
+                            <RadzenLabel Text="Show Inactive" Component="ShowInactiveUsers" Style="margin-left: 0.5rem; cursor: pointer; color:white" />
+                        </div>
                         @* SMS_System_UserManagement_Application *@
                         @if (_currentUserService.CanCreate("SMS_System_UserManagement_Application"))
                         {
@@ -57,9 +61,9 @@
     <!-- Users DataGrid -->
 
                <RadzenCard>
-                    @if (ApplicationUsersList.Any())
+                    @if (FilteredApplicationUsers.Any())
                     {
-                        <RadzenDataGrid @ref="_usersGrid" Data="@ApplicationUsersList" TItem="SMSApplicationUser"
+                        <RadzenDataGrid @ref="_usersGrid" Data="@FilteredApplicationUsers" TItem="SMSApplicationUser"
                                         AllowFiltering="true" AllowSorting="true" AllowPaging="true"
                                         PageSize="10" ShowPagingSummary="true"
                                         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
@@ -628,6 +632,11 @@
         </div>
     </div>
 }
+
+
+
+
+
 
 <!-- Group Management Modal -->
 @if (_showGroupsModal && !string.IsNullOrEmpty(_groupManagementUserCode))

@@ -22,8 +22,7 @@ namespace SMS3.Components.Layout;
 
 public partial class NavMenu
 {
-    private const bool EnableSessionTimer = false;
-    private const bool EnableActivityTracking = false;
+    private const bool EnableActivityTracking = true;
 
 [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private AuthenticationStateProvider _authenticationStateProvider { get; set; } = default!;
@@ -32,7 +31,7 @@ public partial class NavMenu
     [Inject] private IEventQueueService _eventQueueService { get; set; } = default!;
     [Inject] private IActiveUserSessionRegistry _activeUserSessionRegistry { get; set; } = default!;
     [Inject] private IHttpContextAccessor _httpContextAccessor { get; set; } = default!;
-[Inject] private IRecordLockLeaseCoordinator _recordLockLeaseCoordinator { get; set; } = default!;
+    [Inject] private IRecordLockLeaseCoordinator _recordLockLeaseCoordinator { get; set; } = default!;
 
     [Parameter]
     public EventCallback OnLogoutRequested { get; set; }
@@ -57,6 +56,7 @@ public partial class NavMenu
     private static readonly TimeSpan AuthStateDropGuardWindow = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan ServerAuthHydrationRetryInterval = TimeSpan.FromSeconds(2);
     private bool? _lastLoggedAuthState;
+    private bool EnableSessionTimer => _configuration.GetValue<bool>("FeatureManagement:EnableSessionTimer", true);
     private bool ShowSessionTimerInNav => EnableSessionTimer && _configuration.GetValue<bool>("FeatureManagement:ShowSessionTimerInNav", true);
 
     // Environment Detection - Always production appearance

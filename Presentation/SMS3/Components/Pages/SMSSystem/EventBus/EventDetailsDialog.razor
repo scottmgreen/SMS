@@ -1,14 +1,9 @@
 @using SMS_Domain.ValueObjects
 
-<RadzenCard class="event-details-dialog">
-    <RadzenRow>
-        <RadzenColumn Size="12">
-            <h5>Queue Event Details</h5>
-        </RadzenColumn>
-    </RadzenRow>
+<RadzenCard class="event-details-dialog rz-p-3">
 
     <RadzenRow Gap="1rem">
-        <RadzenColumn Size="6">
+        <RadzenColumn Size="12">
             <RadzenFieldset Text="Basic Information">
                 <div class="event-detail-item">
                     <strong>Queue Code:</strong> @Event.QueueCode
@@ -35,9 +30,10 @@
                     </div>
                 }
             </RadzenFieldset>
-        </RadzenColumn>
-
-        <RadzenColumn Size="6">
+        </RadzenColumn>   
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn Size="12">
             <RadzenFieldset Text="Timing Information">
                 <div class="event-detail-item">
                     <strong>Queued At:</strong> @Event.QueuedAt.ToString("yyyy-MM-dd HH:mm:ss")
@@ -74,17 +70,91 @@
         </RadzenRow>
     }
 
-    <RadzenRow>
+    @if (_summaryFields.Count > 0 || _toRecipients.Count > 0 || _ccRecipients.Count > 0 || _bccRecipients.Count > 0)
+    {
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenFieldset Text="Readable Event Summary">
+                    @if (_summaryFields.Count > 0)
+                    {
+                        @foreach (var item in _summaryFields)
+                        {
+                            <div class="event-detail-item">
+                                <strong>@item.Key:</strong> @item.Value
+                            </div>
+                        }
+                    }
+
+                    @if (_toRecipients.Count > 0)
+                    {
+                        <div class="event-detail-item">
+                            <strong>To Recipients:</strong> @string.Join(", ", _toRecipients)
+                        </div>
+                    }
+
+                    @if (_ccRecipients.Count > 0)
+                    {
+                        <div class="event-detail-item">
+                            <strong>CC Recipients:</strong> @string.Join(", ", _ccRecipients)
+                        </div>
+                    }
+
+                    @if (_bccRecipients.Count > 0)
+                    {
+                        <div class="event-detail-item">
+                            <strong>BCC Recipients:</strong> @string.Join(", ", _bccRecipients)
+                        </div>
+                    }
+                </RadzenFieldset>
+            </RadzenColumn>
+        </RadzenRow>
+    }
+
+    @if (_emailMetadata.Count > 0)
+    {
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenFieldset Text="Email Metadata">
+                    @foreach (var item in _emailMetadata)
+                    {
+                        <div class="event-detail-item">
+                            <strong>@item.Key:</strong> @item.Value
+                        </div>
+                    }
+                </RadzenFieldset>
+            </RadzenColumn>
+        </RadzenRow>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(_emailBody))
+    {
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenFieldset Text="Email Body (Read-Only Preview)">
+                    @if (_isHtmlContent)
+                    {
+                        <div class="event-data-html">@((MarkupString)_emailBody)</div>
+                    }
+                    else
+                    {
+                        <pre class="event-data-json">@_emailBody</pre>
+                    }
+                </RadzenFieldset>
+            </RadzenColumn>
+        </RadzenRow>
+    }
+
+    @* <RadzenRow>
         <RadzenColumn Size="12">
             <RadzenFieldset Text="Queue Event Data">
-                <pre class="event-data-json">@Event.EventData</pre>
+                <pre class="event-data-json">@_formattedEventData</pre>
             </RadzenFieldset>
         </RadzenColumn>
-    </RadzenRow>
-
+    </RadzenRow> *@
+    <br /><br />
     <RadzenRow>
         <RadzenColumn Size="12" class="text-end">
-            <RadzenButton Text="Close" Click="@(() => DialogService.Close())" ButtonStyle="ButtonStyle.Secondary" />
+            <RadzenButton Text="Close" Click="@(() => _dialogService.Close())" ButtonStyle="ButtonStyle.Base" />
         </RadzenColumn>
     </RadzenRow>
 </RadzenCard>
@@ -93,14 +163,31 @@
 
 <style>
     .event-details-dialog {
-        min-width: 600px;
-        max-width: 800px;
+        width: 100%;
+        min-width: 1200px;
+        max-width: 1200px;
+        overflow-x: hidden;
+    }
+
+    :global(.event-details-dialog-wrapper .rz-dialog-titlebar) {
+        background-color: #212e61;
+        color: #ffffff;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    :global(.event-details-dialog-wrapper .rz-dialog-titlebar .rz-dialog-title) {
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    :global(.event-details-dialog-wrapper .rz-dialog-titlebar .rz-dialog-titlebar-close) {
+        color: #ffffff;
     }
 
     .event-detail-item {
-        margin-bottom: 0.5rem;
-        padding: 0.25rem 0;
-        border-bottom: 1px solid var(--rz-border-color);
+        /* margin-bottom: 0.5rem; */
+        padding: 0.15rem 0;
+        /* border-bottom: 1px solid var(--rz-border-color); */
     }
 
     .event-data-json {
@@ -113,6 +200,15 @@
         overflow-y: auto;
         white-space: pre-wrap;
         word-break: break-all;
+    }
+
+    .event-data-html {
+        background-color: var(--rz-background-color);
+        border: 1px solid var(--rz-border-color);
+        padding: 1rem;
+        border-radius: 0.375rem;
+        max-height: 360px;
+        overflow-y: auto;
     }
 
     .alert {

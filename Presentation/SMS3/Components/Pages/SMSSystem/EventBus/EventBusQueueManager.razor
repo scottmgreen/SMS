@@ -3,8 +3,8 @@
 @using SMS_Domain.ValueObjects
 @using SMS_Domain.Enums
 @using SMS3.Components.Shared
-@inject ILogger<EventBusQueueManager> Logger
-@inject DialogService DialogService
+@inject ILogger<EventBusQueueManager> _logger
+@inject DialogService _dialogService
 
 <PageTitle>SMS Notifications Manager - SMS3</PageTitle>
 
@@ -15,7 +15,7 @@
 
 <div class="container-fluid">
     <!-- Queue Statistics -->
-    <RadzenRow Gap="1rem" class="mb-4">
+    @* <RadzenRow Gap="1rem" class="mb-4">
         <RadzenColumn Size="12" SizeMD="3">
             <RadzenCard class="queue-stat-card pending">
                 <div class="queue-stat">
@@ -71,7 +71,7 @@
                 </div>
             </RadzenCard>
         </RadzenColumn>
-    </RadzenRow>
+    </RadzenRow> *@
 
     <!-- Filters and Actions -->
     <RadzenCard class="mb-4">
@@ -99,40 +99,42 @@
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="6">
-                <div class="btn-toolbar">
-                    <RadzenButton Icon="refresh" 
-                                 Text="Refresh" 
-                                 Click="@LoadQueuedEvents" 
-                                 ButtonStyle="ButtonStyle.Dark" 
-                                 class="me-2" />
+                <div class="btn-toolbar d-flex justify-content-end">
+                    
 
                     <RadzenButton Icon="settings"
-                                 Text="Email Notification Settings"
+                                 Text="Notification Settings"
                                  Click="@OpenEmailNotificationSettingsAsync"
                                  ButtonStyle="ButtonStyle.Base"
                                  class="me-2"
                                  Disabled="@_isProcessing" />
 
-                    <RadzenButton Icon="play_arrow" 
+                    <RadzenButton Icon="refresh"
+                                  Text="Refresh"
+                                  Click="@LoadQueuedEvents"
+                                  ButtonStyle="ButtonStyle.Dark"
+                                  class="me-2" />
+
+                    @* <RadzenButton Icon="play_arrow" 
                                  Text="Execute All Pending" 
                                  Click="@ExecuteAllPending" 
                                  ButtonStyle="ButtonStyle.Success" 
                                  class="me-2"
-                                 Disabled="@(_isProcessing || (_statistics?.PendingCount ?? 0) == 0)" />
+                                 Disabled="@(_isProcessing || (_statistics?.PendingCount ?? 0) == 0)" /> *@
 
-                    <RadzenButton Icon="clear_all" 
+                    @* <RadzenButton Icon="clear_all" 
                                  Text="Clear Completed" 
                                  Click="@ClearCompleted" 
                                  ButtonStyle="ButtonStyle.Warning" 
                                  class="me-2"
-                                 Disabled="@(_isProcessing)" />
+                                 Disabled="@(_isProcessing)" /> *@
 
-                    <RadzenButton Icon="delete_sweep" 
+                    @* <RadzenButton Icon="delete_sweep" 
                                  Text="Clear Queue" 
                                  Click="@ClearQueue" 
                                  ButtonStyle="ButtonStyle.Danger" 
                                  class="me-2"
-                                 Disabled="@(_isProcessing)" />
+                                 Disabled="@(_isProcessing)" /> *@
                 </div>
             </RadzenColumn>
         </RadzenRow>
@@ -203,9 +205,15 @@
                 <RadzenDataGridColumn TItem="QueuedEvent" Title="Actions" Width="200px" Filterable="false" Sortable="false">
                     <Template Context="queuedEvent">
                         <div class="btn-group-sm">
+                            <RadzenButton Icon="visibility"
+                                          Size="ButtonSize.Small"
+                                          ButtonStyle="ButtonStyle.Base"
+                                          Click="@(() => ShowQueueEventDetails(queuedEvent))"
+                                          Title="View Details" />
+
                             @if (queuedEvent.Status == QueuedEventStatus.Pending)
                             {
-                                <RadzenButton Icon="play_arrow" 
+                                <RadzenButton Icon="envelope" 
                                              Size="ButtonSize.Small" 
                                              ButtonStyle="ButtonStyle.Success" 
                                              Click="@(() => ExecuteQueueEvent(queuedEvent.QueueCode))"
@@ -221,8 +229,7 @@
                                              Title="Cancel Event"
                                              class="me-1" />
 
-                                @if (queuedEvent.EventCategory == EventCategory.IntegrationEvent
-                                    && queuedEvent.EventType == SMS_Domain.Enums.EventType.EmailNotification.Value)
+                            @if (queuedEvent.EventCategory == EventCategory.IntegrationEvent && queuedEvent.EventType == SMS_Domain.Enums.EventType.EmailNotification.Value)
                                 {
                                     <RadzenButton Icon="autorenew"
                                                  Size="ButtonSize.Small"
@@ -233,7 +240,7 @@
                                                  class="me-1" />
                                 }
                             }
-                            else if (queuedEvent.Status == QueuedEventStatus.Failed
+                            else if (queuedEvent.Status == QueuedEventStatus.Failed 
                                 && queuedEvent.EventCategory == EventCategory.IntegrationEvent
                                 && queuedEvent.EventType == SMS_Domain.Enums.EventType.EmailNotification.Value)
                             {
@@ -258,11 +265,7 @@
                                              class="me-1" />
                             }
 
-                            <RadzenButton Icon="info" 
-                                         Size="ButtonSize.Small" 
-                                         ButtonStyle="ButtonStyle.Base" 
-                                         Click="@(() => ShowQueueEventDetails(queuedEvent))"
-                                         Title="View Details" />
+                            
                         </div>
                     </Template>
                 </RadzenDataGridColumn>
@@ -273,7 +276,90 @@
 
 </div>
 
+@if (_showQueueEventDetailsModal && _selectedQueueEvent is not null)
+{
+    <div class="modal-backdrop event-details-modal-backdrop">
+        <div class="modal-dialog sms-modal-body event-details-modal-dialog">
+            <RadzenCard class="modal-content event-details-modal-content">
+                <div class="modal-header sms-modal-header sms-header-primary">
+                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                        <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                        Queue Event Details
+                    </RadzenText>
+                </div>
+
+                <div class="event-details-scroll-body">
+                    <EventDetailsDialog Event="@_selectedQueueEvent" />
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <RadzenButton Text="Close" ButtonStyle="ButtonStyle.Base" Click="@CloseQueueEventDetailsModal" />
+                </div>
+            </RadzenCard>
+        </div>
+    </div>
+}
+
 <style>
+    .event-details-modal-backdrop {
+        position: fixed;
+        top: 64px;
+        left: 0;
+        right: 0;
+        height: calc(100vh - 64px);
+        background-color: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        z-index: 1050;
+    }
+
+    .event-details-modal-dialog {
+        width: 1200px;
+        max-width: 1200px;
+        max-height: 85vh;
+        margin: 0;
+    }
+
+    .event-details-modal-content {
+        max-height: 85vh;
+        overflow-x: hidden;
+        overflow-y: hidden;
+    }
+
+    .event-details-scroll-body {
+        max-height: calc(85vh - 150px);
+        overflow-y: auto;
+    }
+
+    .event-details-modal-content .event-details-dialog {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        box-shadow: none;
+    }
+
+    .event-details-modal-content .event-details-dialog .rz-card {
+        box-shadow: none;
+    }
+
+    .event-details-modal-content .event-details-dialog .text-end {
+        display: none;
+    }
+
+    .sms-modal-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 0.5rem 0.5rem 0 0;
+        margin: -1rem -1rem 1rem -1rem;
+    }
+
+    .sms-header-primary {
+        background-color: #212e61;
+        color: #ffffff;
+    }
+
     .queue-stat-card {
         border-left: 4px solid var(--rz-primary);
         transition: transform 0.2s ease;

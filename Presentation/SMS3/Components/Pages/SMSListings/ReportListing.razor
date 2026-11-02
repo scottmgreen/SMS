@@ -74,8 +74,8 @@
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Report" Property="Name" Title="Name" Width="200px">
             <Template Context="report">
-                <div title="@report.Name" style="@_basicTextStyle">
-                    @(report.Name)
+                <div title="@GetReportListingName(report)" style="@_basicTextStyle">
+                    @GetReportListingName(report)
                 </div>
             </Template>
         </RadzenDataGridColumn>

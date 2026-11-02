@@ -185,6 +185,18 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
         await LoadInitialData();
     }
 
+    private string GetReportListingName(Report report)
+    {
+        if (!string.IsNullOrWhiteSpace(report?.Code)
+            && _initialHazardDescriptionByReport.TryGetValue(report.Code, out var initialHazard)
+            && !string.IsNullOrWhiteSpace(initialHazard.HazardTitle))
+        {
+            return initialHazard.HazardTitle;
+        }
+
+        return report?.Name ?? string.Empty;
+    }
+
     private void HydrateLockedRecordKeys()
     {
         _lockedRecordKeys.Clear();
@@ -490,16 +502,34 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
                 continue;
             }
 
-            if (_initialHazardDescriptionByReport.ContainsKey(hazard.ReportCode))
+            var reportCodeKey = hazard.ReportCode.Trim();
+            var hazardTitle = string.IsNullOrWhiteSpace(hazard.HazardTitle)
+                ? string.Empty
+                : hazard.HazardTitle.Trim();
+            var hazardDescription = string.IsNullOrWhiteSpace(hazard.Description) ? "No description available" : hazard.Description;
+
+            if (_initialHazardDescriptionByReport.TryGetValue(reportCodeKey, out var existing))
             {
+                if (string.IsNullOrWhiteSpace(existing.HazardTitle)
+                    && !string.IsNullOrWhiteSpace(hazardTitle)
+                    )
+                {
+                    _initialHazardDescriptionByReport[reportCodeKey] =
+                        (
+                            hazard.Code,
+                            hazardTitle,
+                            hazardDescription
+                        );
+                }
+
                 continue;
             }
 
-            _initialHazardDescriptionByReport[hazard.ReportCode] =
+            _initialHazardDescriptionByReport[reportCodeKey] =
                 (
                     hazard.Code,
-                    string.IsNullOrWhiteSpace(hazard.HazardTitle) ? hazard.Code : hazard.HazardTitle,
-                    string.IsNullOrWhiteSpace(hazard.Description) ? "No description available" : hazard.Description
+                    hazardTitle,
+                    hazardDescription
                 );
         }
     }

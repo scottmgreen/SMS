@@ -63,11 +63,13 @@ else
                                                         DepartmentOptions="@Organizations" />
 
                         <!-- Action Buttons -->
-                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem">
-                            <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Danger"
-                                        Click="@CancelAndReturn" />
-                            
-                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                               
+                               <RadzenStack Orientation="Orientation.Horizontal"
+                                            JustifyContent="JustifyContent.End"
+                                            Gap="0.5rem"
+                                            Style="width: 100%;">
+                                <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Base"
+                                              Click="@CancelAndReturn" />
                                 <RadzenButton Text="@GetSaveButtonText()" 
                                             Icon="@GetSaveButtonIcon()" 
                                             ButtonStyle="ButtonStyle.Primary"
@@ -78,7 +80,7 @@ else
                                     <RadzenProgressBarCircular ShowValue="false" Size="ProgressBarCircularSize.Small" />
                                 }
                             </RadzenStack>
-                        </RadzenStack>
+                       
 
                     </RadzenTemplateForm>
                 </RadzenStack>
@@ -86,7 +88,7 @@ else
         </RadzenColumn>
 
         <!-- Guidance Panel Column (4/12) -->
-        <RadzenColumn Size="4">
+        <RadzenColumn Size="4" class="d-flex justify-content-end">
             <MitigationGuidance />
         </RadzenColumn>
     </RadzenRow>

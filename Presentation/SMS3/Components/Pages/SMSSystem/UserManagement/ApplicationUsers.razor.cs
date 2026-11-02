@@ -95,6 +95,12 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
 
     // Data Properties - renamed to avoid conflict
     private List<SMSApplicationUser> ApplicationUsersList { get; set; } = new();
+    private bool _showInactiveUsers { get; set; }
+    private IEnumerable<SMSApplicationUser> FilteredApplicationUsers =>
+        _showInactiveUsers
+            ? ApplicationUsersList
+            : ApplicationUsersList.Where(user => user.IsActive);
+    private int InactiveUserCount => ApplicationUsersList.Count(user => !user.IsActive);
     private List<SMSUserRole> UserRoles { get; set; } = new();
     private SMSApplicationUser? _currentUser { get; set; }
     private bool _isEditMode { get; set; }

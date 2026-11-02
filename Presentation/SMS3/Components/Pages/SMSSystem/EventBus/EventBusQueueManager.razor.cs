@@ -46,6 +46,8 @@ public partial class EventBusQueueManager
 
     private bool _isLoading = true;
     private bool _isProcessing = false;
+    private bool _showQueueEventDetailsModal;
+    private QueuedEvent? _selectedQueueEvent;
     private readonly Dictionary<string, string> _hazardTitleByReportId = new(StringComparer.OrdinalIgnoreCase);
 
     private QueuedEventStatus? _statusFilter = QueuedEventStatus.Pending;
@@ -252,7 +254,7 @@ public partial class EventBusQueueManager
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to initialize EventBus Queue Manager");
+            _logger.LogError(ex, "Failed to initialize EventBus Queue Manager");
             await _notificationHelper.ShowErrorAsync("Initialization Error: Failed to load queue data. Please refresh the page.", 4000);
         }
         finally
@@ -280,18 +282,18 @@ public partial class EventBusQueueManager
             {
                 _queuedEvents = result.Value;
                 await BuildHazardTitleCacheAsync(_queuedEvents);
-                Logger.LogDebug("Loaded {EventCount} queued events", _queuedEvents.Count());
+                _logger.LogDebug("Loaded {EventCount} queued events", _queuedEvents.Count());
             }
             else
             {
-                Logger.LogWarning("Failed to load queued events: {Error}", result.Error.Message);
+                _logger.LogWarning("Failed to load queued events: {Error}", result.Error.Message);
                 await _notificationHelper.ShowWarningAsync($"Load Error: {result.Error.Message}", 4000);
                 _queuedEvents = new List<QueuedEvent>();
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Exception while loading queued events");
+            _logger.LogError(ex, "Exception while loading queued events");
             await _notificationHelper.ShowErrorAsync("Load Error: An unexpected error occurred while loading events.", 4000);
             _queuedEvents = new List<QueuedEvent>();
         }
@@ -336,7 +338,7 @@ public partial class EventBusQueueManager
             }
             catch (Exception ex)
             {
-                Logger.LogWarning(ex, "Unable to hydrate hazard title for report {ReportId}", reportId);
+                _logger.LogWarning(ex, "Unable to hydrate hazard title for report {ReportId}", reportId);
             }
         }
     }
@@ -352,18 +354,18 @@ public partial class EventBusQueueManager
             if (result.IsSuccess)
             {
                 _statistics = result.Value;
-                Logger.LogDebug("Loaded queue statistics: {Pending} pending, {Processed} processed", 
+                _logger.LogDebug("Loaded queue statistics: {Pending} pending, {Processed} processed", 
                     _statistics.PendingCount, _statistics.ProcessedCount);
             }
             else
             {
-                Logger.LogWarning("Failed to load queue statistics: {Error}", result.Error.Message);
+                _logger.LogWarning("Failed to load queue statistics: {Error}", result.Error.Message);
                 _statistics = null;
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Exception while loading queue statistics");
+            _logger.LogError(ex, "Exception while loading queue statistics");
             _statistics = null;
         }
 
@@ -376,7 +378,7 @@ public partial class EventBusQueueManager
 
     private async Task OnFilterChanged()
     {
-        Logger.LogDebug("Filters changed - Status: {Status}, Type: {Type}", _statusFilter, _eventTypeFilter);
+        _logger.LogDebug("Filters changed - Status: {Status}, Type: {Type}", _statusFilter, _eventTypeFilter);
         await LoadQueuedEvents();
         await LoadStatistics();
     }
@@ -388,7 +390,7 @@ public partial class EventBusQueueManager
             return;
         }
 
-        var result = await DialogService.OpenAsync<EmailNotificationSettingsDialog>(
+        var result = await _dialogService.OpenAsync<EmailNotificationSettingsDialog>(
             "Email Notification Settings",
             null,
             new DialogOptions
@@ -413,7 +415,7 @@ public partial class EventBusQueueManager
             _isProcessing = true;
             StateHasChanged();
 
-            Logger.LogInformation("Manually executing queue event {QueueCode}", queueCode);
+            _logger.LogInformation("Manually executing queue event {QueueCode}", queueCode);
 
             // Get the event details before execution
             var eventResult = await _mediator.SendAsync(
@@ -426,8 +428,7 @@ public partial class EventBusQueueManager
             }
 
             var queuedEvent = eventResult.Value;
-            var isEmailPreviewEvent = queuedEvent.EventCategory == EventCategory.IntegrationEvent
-                && queuedEvent.EventType == SMS_Domain.Enums.EventType.EmailNotification.Value;
+            var isEmailPreviewEvent = queuedEvent.EventCategory == EventCategory.IntegrationEvent && queuedEvent.EventType == SMS_Domain.Enums.EventType.EmailNotification.Value;
 
             // Check for IntegrationEvent and Email Notification
             if (isEmailPreviewEvent)
@@ -467,21 +468,42 @@ public partial class EventBusQueueManager
                             }
                         }
 
-                        var dialogResult = await DialogService.OpenAsync<Components.EmailComposeDialog>(
-                            "",
-                            new Dictionary<string, object?>
+                        var templateSelection = await _dialogService.Confirm(
+                            "Do you want to use the SMS Integrated Email Template or the Generic Email Template?",
+                            "Choose Email Template",
+                            new ConfirmOptions
                             {
-                                { "InitialModel", model },
-                                { "DeferSendToQueueExecution", queuedEvent.Status == QueuedEventStatus.Pending }
-                            },
-                            new DialogOptions { Width = "1050px", Height = "900px", Resizable = true, Draggable = true, ShowClose = false }
-                        );
+                                OkButtonText = "SMS Integrated Template",
+                                CancelButtonText = "Generic Template"
+                            });
+
+                        if (templateSelection is null)
+                        {
+                            _logger.LogInformation("Email template selection dialog dismissed for queue event {QueueCode}; queue status remains unchanged.", queueCode);
+                            return;
+                        }
+
+                        var dialogParameters = new Dictionary<string, object?>
+                        {
+                            { "InitialModel", model },
+                            { "DeferSendToQueueExecution", queuedEvent.Status == QueuedEventStatus.Pending }
+                        };
+
+                        var dialogResult = templateSelection == true
+                            ? await _dialogService.OpenAsync<Components.EmailComposeDialog>(
+                                "SMS Integrated Email Template",
+                                dialogParameters,
+                                new DialogOptions { Width = "1050px", Height = "900px", Resizable = true, Draggable = true, ShowClose = false })
+                            : await _dialogService.OpenAsync<Components.GenericComposeDialog>(
+                                "Generic Email Template",
+                                dialogParameters,
+                                new DialogOptions { Width = "1050px", Height = "900px", Resizable = true, Draggable = true, ShowClose = false });
 
                         var emailSent = dialogResult is bool sent && sent;
 
                         if (!emailSent)
                         {
-                            Logger.LogInformation("Email dialog cancelled for queue event {QueueCode}; queue status remains unchanged.", queueCode);
+                            _logger.LogInformation("Email dialog cancelled for queue event {QueueCode}; queue status remains unchanged.", queueCode);
                             return;
                         }
 
@@ -489,14 +511,14 @@ public partial class EventBusQueueManager
                         {
                             await _notificationHelper.ShowSuccessAsync("Email Re-Sent: Email was sent again without changing the original queue record.", 3000);
 
-                            Logger.LogInformation("Email queue event {QueueCode} re-sent from queue manager for status {Status}", queueCode, queuedEvent.Status);
+                            _logger.LogInformation("Email queue event {QueueCode} re-sent from queue manager for status {Status}", queueCode, queuedEvent.Status);
                             return;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogWarning(ex, "Failed to preview EmailNotificationEvent for queue event {QueueCode}; continuing with execution", queueCode);
+                    _logger.LogWarning(ex, "Failed to preview EmailNotificationEvent for queue event {QueueCode}; continuing with execution", queueCode);
                 }
             }
 
@@ -514,14 +536,14 @@ public partial class EventBusQueueManager
                     ShowUIEventNotification(uiEventData);
                 }
 
-                Logger.LogInformation("Successfully executed queue event {QueueCode}", queueCode);
+                _logger.LogInformation("Successfully executed queue event {QueueCode}", queueCode);
             }
             else
             {
                 // Only show notifications for actual failures
                 await _notificationHelper.ShowErrorAsync($"Queue Event Execution Failed: {result.Error.Message}", 4000);
 
-                Logger.LogWarning("Failed to execute queue event {QueueCode}: {Error}", queueCode, result.Error.Message);
+                _logger.LogWarning("Failed to execute queue event {QueueCode}: {Error}", queueCode, result.Error.Message);
             }
 
             // Refresh the data
@@ -530,7 +552,7 @@ public partial class EventBusQueueManager
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Exception while executing queue event {QueueCode}", queueCode);
+            _logger.LogError(ex, "Exception while executing queue event {QueueCode}", queueCode);
             await _notificationHelper.ShowErrorAsync("Queue Event Execution Error: An unexpected error occurred during queue event execution.", 4000);
         }
         finally
@@ -756,7 +778,7 @@ public partial class EventBusQueueManager
 
         if (enforceGroupContactOnly && unresolved.Count > 0)
         {
-            Logger.LogWarning("Preview recipient resolution dropped {Count} unresolved To token(s): {Recipients}", unresolved.Count, string.Join(", ", unresolved));
+            _logger.LogWarning("Preview recipient resolution dropped {Count} unresolved To token(s): {Recipients}", unresolved.Count, string.Join(", ", unresolved));
         }
 
         return resolved
@@ -853,7 +875,7 @@ public partial class EventBusQueueManager
             _isProcessing = true;
             StateHasChanged();
 
-            Logger.LogInformation("Cancelling queue event {QueueCode}", queueCode);
+            _logger.LogInformation("Cancelling queue event {QueueCode}", queueCode);
 
             var result = await _mediator.SendAsync(
                 new CancelQueuedEventCommand(queueCode, "ManualUI"),
@@ -863,13 +885,13 @@ public partial class EventBusQueueManager
             {
                 await _notificationHelper.ShowInfoAsync("Queue Event Cancelled: Queue event cancelled successfully.", 3000);
 
-                Logger.LogInformation("Successfully cancelled queue event {QueueCode}", queueCode);
+                _logger.LogInformation("Successfully cancelled queue event {QueueCode}", queueCode);
             }
             else
             {
                 await _notificationHelper.ShowErrorAsync($"Queue Event Cancellation Failed: {result.Error.Message}", 4000);
 
-                Logger.LogWarning("Failed to cancel queue event {QueueCode}: {Error}", queueCode, result.Error.Message);
+                _logger.LogWarning("Failed to cancel queue event {QueueCode}: {Error}", queueCode, result.Error.Message);
             }
 
             // Refresh the data
@@ -878,7 +900,7 @@ public partial class EventBusQueueManager
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Exception while cancelling queue event {QueueCode}", queueCode);
+            _logger.LogError(ex, "Exception while cancelling queue event {QueueCode}", queueCode);
             await _notificationHelper.ShowErrorAsync("Queue Event Cancellation Error: An unexpected error occurred during queue event cancellation.", 4000);
         }
         finally
@@ -892,7 +914,7 @@ public partial class EventBusQueueManager
     {
         try
         {
-            var confirmed = await DialogService.Confirm(
+            var confirmed = await _dialogService.Confirm(
                 "Rebuild this queued email event and cancel the original queue event?",
                 "Rebuild Queued Email Event",
                 new ConfirmOptions()
@@ -909,7 +931,7 @@ public partial class EventBusQueueManager
             _isProcessing = true;
             StateHasChanged();
 
-            Logger.LogInformation("Rebuilding queued email event {QueueCode}", queueCode);
+            _logger.LogInformation("Rebuilding queued email event {QueueCode}", queueCode);
 
             var result = await _mediator.SendAsync(
                 new RebuildQueuedEmailEventCommand(queueCode, "ManualUI"),
@@ -919,13 +941,13 @@ public partial class EventBusQueueManager
             {
                 await _notificationHelper.ShowSuccessAsync($"Queued Email Event Rebuilt: Rebuilt as queue event {result.Value} (not sent).", 4000);
 
-                Logger.LogInformation("Successfully rebuilt queued email event {OldQueueCode} as {NewQueueCode}", queueCode, result.Value);
+                _logger.LogInformation("Successfully rebuilt queued email event {OldQueueCode} as {NewQueueCode}", queueCode, result.Value);
             }
             else
             {
                 await _notificationHelper.ShowErrorAsync($"Queued Email Event Rebuild Failed: {result.Error.Message}", 4000);
 
-                Logger.LogWarning("Failed to rebuild queued email event {QueueCode}: {Error}", queueCode, result.Error.Message);
+                _logger.LogWarning("Failed to rebuild queued email event {QueueCode}: {Error}", queueCode, result.Error.Message);
             }
 
             await LoadQueuedEvents();
@@ -933,7 +955,7 @@ public partial class EventBusQueueManager
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Exception while rebuilding queued email event {QueueCode}", queueCode);
+            _logger.LogError(ex, "Exception while rebuilding queued email event {QueueCode}", queueCode);
             await _notificationHelper.ShowErrorAsync("Rebuild Error: An unexpected error occurred during queued email event rebuild.", 4000);
         }
         finally
@@ -950,7 +972,7 @@ public partial class EventBusQueueManager
             _isProcessing = true;
             StateHasChanged();
 
-            Logger.LogInformation("Executing all pending queue events (Type filter: {EventType})", _eventTypeFilter);
+            _logger.LogInformation("Executing all pending queue events (Type filter: {EventType})", _eventTypeFilter);
 
             var result = await _mediator.SendAsync(
                 new ExecuteAllPendingQueuedEventsCommand(_eventTypeFilter, "ManualUI"),
@@ -960,13 +982,13 @@ public partial class EventBusQueueManager
             {
                 await _notificationHelper.ShowSuccessAsync($"Queue Event Batch Execution Complete: Successfully executed {result.Value} pending queue events.", 4000);
 
-                Logger.LogInformation("Successfully executed {EventCount} pending queue events", result.Value);
+                _logger.LogInformation("Successfully executed {EventCount} pending queue events", result.Value);
             }
             else
             {
                 await _notificationHelper.ShowWarningAsync($"Queue Event Batch Execution Issues: {result.Error.Message}", 5000);
 
-                Logger.LogWarning("Batch execution had issues: {Error}", result.Error.Message);
+                _logger.LogWarning("Batch execution had issues: {Error}", result.Error.Message);
             }
 
             // Refresh the data
@@ -975,7 +997,7 @@ public partial class EventBusQueueManager
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Exception while executing all pending queue events");
+            _logger.LogError(ex, "Exception while executing all pending queue events");
             await _notificationHelper.ShowErrorAsync("Queue Event Batch Execution Error: An unexpected error occurred during queue event batch execution.", 4000);
         }
         finally
@@ -992,7 +1014,7 @@ public partial class EventBusQueueManager
             _isProcessing = true;
             StateHasChanged();
 
-            Logger.LogInformation("Clearing completed queue events");
+            _logger.LogInformation("Clearing completed queue events");
 
             var result = await _mediator.SendAsync(
                 new ClearCompletedQueuedEventsCommand(),
@@ -1002,13 +1024,13 @@ public partial class EventBusQueueManager
             {
                 await _notificationHelper.ShowInfoAsync($"Cleanup Complete: Cleared {result.Value} completed queue events.", 3000);
 
-                Logger.LogInformation("Successfully cleared {EventCount} completed queue events", result.Value);
+                _logger.LogInformation("Successfully cleared {EventCount} completed queue events", result.Value);
             }
             else
             {
                 await _notificationHelper.ShowErrorAsync($"Cleanup Failed: {result.Error.Message}", 4000);
 
-                Logger.LogWarning("Failed to clear completed queue events: {Error}", result.Error.Message);
+                _logger.LogWarning("Failed to clear completed queue events: {Error}", result.Error.Message);
             }
 
             // Refresh the data
@@ -1017,7 +1039,7 @@ public partial class EventBusQueueManager
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Exception while clearing completed queue events");
+            _logger.LogError(ex, "Exception while clearing completed queue events");
             await _notificationHelper.ShowErrorAsync("Cleanup Error: An unexpected error occurred during cleanup.", 4000);
         }
         finally
@@ -1031,7 +1053,7 @@ public partial class EventBusQueueManager
     {
         try
         {
-            var confirmed = await DialogService.Confirm(
+            var confirmed = await _dialogService.Confirm(
                 "Are you sure you want to clear ALL queue events? This will remove all pending, processed, and failed queue events.",
                 "Clear All Queue Events",
                 new ConfirmOptions()
@@ -1045,7 +1067,7 @@ public partial class EventBusQueueManager
             _isProcessing = true;
             StateHasChanged();
 
-            Logger.LogWarning("Clearing ALL queue events - Database truncate/reimport scenario");
+            _logger.LogWarning("Clearing ALL queue events - Database truncate/reimport scenario");
 
             var result = await _mediator.SendAsync(
                 new ClearAllQueuedEventsCommand(),
@@ -1055,13 +1077,13 @@ public partial class EventBusQueueManager
             {
                 await _notificationHelper.ShowSuccessAsync($"Queue Cleared: Cleared all {result.Value} queue events.", 3000);
 
-                Logger.LogInformation("Successfully cleared all {EventCount} queue events", result.Value);
+                _logger.LogInformation("Successfully cleared all {EventCount} queue events", result.Value);
             }
             else
             {
                 await _notificationHelper.ShowErrorAsync($"Clear Failed: {result.Error.Message}", 4000);
 
-                Logger.LogWarning("Failed to clear queue: {Error}", result.Error.Message);
+                _logger.LogWarning("Failed to clear queue: {Error}", result.Error.Message);
             }
 
             // Refresh the data
@@ -1070,7 +1092,7 @@ public partial class EventBusQueueManager
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Exception while clearing queue");
+            _logger.LogError(ex, "Exception while clearing queue");
             await _notificationHelper.ShowErrorAsync("Clear Error: An unexpected error occurred during queue clear.", 4000);
         }
         finally
@@ -1088,26 +1110,22 @@ public partial class EventBusQueueManager
     {
         try
         {
-            await DialogService.OpenAsync<EventDetailsDialog>("Queue Event Details", 
-                new Dictionary<string, object?> { { "Event", queuedEvent } },
-                new DialogOptions()
-                {
-                    Width = "800px",
-                    Height = "600px",
-                    Resizable = true,
-                    Draggable = true
-                });
+            _selectedQueueEvent = queuedEvent;
+            _showQueueEventDetailsModal = true;
+            await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to show event details for queue event {QueueCode}", queuedEvent.QueueCode);
+            _logger.LogError(ex, "Failed to show event details for queue event {QueueCode}", queuedEvent.QueueCode);
             await _notificationHelper.ShowErrorAsync("Display Error: Could not display queue event details.", 3000);
         }
     }
 
-    private void CloseQueueEventDetails()
+    private Task CloseQueueEventDetailsModal()
     {
-        // This method is no longer needed with DialogService
+        _showQueueEventDetailsModal = false;
+        _selectedQueueEvent = null;
+        return Task.CompletedTask;
     }
 
     private static BadgeStyle GetStatusBadgeStyle(QueuedEventStatus status)
@@ -1174,7 +1192,7 @@ public partial class EventBusQueueManager
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Failed to deserialize UI event data");
+            _logger.LogWarning(ex, "Failed to deserialize UI event data");
             return null;
         }
     }
@@ -1199,7 +1217,7 @@ public partial class EventBusQueueManager
             var summary = GetNotificationSummaryFromEventType(eventTypeValue, priorityValue);
             var duration = GetNotificationDurationFromPriority(priorityValue);
 
-            Logger.LogInformation("[UI NOTIFICATION] Showing notification: {Summary} - {Message}", summary, message);
+            _logger.LogInformation("[UI NOTIFICATION] Showing notification: {Summary} - {Message}", summary, message);
 
             switch (severity)
             {
@@ -1219,7 +1237,7 @@ public partial class EventBusQueueManager
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to show UI event notification");
+            _logger.LogError(ex, "Failed to show UI event notification");
         }
     }
 
