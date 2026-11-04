@@ -148,7 +148,6 @@
         <RadzenDataGridColumn TItem="Mitigation" Property="Progress" Title="Progress" Width="100px">
             <Template Context="mitigation">
                 <RadzenProgressBar Value="@mitigation.Progress" Max="100" Style="width: 100%;" />
-                @* <RadzenText TextStyle="TextStyle.Caption" Text="@($"{mitigationViewModel.Progress}%")" /> *@
             </Template>
         </RadzenDataGridColumn>
 
@@ -183,13 +182,13 @@
                                   Click="@(() => EditMitigation(mitigation))"
                                   Disabled="@isLocked" />
 
-                    @if (mitigation.Status != MitigationStatus.Approved)
+                   @*  @if (mitigation.Status != MitigationStatus.Approved)
                     {
                         <RadzenButton Icon="verified" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                                       Tooltip="Quick Approve"
                                       Click="@(async () => await QuickApproveMitigation(mitigation))"
                                       Disabled="@isLocked" />
-                    }
+                    } *@
 
                     <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
                                   Tooltip="Delete Mitigation"

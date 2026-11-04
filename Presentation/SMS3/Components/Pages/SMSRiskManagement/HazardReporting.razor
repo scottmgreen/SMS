@@ -130,7 +130,9 @@ else
 
                             @if (!HazardReport.IsAnonymous)
                             {
-                                <RadzenCard>
+                                if (_currentUserService.CanRead("SMS_PII"))
+                                {
+                                    <RadzenCard>
                                     <RadzenColumn Size="3">
                                         <RadzenFormField AllowFloatingLabel="false" Text="Contact Name *" Variant="Variant.Outlined" Style="width: 100%;">
                                             <RadzenTextBox @bind-Value="@HazardReport.ReportContactName"
@@ -187,6 +189,7 @@ else
                                         </RadzenFormField>
                                     </RadzenColumn>
                                 </RadzenCard>
+                                }
                             }
                             else
                             {
@@ -211,10 +214,13 @@ else
                                 </RadzenColumn>
                                 <RadzenColumn Size="3">
                                    
-                                    @* <RadzenRequiredValidator Component="SubmittedBy" Text="Report Source required" /> *@
+                                    
                                 </RadzenColumn>
                                 @if (!HazardReport.IsAnonymous)
                                 {
+                                    if (_currentUserService.CanRead("SMS_PII"))
+                                    {
+                                     
                                     <RadzenColumn Size="3">
                                         <RadzenFormField Text="Submitting Organization" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
 
@@ -227,7 +233,6 @@ else
                                             Change="@(async (object value) => await OnOrganizationChanged(value?.ToString()))"
                                             Style="width: 50%; min-width: 50%;" />
                                         </RadzenFormField>
-                                        @* <RadzenRequiredValidator Component="SubmittingDepartment" Text="Reporting Organization is required" /> *@
                                     </RadzenColumn>
                                     <RadzenColumn Size="5">
                                         <RadzenFormField Text="Job Function" AllowFloatingLabel="false"  Variant="Variant.Outlined" Style="width: 100%;">
@@ -238,8 +243,9 @@ else
                                             Style="width: 100%; min-width: 100%;"
                                             Rows="2" Cols="100" />
                                         </RadzenFormField>
-                                        @* <RadzenRequiredValidator Component="SubmittingDepartmentJobFunction" Text="Reporting Organization is required" /> *@
                                     </RadzenColumn>
+                                    }
+                                    
                                 }
                             </RadzenCard>
                         

@@ -108,10 +108,8 @@ public static class EventBusDispatcher
                 .ToList();
 
             targetReceivers = sessionMatchedReceivers.Count > 0
-                ? sessionMatchedReceivers
-                : !string.IsNullOrWhiteSpace(targetUserCode)
-                    ? currentReceivers.Where(x => string.Equals(x.UserCode, targetUserCode, StringComparison.OrdinalIgnoreCase))
-                    : Enumerable.Empty<(IEventReceiver Receiver, string UserCode, string SessionKey)>();
+                ? sessionMatchedReceivers : !string.IsNullOrWhiteSpace(targetUserCode)
+                ? currentReceivers.Where(x => string.Equals(x.UserCode, targetUserCode, StringComparison.OrdinalIgnoreCase)) : Enumerable.Empty<(IEventReceiver Receiver, string UserCode, string SessionKey)>();
         }
         else if (!string.IsNullOrWhiteSpace(targetUserCode))
         {

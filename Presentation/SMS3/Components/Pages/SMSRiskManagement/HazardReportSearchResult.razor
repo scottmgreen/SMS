@@ -87,27 +87,31 @@ else if (ReportDetails is not null)
                     </RadzenRow>
                     @if (!string.IsNullOrWhiteSpace(ReportDetails.SubmittingOrganization) || !string.IsNullOrWhiteSpace(ReportDetails.JobFunction))
                     {
-                        <RadzenRow Gap="1rem">
-                            @if (!string.IsNullOrWhiteSpace(ReportDetails.SubmittingOrganization))
-                            {
-                                <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
-                                    <strong>Submitting Organization:</strong>
-                                </RadzenColumn>
-                                <RadzenColumn Size="4" SizeMD="4" Style="text-align:start">
-                                    @ReportDetails.SubmittingOrganization
-                                </RadzenColumn>
-                            }
+                        if (_currentUserService.CanRead("SMS_PII"))
+                        {
+                            <RadzenRow Gap="1rem">
+                                @if (!string.IsNullOrWhiteSpace(ReportDetails.SubmittingOrganization))
+                                {
+                                    <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
+                                        <strong>Submitting Organization:</strong>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="4" SizeMD="4" Style="text-align:start">
+                                        @ReportDetails.SubmittingOrganization
+                                    </RadzenColumn>
+                                }
 
-                            @if (!string.IsNullOrWhiteSpace(ReportDetails.JobFunction))
-                            {
-                                <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
-                                    <strong>Job Function:</strong>
-                                </RadzenColumn>
-                                <RadzenColumn Size="4" SizeMD="4" Style="text-align:start">
-                                    @ReportDetails.JobFunction
-                                </RadzenColumn>
-                            }
-                        </RadzenRow>
+                                @if (!string.IsNullOrWhiteSpace(ReportDetails.JobFunction))
+                                {
+                                    <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
+                                        <strong>Job Function:</strong>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="4" SizeMD="4" Style="text-align:start">
+                                        @ReportDetails.JobFunction
+                                    </RadzenColumn>
+                                }
+                            </RadzenRow>
+                        }
+                        
                     }
 
                     <!-- Hazard Classification Section -->
@@ -149,7 +153,7 @@ else if (ReportDetails is not null)
                     }
 
                     <!-- Anonymous Alert (if applicable) -->
-                    @if (ReportDetails.IsAnonymous && _currentUserService.CanRead("SMS_Anonymous"))
+                    @if (ReportDetails.IsAnonymous)
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Warning" ShowIcon="true" Variant="Variant.Flat">
                             <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">
@@ -160,27 +164,31 @@ else if (ReportDetails is not null)
 
                     @if (!ReportDetails.IsAnonymous && (!string.IsNullOrWhiteSpace(ReportDetails.ContactName) || !string.IsNullOrWhiteSpace(ReportDetails.ContactCell) || !string.IsNullOrWhiteSpace(ReportDetails.ContactEmail)))
                     {
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
-                                <strong>Contact Information:</strong>
-                            </RadzenColumn>
-                            <RadzenColumn Size="10" SizeMD="10" Style="text-align:start">
-                                <RadzenStack Gap="0.25rem">
-                                    @if (!string.IsNullOrWhiteSpace(ReportDetails.ContactName))
-                                    {
-                                        <div class="info-line"><strong>Name:</strong> @ReportDetails.ContactName</div>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(ReportDetails.ContactCell))
-                                    {
-                                        <div class="info-line"><strong>Phone:</strong> @ReportDetails.ContactCell</div>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(ReportDetails.ContactEmail))
-                                    {
-                                        <div class="info-line"><strong>Email:</strong> @ReportDetails.ContactEmail</div>
-                                    }
-                                </RadzenStack>
-                            </RadzenColumn>
-                        </RadzenRow>
+                        if (_currentUserService.CanRead("SMS_PII"))
+                        {
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
+                                    <strong>Contact Information:</strong>
+                                </RadzenColumn>
+                                <RadzenColumn Size="10" SizeMD="10" Style="text-align:start">
+                                    <RadzenStack Gap="0.25rem">
+                                        @if (!string.IsNullOrWhiteSpace(ReportDetails.ContactName))
+                                        {
+                                            <div class="info-line"><strong>Name:</strong> @ReportDetails.ContactName</div>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(ReportDetails.ContactCell))
+                                        {
+                                            <div class="info-line"><strong>Phone:</strong> @ReportDetails.ContactCell</div>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(ReportDetails.ContactEmail))
+                                        {
+                                            <div class="info-line"><strong>Email:</strong> @ReportDetails.ContactEmail</div>
+                                        }
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        }
+                        
                     }
                 </RadzenStack>
             </RadzenCard>
