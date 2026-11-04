@@ -213,7 +213,7 @@
 
                             @if (queuedEvent.Status == QueuedEventStatus.Pending)
                             {
-                                <RadzenButton Icon="envelope" 
+                                <RadzenButton Icon="arrow_forward"
                                              Size="ButtonSize.Small" 
                                              ButtonStyle="ButtonStyle.Success" 
                                              Click="@(() => ExecuteQueueEvent(queuedEvent.QueueCode))"

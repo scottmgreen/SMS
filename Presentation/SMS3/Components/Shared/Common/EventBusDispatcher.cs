@@ -99,21 +99,30 @@ public static class EventBusDispatcher
             currentReceivers = new List<(IEventReceiver Receiver, string UserCode, string SessionKey)>(_receivers);
         }
 
-        var tasks = currentReceivers
-            .Where(x =>
-            {
-                if (!string.IsNullOrWhiteSpace(targetSessionKey))
-                {
-                    return string.Equals(x.SessionKey, targetSessionKey, StringComparison.Ordinal);
-                }
+        IEnumerable<(IEventReceiver Receiver, string UserCode, string SessionKey)> targetReceivers;
 
-                if (!string.IsNullOrWhiteSpace(targetUserCode))
-                {
-                    return string.Equals(x.UserCode, targetUserCode, StringComparison.OrdinalIgnoreCase);
-                }
+        if (!string.IsNullOrWhiteSpace(targetSessionKey))
+        {
+            var sessionMatchedReceivers = currentReceivers
+                .Where(x => string.Equals(x.SessionKey, targetSessionKey, StringComparison.Ordinal))
+                .ToList();
 
-                return true;
-            })
+            targetReceivers = sessionMatchedReceivers.Count > 0
+                ? sessionMatchedReceivers
+                : !string.IsNullOrWhiteSpace(targetUserCode)
+                    ? currentReceivers.Where(x => string.Equals(x.UserCode, targetUserCode, StringComparison.OrdinalIgnoreCase))
+                    : Enumerable.Empty<(IEventReceiver Receiver, string UserCode, string SessionKey)>();
+        }
+        else if (!string.IsNullOrWhiteSpace(targetUserCode))
+        {
+            targetReceivers = currentReceivers.Where(x => string.Equals(x.UserCode, targetUserCode, StringComparison.OrdinalIgnoreCase));
+        }
+        else
+        {
+            targetReceivers = currentReceivers;
+        }
+
+        var tasks = targetReceivers
             .Select(x => x.Receiver.HandleEventAsync(severity, title, message, duration));
 
         await Task.WhenAll(tasks);

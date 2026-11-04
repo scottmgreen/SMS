@@ -12,6 +12,7 @@ using SMS3.Components.Shared.UIHelpers;
 using SMS3.Components.Shared;
 using SMS3.Hubs.Contracts;
 using SMS_Domain.Enums;
+using SMS_Domain.Errors;
 using SMS_Infrastructure.Interfaces;
 
 namespace SMS3.Components.Pages.SMSSystem.UserManagement;
@@ -23,6 +24,7 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<OrganizationalUsers> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
 
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -36,6 +38,12 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
     #region Properties
 
     private List<SMSOrganizationalUser> OrganizationalUsersList { get; set; } = new();
+    private bool _showInactiveUsers { get; set; }
+    private IEnumerable<SMSOrganizationalUser> FilteredOrganizationalUsers =>
+        _showInactiveUsers
+            ? OrganizationalUsersList
+            : OrganizationalUsersList.Where(user => user.IsActive);
+    private int InactiveUserCount => OrganizationalUsersList.Count(user => !user.IsActive);
     private SMSOrganizationalUser? _currentUser { get; set; }
     private bool _isSaving { get; set; } = false;
 
@@ -44,8 +52,25 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
     private readonly HashSet<string> _lockedRecordKeys = new(StringComparer.OrdinalIgnoreCase);
     private string _activeEditLockKey = string.Empty;
 
-    private string _successMessage { get; set; } = string.Empty;
-    private string _errorMessage { get; set; } = string.Empty;
+    private bool _createValidationActive;
+    private bool _editValidationActive;
+    private bool _isCreateFirstNameValid = true;
+    private bool _isCreateLastNameValid = true;
+    private bool _isCreateUserNameValid = true;
+    private bool _isCreatePasswordValid = true;
+    private bool _isCreateConfirmPasswordValid = true;
+    private bool _isCreateCompanyValid = true;
+    private bool _isCreateOrganizationValid = true;
+    private bool _isCreateTitleValid = true;
+    private bool _isCreateOrganizationLevelValid = true;
+    private bool _isCreateRoleValid = true;
+    private bool _isEditFirstNameValid = true;
+    private bool _isEditLastNameValid = true;
+    private bool _isEditCompanyValid = true;
+    private bool _isEditOrganizationValid = true;
+    private bool _isEditTitleValid = true;
+    private bool _isEditOrganizationLevelValid = true;
+    private bool _isEditRoleValid = true;
 
     #endregion
 
@@ -316,6 +341,186 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
 
         return matchedOption?.Value ?? trimmed;
     }
+
+    private bool ValidateCreateForm(out List<string> validationErrors)
+    {
+        validationErrors = new List<string>();
+
+        var firstNameResult = FirstName.Create(_newFirstName ?? string.Empty);
+        _isCreateFirstNameValid = firstNameResult.IsSuccess;
+        if (firstNameResult.IsFailure)
+        {
+            validationErrors.Add(firstNameResult.Error.Message);
+        }
+
+        var lastNameResult = LastName.Create(_newLastName ?? string.Empty);
+        _isCreateLastNameValid = lastNameResult.IsSuccess;
+        if (lastNameResult.IsFailure)
+        {
+            validationErrors.Add(lastNameResult.Error.Message);
+        }
+
+        var userNameResult = UserName.Create(_newUserName ?? string.Empty);
+        _isCreateUserNameValid = userNameResult.IsSuccess;
+        if (userNameResult.IsFailure)
+        {
+            validationErrors.Add(userNameResult.Error.Message);
+        }
+
+        var passwordResult = Password.Create(_newPassword ?? string.Empty);
+        _isCreatePasswordValid = passwordResult.IsSuccess;
+        if (passwordResult.IsFailure)
+        {
+            validationErrors.Add(passwordResult.Error.Message);
+        }
+
+        _isCreateConfirmPasswordValid = !string.IsNullOrWhiteSpace(_confirmPassword)
+            && string.Equals(_newPassword, _confirmPassword, StringComparison.Ordinal);
+        if (!_isCreateConfirmPasswordValid)
+        {
+            validationErrors.Add("Password and Confirm Password must match.");
+        }
+
+        _isCreateCompanyValid = !string.IsNullOrWhiteSpace(_newUser.Company);
+        if (!_isCreateCompanyValid)
+        {
+            validationErrors.Add("Company is required.");
+        }
+
+        _isCreateOrganizationValid = IsValidOrganization(_newUser.Organization);
+        if (!_isCreateOrganizationValid)
+        {
+            validationErrors.Add("Organization is required.");
+        }
+
+        _isCreateTitleValid = !string.IsNullOrWhiteSpace(_newUser.Title);
+        if (!_isCreateTitleValid)
+        {
+            validationErrors.Add("Title is required.");
+        }
+
+        _isCreateOrganizationLevelValid = IsValidOrganizationLevel(_newOrganizationLevelId);
+        if (!_isCreateOrganizationLevelValid)
+        {
+            validationErrors.Add("SMS Organization Level is required.");
+        }
+
+        _isCreateRoleValid = !string.IsNullOrWhiteSpace(_newUserRoleCode);
+        if (!_isCreateRoleValid)
+        {
+            validationErrors.Add(DomainErrors.SMSApplicationUserError.ApplicationRoleRequired.Message);
+        }
+
+        return validationErrors.Count == 0;
+    }
+
+    private bool ValidateEditForm(out List<string> validationErrors)
+    {
+        validationErrors = new List<string>();
+
+        var firstNameResult = FirstName.Create(_editFirstName ?? string.Empty);
+        _isEditFirstNameValid = firstNameResult.IsSuccess;
+        if (firstNameResult.IsFailure)
+        {
+            validationErrors.Add(firstNameResult.Error.Message);
+        }
+
+        var lastNameResult = LastName.Create(_editLastName ?? string.Empty);
+        _isEditLastNameValid = lastNameResult.IsSuccess;
+        if (lastNameResult.IsFailure)
+        {
+            validationErrors.Add(lastNameResult.Error.Message);
+        }
+
+        _isEditCompanyValid = !string.IsNullOrWhiteSpace(_editUser.Company);
+        if (!_isEditCompanyValid)
+        {
+            validationErrors.Add("Company is required.");
+        }
+
+        _isEditOrganizationValid = IsValidOrganization(_editUser.Organization);
+        if (!_isEditOrganizationValid)
+        {
+            validationErrors.Add("Organization is required.");
+        }
+
+        _isEditTitleValid = !string.IsNullOrWhiteSpace(_editUser.Title);
+        if (!_isEditTitleValid)
+        {
+            validationErrors.Add("Title is required.");
+        }
+
+        _isEditOrganizationLevelValid = IsValidOrganizationLevel(_editOrganizationLevelId);
+        if (!_isEditOrganizationLevelValid)
+        {
+            validationErrors.Add("SMS Organization Level is required.");
+        }
+
+        _isEditRoleValid = !string.IsNullOrWhiteSpace(_editUserRoleCode);
+        if (!_isEditRoleValid)
+        {
+            validationErrors.Add(DomainErrors.SMSApplicationUserError.ApplicationRoleRequired.Message);
+        }
+
+        return validationErrors.Count == 0;
+    }
+
+    private string GetCreateFieldValidationClass(bool isValid)
+    {
+        return _createValidationActive && !isValid ? "validation-error-field" : string.Empty;
+    }
+
+    private string GetCreateInputValidationClass(bool isValid)
+    {
+        return _createValidationActive && !isValid ? "default-validation-textbox" : string.Empty;
+    }
+
+    private string GetCreateDropdownValidationClass(bool isValid)
+    {
+        return _createValidationActive && !isValid ? "default-validation-dropdown" : string.Empty;
+    }
+
+    private string GetEditFieldValidationClass(bool isValid)
+    {
+        return _editValidationActive && !isValid ? "validation-error-field" : string.Empty;
+    }
+
+    private string GetEditInputValidationClass(bool isValid)
+    {
+        return _editValidationActive && !isValid ? "default-validation-textbox" : string.Empty;
+    }
+
+    private string GetEditDropdownValidationClass(bool isValid)
+    {
+        return _editValidationActive && !isValid ? "default-validation-dropdown" : string.Empty;
+    }
+
+    private void ResetCreateValidationState()
+    {
+        _createValidationActive = false;
+        _isCreateFirstNameValid = true;
+        _isCreateLastNameValid = true;
+        _isCreateUserNameValid = true;
+        _isCreatePasswordValid = true;
+        _isCreateConfirmPasswordValid = true;
+        _isCreateCompanyValid = true;
+        _isCreateOrganizationValid = true;
+        _isCreateTitleValid = true;
+        _isCreateOrganizationLevelValid = true;
+        _isCreateRoleValid = true;
+    }
+
+    private void ResetEditValidationState()
+    {
+        _editValidationActive = false;
+        _isEditFirstNameValid = true;
+        _isEditLastNameValid = true;
+        _isEditCompanyValid = true;
+        _isEditOrganizationValid = true;
+        _isEditTitleValid = true;
+        _isEditOrganizationLevelValid = true;
+        _isEditRoleValid = true;
+    }
     #endregion
 
     #region Lifecycle Methods
@@ -472,6 +677,7 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
         _confirmPassword = string.Empty;
         _newOrganizationLevelId = string.Empty;
         _newUserRoleCode = string.Empty;
+        ResetCreateValidationState();
         _showCreateModal = true;
     }
 
@@ -486,13 +692,16 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
         _confirmPassword = string.Empty;
         _newOrganizationLevelId = string.Empty;
         _newUserRoleCode = string.Empty;
+        ResetCreateValidationState();
     }
 
     private async Task CreateUser()
     {
-        if (!_isCreateFormValid)
+        _createValidationActive = true;
+
+        if (!ValidateCreateForm(out var validationErrors))
         {
-            await ShowErrorAsyncNotification("Please fill in all required fields.");
+            await ShowValidationErrorsAsync(validationErrors);
             return;
         }
 
@@ -500,6 +709,35 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
         {
             _isSaving = true;
             StateHasChanged();
+
+            var firstNameResult = FirstName.Create(_newFirstName);
+            var lastNameResult = LastName.Create(_newLastName);
+            var userNameResult = UserName.Create(_newUserName);
+            var passwordResult = Password.Create(_newPassword);
+
+            if (firstNameResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { firstNameResult.Error.Message });
+                return;
+            }
+
+            if (lastNameResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { lastNameResult.Error.Message });
+                return;
+            }
+
+            if (userNameResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { userNameResult.Error.Message });
+                return;
+            }
+
+            if (passwordResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { passwordResult.Error.Message });
+                return;
+            }
 
             // Find the actual SMS User Role if one was selected
             SMSUserRole? selectedRole = null;
@@ -522,10 +760,10 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
             var user = new SMSOrganizationalUser(userId)
             {
                 Code = userCode,
-                FirstName = FirstName.Create(_newFirstName).Value,
-                LastName = LastName.Create(_newLastName).Value,
-                UserName = UserName.Create(_newUserName).Value,
-                Password = Password.Create(_newPassword).Value,
+                FirstName = firstNameResult.Value,
+                LastName = lastNameResult.Value,
+                UserName = userNameResult.Value,
+                Password = passwordResult.Value,
                 Company = _newUser.Company,
                 Organization = _newUser.Organization,
                 Title = _newUser.Title,
@@ -645,6 +883,7 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
         // FIXED: Reset to empty string instead of enum object
         _editOrganizationLevelId = string.Empty;
         _editUserRoleCode = string.Empty;
+        ResetEditValidationState();
     }
 
     private async Task UpdateUser()
@@ -658,6 +897,7 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
         try
         {
             _isSaving = true;
+            _editValidationActive = true;
             StateHasChanged();
 
             var title = string.IsNullOrWhiteSpace(_editUser.Title)
@@ -668,17 +908,30 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
                 ? string.Empty
                 : _editUser.Organization;
 
-            if (string.IsNullOrWhiteSpace(_editFirstName)
-                || string.IsNullOrWhiteSpace(_editLastName)
-                )
+            if (!ValidateEditForm(out var validationErrors))
             {
-                await ShowErrorAsyncNotification("Please fill in all required fields.");
+                await ShowValidationErrorsAsync(validationErrors);
+                return;
+            }
+
+            var firstNameResult = FirstName.Create(_editFirstName);
+            var lastNameResult = LastName.Create(_editLastName);
+
+            if (firstNameResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { firstNameResult.Error.Message });
+                return;
+            }
+
+            if (lastNameResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { lastNameResult.Error.Message });
                 return;
             }
 
             // Update user properties
-            _currentUser.FirstName = FirstName.Create(_editFirstName).Value;
-            _currentUser.LastName = LastName.Create(_editLastName).Value;
+            _currentUser.FirstName = firstNameResult.Value;
+            _currentUser.LastName = lastNameResult.Value;
             _currentUser.Company = _editUser.Company;
             _currentUser.Organization = organization;
             _currentUser.Title = title;
@@ -847,7 +1100,7 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
 
     private async Task ShowInfoAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
+        await _notificationHelper.ShowInfoAsync(message);
     }
 
     #endregion
@@ -1277,12 +1530,24 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
 
     private async Task ShowErrorAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
+        await _notificationHelper.ShowErrorAsync(message);
+    }
+
+    private async Task ShowValidationErrorsAsync(IEnumerable<string> errors)
+    {
+        var messages = errors
+            .Where(error => !string.IsNullOrWhiteSpace(error))
+            .Select(error => error.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        var message = messages.FirstOrDefault() ?? "Please correct validation errors and try again.";
+        await ShowErrorAsyncNotification(message);
     }
 
     private async Task ShowSuccessAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
+        await _notificationHelper.ShowSuccessAsync(message);
     }
 
     private static string BuildRecordLockKey(string userCode)

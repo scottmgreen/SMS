@@ -88,7 +88,7 @@
 - Document the finalized session management strategy and configuration completely in this file as a required baseline for future changes, prioritizing Test/Prod stability and avoiding regressions.
 - Session/circuit management should be unified into one simplified framework with one authoritative auth flow.
 - Do not propose replacing in-memory session backing with shared distributed cache (SQL/Redis) as a remedy for this project.
-- ARR is not an available option in the user's deployment environment; do not rely on ARR-based sticky session guidance.
+- ARR is not an available option in the user's deployment environment; do not rely on ARR-based sticky session guidance for notification/session behavior.
 
 ## Email Routing
 - Implement a hard business rule for email routing: emails must only be sent to group contacts as primary To recipients; if the recipient is not part of a group, no email should be sent via fallback methods. Allow CC/BCC as exceptions for manually added individual recipients.

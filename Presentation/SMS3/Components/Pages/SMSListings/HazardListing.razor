@@ -84,6 +84,22 @@
                 }
             </Template>
         </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="Hazard" Property="CreatedDate" Title="Created Date" Width="150px" Sortable="true" Filterable="true">
+            <Template Context="hazard">
+                <div title="@(hazard.CreatedDate?.ToString("MM/dd/yyyy HH:mm") ?? string.Empty)" style="@_basicTextStyle">
+                    @(hazard.CreatedDate?.ToString("MM/dd/yyyy HH:mm") ?? string.Empty)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="Hazard" Property="UpdatedDate" Title="Updated Date" Width="150px" Sortable="true" Filterable="true">
+            <Template Context="hazard">
+                <div title="@(hazard.UpdatedDate?.ToString("MM/dd/yyyy HH:mm") ?? string.Empty)" style="@_basicTextStyle">
+                    @(hazard.UpdatedDate?.ToString("MM/dd/yyyy HH:mm") ?? string.Empty)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
                 
 
         <!-- Enhanced Actions Column -->

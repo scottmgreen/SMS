@@ -8,6 +8,7 @@ using SMS3.Components.Shared.UIHelpers;
 using SMS3.Components.Shared;
 using SMS3.Hubs.Contracts;
 using SMS_Domain.Enums;
+using SMS_Domain.Errors;
 
 namespace SMS3.Components.Pages.SMSSystem.UserManagement;
 
@@ -29,6 +30,7 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private ISMSJobTitleRepository _jobTitleRepository { get; set; } = default!;
     [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
@@ -36,9 +38,13 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
 
     // Data Properties
     private List<SMSStakeholderUser> StakeholderUsersList { get; set; } = new();
+    private bool _showInactiveUsers { get; set; }
+    private IEnumerable<SMSStakeholderUser> FilteredStakeholderUsers =>
+        _showInactiveUsers
+            ? StakeholderUsersList
+            : StakeholderUsersList.Where(user => user.IsActive);
+    private int InactiveUserCount => StakeholderUsersList.Count(user => !user.IsActive);
     private List<SMSUserRole> UserRoles { get; set; } = new();
-    private string? _successMessage { get; set; }
-    private string? _errorMessage { get; set; }
 
     // Predefined stakeholder types
     //private static readonly string[] StakeholderTypes = { "SUT-0001", "SUT-0002", "SUT-0003" };
@@ -57,6 +63,14 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
     // Create Modal Properties  
     private bool _showCreateModal { get; set; }
     private bool _isSaving { get; set; }
+    private bool _createValidationActive;
+    private bool _editValidationActive;
+    private bool _isCreateFirstNameValid = true;
+    private bool _isCreateLastNameValid = true;
+    private bool _isCreateRoleValid = true;
+    private bool _isEditFirstNameValid = true;
+    private bool _isEditLastNameValid = true;
+    private bool _isEditRoleValid = true;
 
     // Edit Modal Properties
     private bool _showEditModal { get; set; }
@@ -194,15 +208,18 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
         _newFirstName = string.Empty;
         _newLastName = string.Empty;
         _newUserRoleCode = string.Empty;
+        ResetCreateValidationState();
         _showCreateModal = true;
         StateHasChanged();
     }
 
     private async Task CreateUser()
     {
-        if (!_isCreateFormValid)
+        _createValidationActive = true;
+
+        if (!ValidateCreateForm(out var validationErrors))
         {
-            await ShowErrorAsyncNotification("Please fill in all required fields.");
+            await ShowValidationErrorsAsync(validationErrors);
             return;
         }
 
@@ -210,6 +227,21 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
         {
             _isSaving = true;
             StateHasChanged();
+
+            var firstNameResult = FirstName.Create(_newFirstName);
+            var lastNameResult = LastName.Create(_newLastName);
+
+            if (firstNameResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { firstNameResult.Error.Message });
+                return;
+            }
+
+            if (lastNameResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { lastNameResult.Error.Message });
+                return;
+            }
 
             // Create user entity
             var userId = new SMSStakeholderUserID($"SU-0000");
@@ -219,8 +251,8 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
             var user = new SMSStakeholderUser(userId)
             {
                 Code = userId.Value,
-                FirstName = FirstName.Create(_newFirstName).Value,
-                LastName = LastName.Create(_newLastName).Value,
+                FirstName = firstNameResult.Value,
+                LastName = lastNameResult.Value,
                 UserName = UserName.Create(generatedUserName).Value,
                 Password = Password.Create(generatedPassword).Value,
                 StakeholderType = normalizedTitle,
@@ -247,7 +279,7 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
 
             if (user.UserRole is null)
             {
-                await ShowErrorAsyncNotification("SMS User Role/Permissions is required.");
+                await ShowValidationErrorsAsync(new[] { DomainErrors.SMSApplicationUserError.ApplicationRoleRequired.Message });
                 return;
             }
 
@@ -284,6 +316,7 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
         _newFirstName = string.Empty;
         _newLastName = string.Empty;
         _newUserRoleCode = string.Empty;
+        ResetCreateValidationState();
         StateHasChanged();
     }
 
@@ -451,6 +484,7 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
         try
         {
             _isSaving = true;
+            _editValidationActive = true;
             StateHasChanged();
 
             if (_currentEditUser is null)
@@ -458,14 +492,6 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
                 await ShowErrorAsyncNotification("No user selected for update.");
                 return;
             }
-
-            var firstName = string.IsNullOrWhiteSpace(_editFirstName)
-                ? _currentEditUser.FirstName?.Value ?? string.Empty
-                : _editFirstName;
-
-            var lastName = string.IsNullOrWhiteSpace(_editLastName)
-                ? _currentEditUser.LastName?.Value ?? string.Empty
-                : _editLastName;
 
             var title = string.IsNullOrWhiteSpace(_editUser.Title)
                 ? string.Empty
@@ -475,18 +501,31 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
                 ? string.Empty
                 : _editUser.Organization;
 
-            if (string.IsNullOrWhiteSpace(firstName)
-                || string.IsNullOrWhiteSpace(lastName)
-                )
+            if (!ValidateEditForm(out var validationErrors))
             {
-                await ShowErrorAsyncNotification("Please fill in all required fields.");
+                await ShowValidationErrorsAsync(validationErrors);
+                return;
+            }
+
+            var firstNameResult = FirstName.Create(_editFirstName);
+            var lastNameResult = LastName.Create(_editLastName);
+
+            if (firstNameResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { firstNameResult.Error.Message });
+                return;
+            }
+
+            if (lastNameResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { lastNameResult.Error.Message });
                 return;
             }
 
             // ? FIXED: Only set business fields - let pipeline handle audit fields
             var normalizedTitle = NormalizeTitleSelection(title);
-            _currentEditUser.FirstName = FirstName.Create(firstName).Value;
-            _currentEditUser.LastName = LastName.Create(lastName).Value;
+            _currentEditUser.FirstName = firstNameResult.Value;
+            _currentEditUser.LastName = lastNameResult.Value;
             _currentEditUser.StakeholderType = normalizedTitle;
             _currentEditUser.Organization = organization;
             _currentEditUser.Company = _editUser.Company;
@@ -500,7 +539,8 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
                         
             if (string.IsNullOrWhiteSpace(_editUserRoleCode))
             {
-                _logger.LogDebug("No role selected during stakeholder update for {UserId}; preserving existing role assignment.", _currentEditUser.Code);
+                await ShowValidationErrorsAsync(new[] { DomainErrors.SMSApplicationUserError.ApplicationRoleRequired.Message });
+                return;
             }
             else
             {
@@ -551,6 +591,7 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
         _editFirstName = string.Empty;
         _editLastName = string.Empty;
         _editUserRoleCode = string.Empty;
+        ResetEditValidationState();
         StateHasChanged();
     }
 
@@ -558,6 +599,106 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
         !string.IsNullOrWhiteSpace(_editFirstName) &&
         !string.IsNullOrWhiteSpace(_editLastName) &&
         !string.IsNullOrWhiteSpace(_editUserRoleCode);
+
+    private bool ValidateCreateForm(out List<string> validationErrors)
+    {
+        validationErrors = new List<string>();
+
+        var firstNameResult = FirstName.Create(_newFirstName ?? string.Empty);
+        _isCreateFirstNameValid = firstNameResult.IsSuccess;
+        if (firstNameResult.IsFailure)
+        {
+            validationErrors.Add(firstNameResult.Error.Message);
+        }
+
+        var lastNameResult = LastName.Create(_newLastName ?? string.Empty);
+        _isCreateLastNameValid = lastNameResult.IsSuccess;
+        if (lastNameResult.IsFailure)
+        {
+            validationErrors.Add(lastNameResult.Error.Message);
+        }
+
+        _isCreateRoleValid = !string.IsNullOrWhiteSpace(_newUserRoleCode);
+        if (!_isCreateRoleValid)
+        {
+            validationErrors.Add(DomainErrors.SMSApplicationUserError.ApplicationRoleRequired.Message);
+        }
+
+        return validationErrors.Count == 0;
+    }
+
+    private bool ValidateEditForm(out List<string> validationErrors)
+    {
+        validationErrors = new List<string>();
+
+        var firstNameResult = FirstName.Create(_editFirstName ?? string.Empty);
+        _isEditFirstNameValid = firstNameResult.IsSuccess;
+        if (firstNameResult.IsFailure)
+        {
+            validationErrors.Add(firstNameResult.Error.Message);
+        }
+
+        var lastNameResult = LastName.Create(_editLastName ?? string.Empty);
+        _isEditLastNameValid = lastNameResult.IsSuccess;
+        if (lastNameResult.IsFailure)
+        {
+            validationErrors.Add(lastNameResult.Error.Message);
+        }
+
+        _isEditRoleValid = !string.IsNullOrWhiteSpace(_editUserRoleCode);
+        if (!_isEditRoleValid)
+        {
+            validationErrors.Add(DomainErrors.SMSApplicationUserError.ApplicationRoleRequired.Message);
+        }
+
+        return validationErrors.Count == 0;
+    }
+
+    private string GetCreateFieldValidationClass(bool isValid)
+    {
+        return _createValidationActive && !isValid ? "validation-error-field" : string.Empty;
+    }
+
+    private string GetCreateInputValidationClass(bool isValid)
+    {
+        return _createValidationActive && !isValid ? "default-validation-textbox" : string.Empty;
+    }
+
+    private string GetCreateDropdownValidationClass(bool isValid)
+    {
+        return _createValidationActive && !isValid ? "default-validation-dropdown" : string.Empty;
+    }
+
+    private string GetEditFieldValidationClass(bool isValid)
+    {
+        return _editValidationActive && !isValid ? "validation-error-field" : string.Empty;
+    }
+
+    private string GetEditInputValidationClass(bool isValid)
+    {
+        return _editValidationActive && !isValid ? "default-validation-textbox" : string.Empty;
+    }
+
+    private string GetEditDropdownValidationClass(bool isValid)
+    {
+        return _editValidationActive && !isValid ? "default-validation-dropdown" : string.Empty;
+    }
+
+    private void ResetCreateValidationState()
+    {
+        _createValidationActive = false;
+        _isCreateFirstNameValid = true;
+        _isCreateLastNameValid = true;
+        _isCreateRoleValid = true;
+    }
+
+    private void ResetEditValidationState()
+    {
+        _editValidationActive = false;
+        _isEditFirstNameValid = true;
+        _isEditLastNameValid = true;
+        _isEditRoleValid = true;
+    }
 
     private static SMSStakeholderUser CreateEmptyStakeholderUser()
     {
@@ -1095,17 +1236,29 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
 
     private async Task ShowErrorAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
+        await _notificationHelper.ShowErrorAsync(message);
     }
 
     private async Task ShowSuccessAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
+        await _notificationHelper.ShowSuccessAsync(message);
     }
 
     private async Task ShowInfoAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
+        await _notificationHelper.ShowInfoAsync(message);
+    }
+
+    private async Task ShowValidationErrorsAsync(IEnumerable<string> errors)
+    {
+        var messages = errors
+            .Where(error => !string.IsNullOrWhiteSpace(error))
+            .Select(error => error.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        var message = messages.FirstOrDefault() ?? "Please correct validation errors and try again.";
+        await ShowErrorAsyncNotification(message);
     }
 
     private static string BuildRecordLockKey(string userCode)

@@ -26,6 +26,7 @@ public partial class ApplicationGroups : ComponentBase, IEventReceiver, IDisposa
     [Inject] private ILogger<ApplicationGroups> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
 
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
@@ -61,6 +62,12 @@ public partial class ApplicationGroups : ComponentBase, IEventReceiver, IDisposa
     #region Properties
 
     private List<SMSApplicationGroup> SMSApplicationGroups { get; set; } = new();
+    private bool _showInactiveGroups { get; set; }
+    private IEnumerable<SMSApplicationGroup> FilteredApplicationGroups =>
+        _showInactiveGroups
+            ? SMSApplicationGroups
+            : SMSApplicationGroups.Where(group => group.IsActive);
+    private int InactiveGroupCount => SMSApplicationGroups.Count(group => !group.IsActive);
     private List<SMSApplicationUser> SMSApplicationUsers { get; set; } = new();
     private List<SMSCompany> CompanyOptions { get; set; } = new();
     private Dictionary<string, int> GroupMemberCounts { get; set; } = new(StringComparer.OrdinalIgnoreCase);
@@ -102,6 +109,13 @@ public partial class ApplicationGroups : ComponentBase, IEventReceiver, IDisposa
     private bool _editIsActive { get; set; } = true;
     private string _deleteGroupCode { get; set; } = string.Empty;
     private string _deleteGroupName { get; set; } = string.Empty;
+
+    private bool _createValidationActive = false;
+    private bool _editValidationActive = false;
+    private bool _isCreateGroupNameValid = true;
+    private bool _isCreateContactEmailValid = true;
+    private bool _isEditGroupNameValid = true;
+    private bool _isEditContactEmailValid = true;
 
     #endregion
 
@@ -366,6 +380,7 @@ public partial class ApplicationGroups : ComponentBase, IEventReceiver, IDisposa
         _editContactEmail = string.Empty;
         _editAllowedCompanyCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         _editIsActive = true;
+        ResetEditValidationState();
     }
 
     #endregion
@@ -374,15 +389,11 @@ public partial class ApplicationGroups : ComponentBase, IEventReceiver, IDisposa
 
     private async Task CreateGroup()
     {
-        if (string.IsNullOrWhiteSpace(_newGroupName))
-        {
-            await ShowErrorAsyncNotification("Group name is required.");
-            return;
-        }
+        _createValidationActive = true;
 
-        if (!IsValidOptionalEmail(_newContactEmail))
+        if (!ValidateCreateForm(out var validationErrors))
         {
-            await ShowErrorAsyncNotification("Contact Email must be a valid email address.");
+            await ShowValidationErrorsAsync(validationErrors);
             return;
         }
 
@@ -435,15 +446,17 @@ public partial class ApplicationGroups : ComponentBase, IEventReceiver, IDisposa
 
     private async Task UpdateGroup()
     {
-        if (_currentGroup is null || string.IsNullOrWhiteSpace(_editGroupName))
+        if (_currentGroup is null)
         {
             await ShowErrorAsyncNotification("Group name is required.");
             return;
         }
 
-        if (!IsValidOptionalEmail(_editContactEmail))
+        _editValidationActive = true;
+
+        if (!ValidateEditForm(out var validationErrors))
         {
-            await ShowErrorAsyncNotification("Contact Email must be a valid email address.");
+            await ShowValidationErrorsAsync(validationErrors);
             return;
         }
 
@@ -552,6 +565,7 @@ public partial class ApplicationGroups : ComponentBase, IEventReceiver, IDisposa
         _newDescription = string.Empty;
         _newContactEmail = string.Empty;
         _newAllowedCompanyCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        ResetCreateValidationState();
         _showCreateModal = true;
     }
 
@@ -562,6 +576,79 @@ public partial class ApplicationGroups : ComponentBase, IEventReceiver, IDisposa
         _newDescription = string.Empty;
         _newContactEmail = string.Empty;
         _newAllowedCompanyCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        ResetCreateValidationState();
+    }
+
+    private bool ValidateCreateForm(out List<string> validationErrors)
+    {
+        validationErrors = new List<string>();
+
+        _isCreateGroupNameValid = !string.IsNullOrWhiteSpace(_newGroupName);
+        if (!_isCreateGroupNameValid)
+        {
+            validationErrors.Add("Group name is required.");
+        }
+
+        _isCreateContactEmailValid = IsValidOptionalEmail(_newContactEmail);
+        if (!_isCreateContactEmailValid)
+        {
+            validationErrors.Add("Contact Email must be a valid email address.");
+        }
+
+        return validationErrors.Count == 0;
+    }
+
+    private bool ValidateEditForm(out List<string> validationErrors)
+    {
+        validationErrors = new List<string>();
+
+        _isEditGroupNameValid = !string.IsNullOrWhiteSpace(_editGroupName);
+        if (!_isEditGroupNameValid)
+        {
+            validationErrors.Add("Group name is required.");
+        }
+
+        _isEditContactEmailValid = IsValidOptionalEmail(_editContactEmail);
+        if (!_isEditContactEmailValid)
+        {
+            validationErrors.Add("Contact Email must be a valid email address.");
+        }
+
+        return validationErrors.Count == 0;
+    }
+
+    private string GetCreateFieldValidationClass(bool isValid)
+    {
+        return _createValidationActive && !isValid ? "validation-error-field" : string.Empty;
+    }
+
+    private string GetCreateInputValidationClass(bool isValid)
+    {
+        return _createValidationActive && !isValid ? "default-validation-textbox" : string.Empty;
+    }
+
+    private string GetEditFieldValidationClass(bool isValid)
+    {
+        return _editValidationActive && !isValid ? "validation-error-field" : string.Empty;
+    }
+
+    private string GetEditInputValidationClass(bool isValid)
+    {
+        return _editValidationActive && !isValid ? "default-validation-textbox" : string.Empty;
+    }
+
+    private void ResetCreateValidationState()
+    {
+        _createValidationActive = false;
+        _isCreateGroupNameValid = true;
+        _isCreateContactEmailValid = true;
+    }
+
+    private void ResetEditValidationState()
+    {
+        _editValidationActive = false;
+        _isEditGroupNameValid = true;
+        _isEditContactEmailValid = true;
     }
 
     private async Task ConfirmDelete(string groupCode, string groupName)
@@ -648,17 +735,24 @@ public partial class ApplicationGroups : ComponentBase, IEventReceiver, IDisposa
 
     private async Task ShowErrorAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
+        await _notificationHelper.ShowErrorAsync(message);
+    }
+
+    private async Task ShowValidationErrorsAsync(IEnumerable<string> errors)
+    {
+        var message = errors.FirstOrDefault(error => !string.IsNullOrWhiteSpace(error))?.Trim()
+            ?? "Please correct validation errors and try again.";
+        await ShowErrorAsyncNotification(message);
     }
 
     private async Task ShowSuccessAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
+        await _notificationHelper.ShowSuccessAsync(message);
     }
 
     private async Task ShowInfoAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
+        await _notificationHelper.ShowInfoAsync(message);
     }
 
     private static string BuildRecordLockKey(string groupCode)

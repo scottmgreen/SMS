@@ -10,11 +10,15 @@
 
 <!-- SMS Page Header -->
 <PageHeader Title="Application Group Management"
-            Subtitle="@($"Manage SMS Application User Groups ({SMSApplicationGroups.Count})")"
+            Subtitle="@($"Manage SMS Application User Groups ({FilteredApplicationGroups.Count()}) | Inactive: {InactiveGroupCount}")"
            Icon="fas fa-users-cog">
             <AdditionalContent>
                 <div class="d-flex justify-content-end align-items-center w-100">
                     <div class="d-flex gap-2">
+                        <div class="d-flex align-items-center me-2">
+                            <RadzenCheckBox @bind-Value="@_showInactiveGroups" Name="ShowInactiveGroups" TValue="bool" />
+                            <RadzenLabel Text="Show Inactive" Component="ShowInactiveGroups" Style="margin-left: 0.5rem; cursor: pointer; color:white" />
+                        </div>
                         @* SMS_System_UserGroups_Application *@
                         @if (_currentUserService.CanCreate("SMS_System_UserGroups_Application"))
                         {
@@ -29,20 +33,12 @@
 
 <!-- Success/Error Messages -->
 
-@if (!string.IsNullOrEmpty(_errorMessage))
-{
-    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" class="mb-3">
-        <RadzenIcon Icon="error" Style="margin-right: 0.5rem;" />
-        @_errorMessage
-    </RadzenAlert>
-}
-
 <!-- Groups Display -->
 
    <RadzenCard>
-        @if (SMSApplicationGroups.Any())
+        @if (FilteredApplicationGroups.Any())
         {
-            <RadzenDataGrid @ref="_groupsGrid" Data="@SMSApplicationGroups" TItem="SMSApplicationGroup" 
+            <RadzenDataGrid @ref="_groupsGrid" Data="@FilteredApplicationGroups" TItem="SMSApplicationGroup" 
                             AllowFiltering="true" AllowColumnResize="true" AllowSorting="true" 
                             PageSize="10" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" 
                             ShowPagingSummary="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
@@ -191,11 +187,11 @@
                 
                 <!-- Modal Body -->
                 <RadzenStack Gap="1rem">
-                    <RadzenFormField Text="Group Name *" Variant="Variant.Outlined" class="@(string.IsNullOrWhiteSpace(_newGroupName) ? "validation-error-field" : string.Empty)">
+                    <RadzenFormField Text="Group Name *" Variant="Variant.Outlined" class="@GetCreateFieldValidationClass(_isCreateGroupNameValid)">
                         <RadzenTextBox @bind-Value="@_newGroupName" 
                                        Placeholder="Enter group name (e.g., IT Administrators, Safety Team)" 
                                        Style="width: 100%;"
-                                       class="@(string.IsNullOrWhiteSpace(_newGroupName) ? "default-validation-textbox" : string.Empty)" />
+                                       class="@GetCreateInputValidationClass(_isCreateGroupNameValid)" />
                     </RadzenFormField>
                     
                     <RadzenFormField Text="Description" Variant="Variant.Outlined">
@@ -240,7 +236,7 @@
                 <div class="d-flex justify-content-end gap-2 mt-3">
                     <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseCreateModal" />
                     <RadzenButton Text="Create Group" Icon="save" ButtonStyle="ButtonStyle.Primary" 
-                                  Click="@CreateGroup" Disabled="@(string.IsNullOrWhiteSpace(_newGroupName) || _isSaving)"
+                                  Click="@CreateGroup" Disabled="@_isSaving"
                                   Style="background-color: #212e61; border-color: #212e61;" />
                 </div>
             </RadzenCard>
@@ -267,11 +263,11 @@
                         <RadzenColumn Size="12" SizeMD="12">
                             <RadzenStack Gap="1rem">             
                                     
-                                    <RadzenFormField Text="Group Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_editGroupName) ? "validation-error-field" : string.Empty)">
+                                     <RadzenFormField Text="Group Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@GetEditFieldValidationClass(_isEditGroupNameValid)">
                                         <RadzenTextBox @bind-Value="@_editGroupName" 
                                                        Placeholder="Enter group name" 
                                                        Style="width: 100%;"
-                                                       class="@(string.IsNullOrWhiteSpace(_editGroupName) ? "default-validation-textbox" : string.Empty)" />
+                                                        class="@GetEditInputValidationClass(_isEditGroupNameValid)" />
                                     </RadzenFormField>
                             </RadzenStack>
                             <RadzenStack Gap="1rem">
@@ -330,7 +326,7 @@
                 <div class="d-flex justify-content-end gap-2 mt-3">
                     <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseEditModal" />
                     <RadzenButton Text="Update Group" Icon="save" ButtonStyle="ButtonStyle.Primary" 
-                                  Click="@UpdateGroup" Disabled="@(string.IsNullOrWhiteSpace(_editGroupName) || _isSaving)"
+                                  Click="@UpdateGroup" Disabled="@_isSaving"
                                   Style="background-color: #212e61; border-color: #212e61;" />
                 </div>
             </RadzenCard>

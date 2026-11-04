@@ -4,6 +4,7 @@ using SMS_Application.Queries;
 
 using SMS_Domain.Events;
 using SMS_Domain.ValueObjects;
+using SMS_Domain.Errors;
 
 using SMS_Shared.Common;
 using SMS_Shared.Configuration;
@@ -84,6 +85,7 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private ILiveUpdatesPublisher _liveUpdatesPublisher { get; set; } = default!;
     [Inject] private IRecordLockLeaseCoordinator _recordLockLeaseCoordinator { get; set; } = default!;
     [Inject] private ISMSCompanyRepository _companyRepository { get; set; } = default!;
@@ -104,8 +106,6 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
     private List<SMSUserRole> UserRoles { get; set; } = new();
     private SMSApplicationUser? _currentUser { get; set; }
     private bool _isEditMode { get; set; }
-    private string? _successMessage { get; set; }
-    private string? _errorMessage { get; set; }
 
     // Password Modal Properties for Shared Component
     private bool _showPasswordModal { get; set; }
@@ -155,6 +155,18 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
     // Create Modal Properties
     private bool _showCreateModal { get; set; }
     private bool _isSaving { get; set; }
+
+    private bool _createValidationActive;
+    private bool _editValidationActive;
+    private bool _isCreateFirstNameValid = true;
+    private bool _isCreateLastNameValid = true;
+    private bool _isCreateUserNameValid = true;
+    private bool _isCreatePasswordValid = true;
+    private bool _isCreateConfirmPasswordValid = true;
+    private bool _isCreateRoleValid = true;
+    private bool _isEditFirstNameValid = true;
+    private bool _isEditLastNameValid = true;
+    private bool _isEditRoleValid = true;
 
     // Component References
     private RadzenDataGrid<SMSApplicationUser>? _usersGrid;
@@ -514,15 +526,18 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
         _confirmPassword = string.Empty;
         _newUserRoleCode = string.Empty;
         _newIsActive = true; // ADDED: Initialize the property
+        ResetCreateValidationState();
         _showCreateModal = true;
         StateHasChanged();
     }
 
     private async Task CreateUser()
     {
-        if (!_isCreateFormValid)
+        _createValidationActive = true;
+
+        if (!ValidateCreateForm(out var validationErrors))
         {
-            await ShowErrorAsyncNotification("Please fill in all required fields.");
+            await ShowValidationErrorsAsync(validationErrors);
             return;
         }
 
@@ -544,15 +559,44 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
                 return;
             }
 
+            var firstNameResult = FirstName.Create(_newFirstName);
+            var lastNameResult = LastName.Create(_newLastName);
+            var userNameResult = UserName.Create(_newUserName);
+            var passwordResult = Password.Create(_newPassword);
+
+            if (firstNameResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { firstNameResult.Error.Message });
+                return;
+            }
+
+            if (lastNameResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { lastNameResult.Error.Message });
+                return;
+            }
+
+            if (userNameResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { userNameResult.Error.Message });
+                return;
+            }
+
+            if (passwordResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { passwordResult.Error.Message });
+                return;
+            }
+
             // Create user entity
             var userId = new SMSApplicationUserID($"AU-0000");
             var user = new SMSApplicationUser(userId)
             {
                 Code = userId.Value,
-                FirstName = FirstName.Create(_newFirstName).Value,
-                LastName = LastName.Create(_newLastName).Value,
-                UserName = UserName.Create(_newUserName).Value,
-                Password = Password.Create(_newPassword).Value,
+                FirstName = firstNameResult.Value,
+                LastName = lastNameResult.Value,
+                UserName = userNameResult.Value,
+                Password = passwordResult.Value,
                 Company = _newUser.Company,
                 Organization = _newUser.Organization,
                 Title = _newUser.Title,
@@ -605,6 +649,7 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
         _confirmPassword = string.Empty;
         _newUserRoleCode = string.Empty;
         _newIsActive = true; // ADDED: Reset the property
+        ResetCreateValidationState();
         StateHasChanged();
     }
 
@@ -615,6 +660,11 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
         !string.IsNullOrWhiteSpace(_newPassword) &&
         _newPassword == _confirmPassword &&
         !string.IsNullOrWhiteSpace(_newUserRoleCode);
+
+    private bool _isEditFormValid =>
+        !string.IsNullOrWhiteSpace(_editFirstName) &&
+        !string.IsNullOrWhiteSpace(_editLastName) &&
+        !string.IsNullOrWhiteSpace(_editUserRoleCode);
 
     private async Task EditUser(string userId)
     {
@@ -646,6 +696,7 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
         try
         {
             _isSaving = true;
+            _editValidationActive = true;
             StateHasChanged();
 
             if (_currentUser is null)
@@ -662,17 +713,30 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
                 ? string.Empty
                 : _editUser.Organization;
 
-            if (string.IsNullOrWhiteSpace(_editFirstName)
-                || string.IsNullOrWhiteSpace(_editLastName)
-                )
+            if (!ValidateEditForm(out var validationErrors))
             {
-                await ShowErrorAsyncNotification("Please fill in all required fields.");
+                await ShowValidationErrorsAsync(validationErrors);
+                return;
+            }
+
+            var firstNameResult = FirstName.Create(_editFirstName);
+            var lastNameResult = LastName.Create(_editLastName);
+
+            if (firstNameResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { firstNameResult.Error.Message });
+                return;
+            }
+
+            if (lastNameResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { lastNameResult.Error.Message });
                 return;
             }
 
             // ? FIXED: Only update business fields - let pipeline handle audit fields
-            _currentUser.FirstName = FirstName.Create(_editFirstName).Value;
-            _currentUser.LastName = LastName.Create(_editLastName).Value;
+            _currentUser.FirstName = firstNameResult.Value;
+            _currentUser.LastName = lastNameResult.Value;
             _currentUser.Company = _editUser.Company;
             _currentUser.Organization = organization;
             _currentUser.Title = title;
@@ -713,6 +777,7 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
                 // Reset form state
                 _isEditMode = false;
                 _currentUser = null;
+            ResetEditValidationState();
                 
                 // Navigate back to main list with success
                 _navigation.NavigateToSecure("/SMSSystem/UserManagement/ApplicationUsers");
@@ -821,12 +886,137 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
         _editUser = CreateEmptyApplicationUser();
         _editFirstName = string.Empty;
         _editLastName = string.Empty;
+        ResetEditValidationState();
         _navigation.NavigateToSecure("/SMSSystem/UserManagement/ApplicationUsers");
     }
 
     private void NavigateToUserManagement()
     {
         _navigation.NavigateToSecure("/SMSSystem/UserManagement");
+    }
+
+    private bool ValidateCreateForm(out List<string> validationErrors)
+    {
+        validationErrors = new List<string>();
+
+        var firstNameResult = FirstName.Create(_newFirstName ?? string.Empty);
+        _isCreateFirstNameValid = firstNameResult.IsSuccess;
+        if (firstNameResult.IsFailure)
+        {
+            validationErrors.Add(firstNameResult.Error.Message);
+        }
+
+        var lastNameResult = LastName.Create(_newLastName ?? string.Empty);
+        _isCreateLastNameValid = lastNameResult.IsSuccess;
+        if (lastNameResult.IsFailure)
+        {
+            validationErrors.Add(lastNameResult.Error.Message);
+        }
+
+        var userNameResult = UserName.Create(_newUserName ?? string.Empty);
+        _isCreateUserNameValid = userNameResult.IsSuccess;
+        if (userNameResult.IsFailure)
+        {
+            validationErrors.Add(userNameResult.Error.Message);
+        }
+
+        var passwordResult = Password.Create(_newPassword ?? string.Empty);
+        _isCreatePasswordValid = passwordResult.IsSuccess;
+        if (passwordResult.IsFailure)
+        {
+            validationErrors.Add(passwordResult.Error.Message);
+        }
+
+        _isCreateConfirmPasswordValid = !string.IsNullOrWhiteSpace(_confirmPassword)
+            && string.Equals(_newPassword, _confirmPassword, StringComparison.Ordinal);
+        if (!_isCreateConfirmPasswordValid)
+        {
+            validationErrors.Add("Password and Confirm Password must match.");
+        }
+
+        _isCreateRoleValid = !string.IsNullOrWhiteSpace(_newUserRoleCode);
+        if (!_isCreateRoleValid)
+        {
+            validationErrors.Add(DomainErrors.SMSApplicationUserError.ApplicationRoleRequired.Message);
+        }
+
+        return validationErrors.Count == 0;
+    }
+
+    private bool ValidateEditForm(out List<string> validationErrors)
+    {
+        validationErrors = new List<string>();
+
+        var firstNameResult = FirstName.Create(_editFirstName ?? string.Empty);
+        _isEditFirstNameValid = firstNameResult.IsSuccess;
+        if (firstNameResult.IsFailure)
+        {
+            validationErrors.Add(firstNameResult.Error.Message);
+        }
+
+        var lastNameResult = LastName.Create(_editLastName ?? string.Empty);
+        _isEditLastNameValid = lastNameResult.IsSuccess;
+        if (lastNameResult.IsFailure)
+        {
+            validationErrors.Add(lastNameResult.Error.Message);
+        }
+
+        _isEditRoleValid = !string.IsNullOrWhiteSpace(_editUserRoleCode);
+        if (!_isEditRoleValid)
+        {
+            validationErrors.Add(DomainErrors.SMSApplicationUserError.ApplicationRoleRequired.Message);
+        }
+
+        return validationErrors.Count == 0;
+    }
+
+    private string GetCreateFieldValidationClass(bool isValid)
+    {
+        return _createValidationActive && !isValid ? "validation-error-field" : string.Empty;
+    }
+
+    private string GetCreateInputValidationClass(bool isValid)
+    {
+        return _createValidationActive && !isValid ? "default-validation-textbox" : string.Empty;
+    }
+
+    private string GetCreateDropdownValidationClass(bool isValid)
+    {
+        return _createValidationActive && !isValid ? "default-validation-dropdown" : string.Empty;
+    }
+
+    private string GetEditFieldValidationClass(bool isValid)
+    {
+        return _editValidationActive && !isValid ? "validation-error-field" : string.Empty;
+    }
+
+    private string GetEditInputValidationClass(bool isValid)
+    {
+        return _editValidationActive && !isValid ? "default-validation-textbox" : string.Empty;
+    }
+
+    private string GetEditDropdownValidationClass(bool isValid)
+    {
+        return _editValidationActive && !isValid ? "default-validation-dropdown" : string.Empty;
+    }
+
+    private void ResetCreateValidationState()
+    {
+        _createValidationActive = false;
+        _isCreateFirstNameValid = true;
+        _isCreateLastNameValid = true;
+        _isCreateUserNameValid = true;
+        _isCreatePasswordValid = true;
+        _isCreateConfirmPasswordValid = true;
+        _isCreateRoleValid = true;
+    }
+
+    private void ResetEditValidationState()
+    {
+        _editValidationActive = false;
+        _isEditFirstNameValid = true;
+        _isEditLastNameValid = true;
+        _isEditRoleValid = true;
     }
 
     private async Task ExportUsers()
@@ -841,17 +1031,29 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
 
     private async Task ShowSuccessAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
+        await _notificationHelper.ShowSuccessAsync(message);
     }
 
     private async Task ShowErrorAsyncNotification(string message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
+        await _notificationHelper.ShowErrorAsync(message);
     }
 
     private async Task ShowInfoAsyncNotification(String message)
     {
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
+        await _notificationHelper.ShowInfoAsync(message);
+    }
+
+    private async Task ShowValidationErrorsAsync(IEnumerable<string> errors)
+    {
+        var messages = errors
+            .Where(error => !string.IsNullOrWhiteSpace(error))
+            .Select(error => error.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        var message = messages.FirstOrDefault() ?? "Please correct validation errors and try again.";
+        await ShowErrorAsyncNotification(message);
     }
 
     private static string BuildRecordLockKey(string userCode)

@@ -11,11 +11,15 @@
 
 <PageTitle>Stakeholder User Management - SMS3</PageTitle>
 <PageHeader Title="Stakeholder User Management"
-            Subtitle="@($"Manage SMS Stakeholders ({@StakeholderUsersList.Count()})")"
+            Subtitle="@($"Manage SMS Stakeholders ({FilteredStakeholderUsers.Count()}) | Inactive: {InactiveUserCount}")"
             Icon="fas fa-user-tie">
             <AdditionalContent>
                 <div class="d-flex justify-content-end align-items-center w-100">
                     <div class="d-flex gap-2">
+                        <div class="d-flex align-items-center me-2">
+                            <RadzenCheckBox @bind-Value="@_showInactiveUsers" Name="ShowInactiveUsers" TValue="bool" />
+                            <RadzenLabel Text="Show Inactive" Component="ShowInactiveUsers" Style="margin-left: 0.5rem; cursor: pointer; color:white" />
+                        </div>
                         @* SMS_System_UserManagement_Stakeholder *@
                         @if (_currentUserService.CanCreate("SMS_System_UserManagement_Stakeholder"))
                         {
@@ -27,37 +31,12 @@
             </AdditionalContent>
 </PageHeader>
 
-    <!-- Messages -->
-    @if (!string.IsNullOrEmpty(_successMessage))
-    {
-        <RadzenRow Gap="1rem" class="rz-mb-3">
-            <RadzenColumn Size="12">
-                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter">
-                    <RadzenIcon Icon="check_circle" Style="margin-right: 0.5rem;" />
-                    @_successMessage
-                </RadzenAlert>
-            </RadzenColumn>
-        </RadzenRow>
-    }
-
-    @if (!string.IsNullOrEmpty(_errorMessage))
-    {
-        <RadzenRow Gap="1rem" class="rz-mb-3">
-            <RadzenColumn Size="12">
-                <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
-                    <RadzenIcon Icon="error" Style="margin-right: 0.5rem;" />
-                    @_errorMessage
-                </RadzenAlert>
-            </RadzenColumn>
-        </RadzenRow>
-    }
-
     <!-- Users DataGrid -->
 
                 <RadzenCard>
-                    @if (StakeholderUsersList.Any())
+                    @if (FilteredStakeholderUsers.Any())
                     {
-                        <RadzenDataGrid @ref="_usersGrid" Data="@StakeholderUsersList" TItem="SMSStakeholderUser" 
+                        <RadzenDataGrid @ref="_usersGrid" Data="@FilteredStakeholderUsers" TItem="SMSStakeholderUser" 
                                       AllowFiltering="true" AllowSorting="true" AllowPaging="true" 
                                       PageSize="10" ShowPagingSummary="true" 
                                       FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
@@ -210,13 +189,13 @@
                 <!-- Modal Body -->
                 <RadzenRow Gap=".5rem">
                     <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenFormField Text="First Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_newFirstName) ? "validation-error-field" : string.Empty)">
-                            <RadzenTextBox @bind-Value="@_newFirstName" Placeholder="Enter first name" Style="width: 100%;" class="@(string.IsNullOrWhiteSpace(_newFirstName) ? "default-validation-textbox" : string.Empty)" />
+                        <RadzenFormField Text="First Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@GetCreateFieldValidationClass(_isCreateFirstNameValid)">
+                            <RadzenTextBox @bind-Value="@_newFirstName" Placeholder="Enter first name" Style="width: 100%;" class="@GetCreateInputValidationClass(_isCreateFirstNameValid)" />
                         </RadzenFormField>
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenFormField Text="Last Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_newLastName) ? "validation-error-field" : string.Empty)">
-                            <RadzenTextBox @bind-Value="@_newLastName" Placeholder="Enter last name" Style="width: 100%;" class="@(string.IsNullOrWhiteSpace(_newLastName) ? "default-validation-textbox" : string.Empty)" />
+                        <RadzenFormField Text="Last Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@GetCreateFieldValidationClass(_isCreateLastNameValid)">
+                            <RadzenTextBox @bind-Value="@_newLastName" Placeholder="Enter last name" Style="width: 100%;" class="@GetCreateInputValidationClass(_isCreateLastNameValid)" />
                         </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
@@ -253,12 +232,10 @@
                 <RadzenRow Gap=".5rem">
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="Title" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                            <RadzenDropDown TValue="string" @bind-Value="@_newUser.Title" Data="@StakeholderTypesForDropdown"
-                                            ValueProperty="Value" TextProperty="Text"
-                                            Change="@(args => { _newUser.Title = args?.ToString(); OnNewTitleChanged(_newUser.Title); })"
-                                            AllowClear="true"
-                                            AllowFiltering="true"
-                                            Style="width: 100%;" Placeholder="-- Select Title --" />
+                            <RadzenTextBox @bind-Value="@_newUser.Title"
+                                           Change="@(args => OnNewTitleChanged(args?.ToString()))"
+                                           Placeholder="Enter title"
+                                           Style="width: 100%;" />
                         </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
@@ -273,12 +250,12 @@
                 
                 <RadzenRow Gap=".5rem">
                     <RadzenColumn Size="12" SizeMD="5">
-                        <RadzenFormField Text="SMS Role/Permissions *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_newUserRoleCode) ? "validation-error-field" : string.Empty)">
+                        <RadzenFormField Text="SMS Role/Permissions *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@GetCreateFieldValidationClass(_isCreateRoleValid)">
                             <RadzenDropDown TValue="string" @bind-Value="@_newUserRoleCode" Data="@UserRoles"
                                             ValueProperty="Code" TextProperty="Name"
                                             Change="@(args => { _newUserRoleCode = args?.ToString(); OnNewRoleCodeChanged(_newUserRoleCode); })"
                                             Style="width: 100%;" Placeholder="-- Select Role --"
-                                            class="@(string.IsNullOrWhiteSpace(_newUserRoleCode) ? "default-validation-dropdown" : string.Empty)" />
+                                            class="@GetCreateDropdownValidationClass(_isCreateRoleValid)" />
                         </RadzenFormField>
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="3">
@@ -303,7 +280,7 @@
                 <div class="d-flex justify-content-end gap-2 mt-3">
                     <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseCreateModal" />
                     <RadzenButton Text="Create User" Icon="save" ButtonStyle="ButtonStyle.Primary" 
-                                  Click="@CreateUser" Disabled="@(!_isCreateFormValid || _isSaving)"
+                                  Click="@CreateUser" Disabled="@(_isSaving)"
                                   Style="background-color: #212e61; border-color: #212e61;" />
                 </div>
             </RadzenCard>
@@ -328,19 +305,19 @@
                 <!-- Modal Body -->
                 <RadzenRow Gap=".5rem">
                     <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenFormField Text="First Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_editFirstName) ? "validation-error-field" : string.Empty)">
+                        <RadzenFormField Text="First Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@GetEditFieldValidationClass(_isEditFirstNameValid)">
                             <RadzenTextBox @bind-Value="@_editFirstName"
                                            Placeholder="Enter first name"
                                            Style="width: 100%;"
-                                           class="@(string.IsNullOrWhiteSpace(_editFirstName) ? "default-validation-textbox" : string.Empty)" />
+                                           class="@GetEditInputValidationClass(_isEditFirstNameValid)" />
                         </RadzenFormField>
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenFormField Text="Last Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_editLastName) ? "validation-error-field" : string.Empty)">
+                        <RadzenFormField Text="Last Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@GetEditFieldValidationClass(_isEditLastNameValid)">
                             <RadzenTextBox @bind-Value="@_editLastName"
                                            Placeholder="Enter last name"
                                            Style="width: 100%;"
-                                           class="@(string.IsNullOrWhiteSpace(_editLastName) ? "default-validation-textbox" : string.Empty)" />
+                                           class="@GetEditInputValidationClass(_isEditLastNameValid)" />
                         </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
@@ -376,12 +353,10 @@
                 <RadzenRow Gap=".5rem">
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="Title" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                            <RadzenDropDown TValue="string" @bind-Value="@_editUser.Title" Data="@StakeholderTypesForDropdown"
-                                            ValueProperty="Value" TextProperty="Text"
-                                            Change="@(args => { _editUser.Title = args?.ToString(); OnEditTitleChanged(_editUser.Title); })"
-                                            AllowClear="true"
-                                            AllowFiltering="true"
-                                            Style="width: 100%;" />
+                            <RadzenTextBox @bind-Value="@_editUser.Title"
+                                           Change="@(args => OnEditTitleChanged(args?.ToString()))"
+                                           Placeholder="Enter title"
+                                           Style="width: 100%;" />
                         </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
@@ -395,12 +370,12 @@
 
                 <RadzenRow Gap=".5rem">
                     <RadzenColumn Size="12" SizeMD="5">
-                        <RadzenFormField Text="SMS User Role/Permissions *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@(string.IsNullOrWhiteSpace(_editUserRoleCode) ? "validation-error-field" : string.Empty)">
+                        <RadzenFormField Text="SMS User Role/Permissions *" Variant="Variant.Outlined" AllowFloatingLabel="false" class="@GetEditFieldValidationClass(_isEditRoleValid)">
                             <RadzenDropDown TValue="string" @bind-Value="@_editUserRoleCode" Data="@UserRoles"
                                             ValueProperty="Code" TextProperty="Name"
                                             Change="@(args => { _editUserRoleCode = args?.ToString(); OnEditRoleCodeChanged(_editUserRoleCode); })"
                                             Style="width: 100%;" Placeholder="-- Select Role --"
-                                            class="@(string.IsNullOrWhiteSpace(_editUserRoleCode) ? "default-validation-dropdown" : string.Empty)" />
+                                            class="@GetEditDropdownValidationClass(_isEditRoleValid)" />
                         </RadzenFormField>
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="3">
@@ -425,7 +400,7 @@
                 <div class="d-flex justify-content-end gap-2 mt-3">
                     <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseEditModal" />
                     <RadzenButton Text="Update User" Icon="save" ButtonStyle="ButtonStyle.Primary" 
-                                  Click="@UpdateUser" Disabled="@(!_isEditFormValid || _isSaving)"
+                                  Click="@UpdateUser" Disabled="@(_isSaving)"
                                   Style="background-color: #212e61; border-color: #212e61;" />
                 </div>
             </RadzenCard>
