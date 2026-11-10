@@ -1,0 +1,114 @@
+workspace "PDX SMS" "System architecture derived from SMS3, Application, Domain, Infrastructure, SQL tables, and stored procedures." {
+
+	model {
+		smsUser = person "SMS User" "Application, Organizational, and Stakeholder users."
+
+		sms = softwareSystem "PDX SMS" "Safety Management System" {
+			presentation = container "Presentation/SMS3" "Blazor Server UI, Radzen components, API endpoints (v1/v2), session/auth and notification dispatch." ".NET 10" {
+				p_uiPages = component "Razor UI Pages" "Blazor pages/code-behind for User Management, User Groups, Listings, Risk workflows." "Razor Components"
+				p_apiV1 = component "API Endpoints v1" "Versioned API v1 endpoint set." "Minimal API"
+				p_apiV2 = component "API Endpoints v2" "Versioned API v2 endpoint set." "Minimal API"
+				p_mainLayout = component "MainLayout + Event Receivers" "Registers UI receivers and renders notifications via Radzen NotificationService." "Blazor Layout"
+				p_uiEventHandler = component "UIEventHandler" "Consumes UINotificationEvent and dispatches to EventBusDispatcher." "Event Handler"
+				p_notificationHelper = component "NotificationHelper" "Single notification publishing path with TargetUserCode/TargetSessionKey metadata." "Service"
+			}
+
+			application = container "Application" "CQRS orchestration, mediator, event bus, queue orchestration, and application workflows." ".NET 10" {
+				a_mediator = component "IBaseMediator Pipeline" "Command/query dispatch pipeline and handlers." "CQRS"
+				a_eventDispatch = component "EventDispatchService" "Publishes Domain/UI/Integration events with Immediate/Queued/Manual modes." "Event Bus"
+				a_eventQueue = component "EventQueueService" "Queues and replays events; executes pending/manual events." "Queue Service"
+				a_domainHandlers = component "Domain Event Handlers" "Application handlers for domain state-change events." "Event Handlers"
+				a_uiHandlers = component "UI Event Handlers" "Application-layer UI handlers for UINotification and related events." "Event Handlers"
+				a_integrationHandlers = component "Integration Event Handlers" "Email and external integration dispatch handlers." "Event Handlers"
+			}
+			domain = container "Domain" "Entities, value objects, enums, domain errors, and domain/UI/integration event contracts." ".NET 10"
+			infrastructure = container "Infrastructure" "Repository and persistence adapters using SQL stored procedures via SqlClient." ".NET 10"
+			sql = container "SQL Server: SMS" "Core tables and stored procedures (pr_*)." "SQL Server" {
+				tags "Database"
+			}
+		}
+
+		smsUser -> presentation "Uses via HTTPS"
+
+		presentation -> application "Sends commands/queries via mediator; publishes UI notifications"
+		application -> domain "Uses domain model and event contracts"
+		application -> infrastructure "Uses repository/service abstractions"
+		infrastructure -> sql "Executes stored procedures"
+		application -> sql "Queues/replays events via EventQueue services"
+
+		p_uiPages -> a_mediator "Sends commands/queries"
+		p_apiV1 -> a_mediator "Sends commands/queries"
+		p_apiV2 -> a_mediator "Sends commands/queries"
+		p_notificationHelper -> a_eventDispatch "Publishes UINotificationEvent"
+		p_uiEventHandler -> p_mainLayout "Dispatches UI notifications"
+
+		a_mediator -> a_domainHandlers "Invokes handlers"
+		a_eventDispatch -> a_uiHandlers "Dispatches UI events"
+		a_eventDispatch -> a_integrationHandlers "Dispatches integration events"
+		a_eventDispatch -> a_eventQueue "Queues/replays events"
+		a_domainHandlers -> domain "Uses entities/enums/errors/events"
+		a_uiHandlers -> domain "Uses UI event contracts"
+		a_integrationHandlers -> infrastructure "Uses infrastructure adapters"
+	}
+
+	views {
+		systemContext sms "SystemContext" {
+			include *
+			autoLayout lr
+		}
+
+		container sms "ContainerView" {
+			include *
+			autoLayout lr
+		}
+
+		component presentation "PresentationComponents" {
+			include p_uiPages
+			include p_apiV1
+			include p_apiV2
+			include p_mainLayout
+			include p_uiEventHandler
+			include p_notificationHelper
+			include a_mediator
+			include a_eventDispatch
+			autoLayout lr
+		}
+
+		component application "ApplicationComponents" {
+			include a_mediator
+			include a_eventDispatch
+			include a_eventQueue
+			include a_domainHandlers
+			include a_uiHandlers
+			include a_integrationHandlers
+			include domain
+			include infrastructure
+			include sql
+			autoLayout lr
+		}
+
+		styles {
+			element "Person" {
+				shape Person
+				background #0b5cad
+				color #ffffff
+			}
+
+			element "Software System" {
+				background #1168bd
+				color #ffffff
+			}
+
+			element "Container" {
+				background #438dd5
+				color #ffffff
+			}
+
+			element "Database" {
+				shape Cylinder
+				background #2e7d32
+				color #ffffff
+			}
+		}
+	}
+}

@@ -112,7 +112,9 @@ else
                         </RadzenAlert>
                     }
                     <RadzenTemplateForm Data="@HazardReport" Submit="@HandleFormSubmit" TItem="HazardReportForm">
-                        <RadzenRow>
+                        @if (_currentUserService.CanRead("SMS_PII"))
+                                {
+                                <RadzenRow>
                             <RadzenColumn Size="3">
                                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.5rem">
                                     <RadzenCheckBox @bind-Value="@HazardReport.IsAnonymous"
@@ -124,6 +126,8 @@ else
 
                             
                         </RadzenRow>
+                                }
+                        
                         <!-- Row 0: Anonymous, Submitted By, Organization and Job Function-->
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
                             

@@ -1263,24 +1263,7 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
         return matchedOption?.Value ?? trimmed;
     }
 
-    private static bool IsEmailFormat(string? userName)
-    {
-        if (string.IsNullOrWhiteSpace(userName))
-        {
-            return false;
-        }
-
-        try
-        {
-            var addr = new MailAddress(userName.Trim());
-            return string.Equals(addr.Address, userName.Trim(), StringComparison.OrdinalIgnoreCase);
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
+    
     #endregion
 
     #region Group Management
@@ -1476,16 +1459,7 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
 
     #region Helper Methods
 
-    private void InitializeGroupSelection()
-    {
-        // Called after loading user groups to initialize the selection dictionary
-        SelectedGroups.Clear();
-        foreach (var group in AvailableGroups)
-        {
-            SelectedGroups[group.Code] = false;
-        }
-    }
-
+    
     #endregion
 }
 

@@ -186,7 +186,7 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
             //}
 
             // Business validation - validate stakeholder type and organization combination
-            await ValidateStakeholderTypeOrganizationCombination(user.StakeholderType, user.Organization);
+            //await ValidateStakeholderTypeOrganizationCombination(user.StakeholderType, user.Organization);
 
             var result = await _dataService.UpdateAsync(user, ct).ConfigureAwait(false);
 

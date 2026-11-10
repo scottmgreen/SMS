@@ -1,0 +1,884 @@
+﻿// Auto-generated from SMS_Tables.sql
+
+Table tbld_AirportSharedDataset {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50) [not null]
+  fldv_ReportCode nvarchar(50) [not null]
+  fldv_HazardCode nvarchar(50)
+  fldv_PrivateNarrative nvarchar(4000)
+  fldv_SharedNarrative nvarchar(2000)
+  fldv_LocationArea nvarchar(100)
+  fldv_LocationSubArea nvarchar(100)
+  fldv_LocationOther nvarchar(500)
+  fldv_Weather nvarchar(100)
+  fldv_TriggeringEvent nvarchar(100)
+  fldb_AircraftInvolved bit [not null]
+  fldb_PoweredEquipmentInvolved bit [not null]
+  fldb_NonPoweredEquipmentInvolved bit [not null]
+  fldb_PedestrianInvolved bit [not null]
+  fldb_OtherInvolved bit [not null]
+  fldv_OtherDescription nvarchar(500)
+  fldb_PropertyDamage bit [not null]
+  fldv_PropertyDamageComments nvarchar(1000)
+  fldb_PersonalInjury bit [not null]
+  fldv_PersonalInjuryComments nvarchar(1000)
+  fldb_Fatality bit [not null]
+  fldv_FatalityComments nvarchar(1000)
+  fldb_OtherIssues bit [not null]
+  fldv_OtherIssuesDescription nvarchar(1000)
+  fldv_AirlineCompanyOperator nvarchar(200)
+  fldv_OperatorsAuthorized nvarchar(20)
+  fldv_FlightDelay nvarchar(20)
+  fldv_FlightDelayDetails nvarchar(1000)
+  fldv_EquipmentRemovedFromService nvarchar(20)
+  fldv_EquipmentRemovalDetails nvarchar(1000)
+  fldv_PoliceReport nvarchar(20)
+  fldv_PoliceReportDetails nvarchar(1000)
+  fldv_ContributingFactors nvarchar(2000)
+  fldv_FactorsOtherDescription nvarchar(1000)
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime2(7) [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime2(7)
+}
+
+Table tbld_EntityCodePrefixes {
+  fldi_ID int [pk, increment]
+  fldv_EntityName varchar(50) [not null]
+  fldv_TableName varchar(50) [not null]
+  fldv_Prefix varchar(5) [not null]
+  fldi_NextSequence int [not null]
+  fldb_IsActive bit [not null]
+  fldv_Description varchar(200)
+  fldv_CreatedBy varchar(50) [not null]
+  fldd_CreatedDate datetime [not null]
+  fldv_UpdatedBy varchar(50)
+  fldd_UpdatedDate datetime
+  fldi_SequenceYear int
+
+  Indexes {
+    (fldv_EntityName) [unique]
+    (fldv_Prefix) [unique]
+  }
+}
+
+Table tbld_EventQueue {
+  fldi_ID int [pk, increment]
+  fldv_Code nvarchar(50) [not null]
+  fldv_QueueGuid nvarchar(36) [not null]
+  fldi_EventCategory int [not null]
+  fldv_EventType nvarchar(100) [not null]
+  fldv_EventData nvarchar(max) [not null]
+  fldv_ReportCode nvarchar(50)
+  fldv_TargetSystem nvarchar(100)
+  fldi_Priority int [not null]
+  fldi_Status int [not null]
+  fldi_AttemptCount int [not null]
+  fldi_MaxAttempts int [not null]
+  fldv_LastError nvarchar(2000)
+  fldd_QueuedDate datetime2(7) [not null]
+  fldd_ProcessingStartedDate datetime2(7)
+  fldd_ProcessedDate datetime2(7)
+  fldd_NextAttemptDate datetime2(7)
+  fldv_LockedBy nvarchar(100)
+  fldd_LockExpiresDate datetime2(7)
+  fldv_QueuedBy nvarchar(50) [not null]
+  fldv_CorrelationId nvarchar(36)
+  fldv_CausationId nvarchar(36)
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime2(7) [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime2(7)
+}
+
+Table tbld_EventQueueAttempts {
+  fldi_ID int [pk, increment]
+  fldi_EventQueueID int [not null]
+  fldi_AttemptNumber int [not null]
+  fldd_StartedDate datetime2(7) [not null]
+  fldd_CompletedDate datetime2(7)
+  fldb_IsSuccess bit
+  fldv_Worker nvarchar(100)
+  fldv_Error nvarchar(2000)
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime2(7) [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime2(7)
+}
+
+Table tbld_HazardFiles {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50) [not null]
+  fldv_HazardCode nvarchar(50) [pk, not null]
+  fldv_ReportCode nvarchar(50) [pk, not null]
+  fldv_FileName nvarchar(255) [not null]
+  fldv_FileType nvarchar(50) [not null]
+  fldv_ContentType nvarchar(100) [not null]
+  fldi_FileSizeBytes bigint [not null]
+  fldv_FileHash nvarchar(128)
+  fldv_StorageType nvarchar(20) [not null]
+  fldv_FilePath nvarchar(500)
+  fldb_FileData varbinary(max)
+  fldv_Description nvarchar(1000)
+  fldv_Category nvarchar(50)
+  fldb_IsConfidential bit [not null]
+  fldv_UploadedBy nvarchar(50) [not null]
+  fldd_UploadedDate datetime [not null]
+  fldv_Tags nvarchar(500)
+  fldb_IsActive bit [not null]
+  fldv_InactiveReason nvarchar(500)
+  fldd_InactiveDate datetime
+  fldv_InactiveBy nvarchar(50)
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime
+
+  Indexes {
+    (fldv_Code) [unique]
+  }
+}
+
+Table tbld_HazardLocations {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50) [not null]
+  fldv_HazardCode nvarchar(50) [pk, not null]
+  fldv_Latitude decimal(11, 8) [not null]
+  fldv_Longitude decimal(11, 8) [not null]
+  fldv_Description nvarchar(500) [not null]
+  fldb_IsValidated bit [not null]
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime2(7) [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime2(7)
+}
+
+Table tbld_HazardReportTracking {
+  fldi_ID int [increment]
+  fldv_Code nchar(60)
+  fldv_HazardCode nchar(60)
+  fldv_ReportCode nchar(60)
+  fldv_CreatedBy nchar(60)
+  fldd_CreatedDate datetime
+  fldv_UpdatedBy nchar(60)
+  fldd_UpdatedDate datetime
+}
+
+Table tbld_Hazards {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50) [pk, not null]
+  fldv_Name nvarchar(200)
+  fldb_IsInitialHazard bit
+  fldv_RiskLevel nchar(15)
+  fldv_HazardTitle nvarchar(200)
+  fldv_Description nvarchar(max)
+  fldv_ReportCode nvarchar(50) [not null]
+  fldv_InitialRiskMatrixCode nvarchar(10)
+  fldv_InitialAverageScore decimal(5, 2)
+  fldv_ResidualRiskMatrixCode nchar(10)
+  fldv_ResidualAverageScore decimal(5, 2)
+  fldv_HazardType nvarchar(100)
+  fldv_HazardCategory nvarchar(100)
+  fldv_Location nvarchar(200)
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime
+
+  Indexes {
+    (fldv_Code) [unique]
+  }
+}
+
+Table tbld_Interviews {
+  fldi_ID int [pk, increment]
+  fldv_Code nvarchar(50) [not null]
+  fldv_InvestigationCode nvarchar(50) [not null]
+  fldv_SMSInvestigatorCode nvarchar(50) [not null]
+  fldv_PersonInterviewed nvarchar(200) [not null]
+  fldv_PersonInterviewedNotes nvarchar(max)
+  fldv_InvestigatorNotes nvarchar(max)
+  fldv_PersonInterviewedRole nvarchar(100)
+  fldv_PersonInterviewedDepartment nvarchar(100)
+  fldv_Status nvarchar(50) [not null]
+  fldd_InterviewDate datetime2(7)
+  fldi_DurationMinutes int
+  fldv_InterviewLocation nvarchar(200)
+  fldv_Type nvarchar(50) [not null]
+  fldb_IsConfidential bit [not null]
+  fldv_PreparationNotes nvarchar(max)
+  fldv_QuestionsToAsk nvarchar(max)
+  fldv_BackgroundInformation nvarchar(max)
+  fldv_KeyFindings nvarchar(max)
+  fldv_FollowUpRequired nvarchar(max)
+  fldv_AdditionalWitnesses nvarchar(max)
+  fldd_CompletedDate datetime2(7)
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime2(7) [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime2(7)
+}
+
+Table tbld_Investigations {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50) [not null]
+  fldv_ReportCode nvarchar(50) [pk, not null]
+  fldv_InvestigationNotes nvarchar(max)
+  fldv_HazardCode nvarchar(50) [pk, not null]
+  fldv_AssignedInvestigatorId nvarchar(50) [not null]
+  fldv_Status nvarchar(100) [not null]
+  fldd_CompletedDate datetime2(7)
+  fldv_InvestigationPlan nvarchar(max)
+  fldv_InvestigationObjectives nvarchar(max)
+  fldv_DecisionType nvarchar(100)
+  fldv_DecisionRationale nvarchar(max)
+  fldv_DecisionMaker nvarchar(50)
+  fldd_DecisionDate datetime2(7)
+  fldv_NextSteps nvarchar(max)
+  fldv_ReferralDetails nvarchar(max)
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime2(7) [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime2(7)
+}
+
+Table tbld_Mitigations {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50) [pk, not null]
+  fldv_HazardCode nvarchar(50) [pk, not null]
+  fldv_Name nvarchar(200)
+  fldv_Description ntext
+  fldv_Type nvarchar(50)
+  fldv_Status nvarchar(50)
+  fldv_RiskAssessmentCode nvarchar(50) [pk, not null]
+  fldd_TargetDate datetime
+  fldv_AssignedDepartment nvarchar(100)
+  fldv_ApprovedBy nvarchar(50)
+  fldv_AssignedTo nvarchar(50)
+  fldi_Progress int
+  fldd_EstimatedCost decimal(12, 2)
+  fldv_ResourceRequirements ntext
+  fldi_EstimatedHours int
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime
+
+  Indexes {
+    (fldv_Code) [unique]
+  }
+}
+
+Table tbld_Reports {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50) [pk, not null]
+  fldv_Name nvarchar(200)
+  fldv_Description nvarchar(max)
+  fldv_Status nvarchar(100)
+  fldv_ReportType nvarchar(50)
+  fldd_IncidentDateTime datetime
+  fldv_ReportContactName nvarchar(50)
+  fldv_ReportContactCell nchar(14)
+  fldv_ReportContactEmail nvarchar(254)
+  fldv_ReportContactCompany nvarchar(100)
+  fldv_SubmittedBy nvarchar(50)
+  fldd_SubmittedDate datetime
+  fldv_SubmittingDepartment nvarchar(50)
+  fldv_SubmittingDepartmentJobFunction ntext
+  fldb_IsAnonymous bit
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime
+}
+
+Table tbld_ReportValidations {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50) [not null]
+  fldv_ReportCode nvarchar(50) [pk, not null]
+  fldv_ValidationDecision nvarchar(100)
+  fldv_Status nvarchar(100)
+  fldv_Stage nvarchar(50)
+  fldv_ValidatedBy nvarchar(50)
+  fldd_ValidatedDate datetime
+  fldv_ValidationComments ntext
+  fldv_ValidationType nvarchar(50)
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime
+}
+
+Table tbld_RiskAnalysis {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50)
+  fldv_AssessmentType nchar(20)
+  fldv_HazardCode nvarchar(50) [pk, not null]
+  fldv_RiskAssessmentCode nvarchar(50) [pk, not null]
+  fldv_InitialWorstCredibleOutcome nvarchar(500)
+  fldv_InitialRootCause nvarchar(500)
+  fldv_InitialAdditionalComments ntext
+  fldv_ResidualWorstCredibleOutcome nvarchar(500)
+  fldv_ResidualRootCause nvarchar(500)
+  fldv_ResidualAdditionalComments nvarchar(500)
+  fldv_CreatedBy nvarchar(50)
+  fldd_CreatedDate datetime
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime
+}
+
+Table tbld_RiskAssessments {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50)
+  fldv_Name nvarchar(200)
+  fldv_Description ntext
+  fldv_HazardCode nvarchar(50)
+  fldv_AssessmentType nvarchar(50)
+  fldv_Status nvarchar(100)
+  fldv_Stage nvarchar(50)
+  fldv_LeadAssessorId nvarchar(50)
+  fldv_PrimaryHazardId nvarchar(50)
+  fldv_RiskAssessmentCategory nvarchar(50)
+  fldi_CurrentStep int
+  fldd_CompletedDate datetime
+  fldv_CompletedBy nvarchar(50)
+  fldv_SystemDescription ntext
+  fldv_SystemBoundaries ntext
+  fldv_SystemPurpose ntext
+  fldv_PersonnelFactors ntext
+  fldv_EquipmentFactors ntext
+  fldv_ProcedureFactors ntext
+  fldv_ResourceFactors ntext
+  fldv_PhysicalEnvironmentFactors ntext
+  fldv_OperationalEnvironmentFactors ntext
+  fldv_SelectedStakeholderGroups ntext
+  fldv_SelectedIndividualStakeholders ntext
+  fldi_FinalSeverityScore int
+  fldi_FinalLikelihoodScore int
+  fldv_FinalRiskLevel nvarchar(10)
+  fldv_AdditionalComments ntext
+  fldv_CompletedSteps nvarchar(50)
+  fldi_CompletionPercentage int
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime
+}
+
+Table tbld_SafetyPerformanceIndicators {
+  fldi_ID int [pk, increment]
+  fldv_Code nvarchar(50) [not null]
+  fldv_Name nvarchar(255) [not null]
+  fldv_Description nvarchar(max)
+  fldv_IndicatorType nvarchar(100) [not null]
+  fldv_Status nvarchar(50) [not null]
+  fldv_MeasurementUnit nvarchar(100)
+  fldv_MeasurementFrequency nvarchar(50) [not null]
+  fldv_CalculationMethod nvarchar(max)
+  fldv_DataSource nvarchar(255)
+  fldm_TargetValue decimal(18, 4)
+  fldm_AcceptableRange decimal(18, 4)
+  fldm_WarningThreshold decimal(18, 4)
+  fldm_CriticalThreshold decimal(18, 4)
+  fldv_ResponsibleDepartment nvarchar(255)
+  fldv_DataOwner nvarchar(255)
+  fldv_ReviewAuthority nvarchar(255)
+  fldd_NextReviewDate datetime2(7)
+  fldd_LastReviewDate datetime2(7)
+  fldv_LastReviewNotes nvarchar(max)
+  fldb_AlertsEnabled bit [not null]
+  fldv_AlertRecipients nvarchar(max)
+  fldv_CreatedBy nvarchar(255) [not null]
+  fldd_CreatedDate datetime2(7) [not null]
+  fldv_UpdatedBy nvarchar(255)
+  fldd_UpdatedDate datetime2(7)
+}
+
+Table tbld_ScoringPanel {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50) [not null]
+  fldv_HazardCode nvarchar(50) [pk, not null]
+  fldv_RiskAssessmentCode nvarchar(50) [pk, not null]
+  fldv_SMSUserCode nvarchar(50)
+  fldi_InitialLikelyhood int
+  fldi_InitialSeverity int
+  fldm_InitialScore decimal(5, 2)
+  fldv_InitialScoreRationale ntext
+  fldi_ResidualLikelyhood int
+  fldi_ResidualSeverity int
+  fldm_ResidualScore decimal(5, 2)
+  fldv_ResidualScoreRationale ntext
+  fldd_CreatedDate datetime [not null]
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime
+}
+
+Table tbld_SMSApplicationGroups {
+  fldi_ID int [increment]
+  fldv_Code varchar(60) [not null]
+  fldv_GroupName varchar(100) [not null]
+  fldv_Description varchar(500)
+  fldv_ContactEmail nvarchar(100)
+  fldb_IsActive bit [not null]
+  fldv_CreatedBy varchar(50) [not null]
+  fldd_CreatedDate datetime [not null]
+  fldv_UpdatedBy varchar(50)
+  fldd_UpdatedDate datetime
+}
+
+Table tbld_SMSApplicationUserRoles {
+  fldi_ID int [pk, increment]
+  fldv_Code varchar(60) [not null]
+  fldv_RoleName nvarchar(100) [not null]
+  fldv_AuthorityLevel nvarchar(50) [not null]
+  fldv_RoleCategory nvarchar(50) [not null]
+  fldv_Description nvarchar(500)
+  fldb_IsActive bit [not null]
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime2(7) [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime2(7)
+
+  Indexes {
+    (fldv_Code) [unique]
+    (fldv_RoleName) [unique]
+  }
+}
+
+Table tbld_SMSApplicationUsers {
+  fldi_ID int [pk, increment]
+  fldv_Code varchar(60) [not null]
+  fldv_FirstName nvarchar(100) [not null]
+  fldv_LastName nvarchar(100) [not null]
+  fldv_UserName nvarchar(50) [not null]
+  fldv_Password nvarchar(255) [not null]
+  fldv_Company nvarchar(100)
+  fldv_Organization nvarchar(100)
+  fldv_Title nvarchar(100)
+  fldv_JobFunction nvarchar(100)
+  fldv_ApplicationUserTypeCode nvarchar(100) [not null]
+  fldv_SMSUserRoleCode nvarchar(50) [not null]
+  fldb_IsActive bit [not null]
+  fldd_LastLoginDate datetime2(7)
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime2(7) [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime2(7)
+  fldb_RequiresPasswordChange bit [not null]
+  fldd_PasswordLastChanged datetime2(7)
+  fldi_FailedLoginAttempts int [not null]
+  fldd_AccountLockedUntil datetime2(7)
+  fldi_LoginCount int [not null]
+  fldv_TwoFactorSecretKey nvarchar(255)
+  fldb_TwoFactorEnabled bit
+  fldv_BackupCodes nvarchar(max)
+  fldd_TwoFactorSetupDate datetime2(7)
+  fldi_FailedTwoFactorAttempts int
+  fldd_TwoFactorLockedUntil datetime2(7)
+
+  Indexes {
+    (fldv_Code) [unique]
+    (fldv_UserName) [unique]
+  }
+}
+
+Table tbld_SMSAuditEvidence {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50) [not null]
+  fldv_AuditCode nvarchar(50) [not null]
+  fldv_FindingCode nvarchar(50)
+  fldv_Title nvarchar(200) [not null]
+  fldv_Description nvarchar(2000) [not null]
+  fldv_EvidenceType nvarchar(60) [not null]
+  fldv_Source nvarchar(200) [not null]
+  fldv_CollectedBy nvarchar(200) [not null]
+  fldd_CollectionDate datetime [not null]
+  fldv_FilePath nvarchar(500)
+  fldi_FileSize bigint
+  fldv_ContentType nvarchar(100)
+  fldv_StorageLocation nvarchar(200)
+  fldv_ConfidentialityLevel nvarchar(20) [not null]
+  fldi_RetentionPeriodMonths int [not null]
+  fldv_RetentionReason nvarchar(200)
+  fldb_IsVerified bit [not null]
+  fldv_VerifiedBy nvarchar(200)
+  fldd_VerificationDate datetime
+  fldb_IsArchived bit [not null]
+  fldd_ArchivedDate datetime
+  fldv_Notes nvarchar(2000)
+  fldv_CreatedBy varchar(50) [not null]
+  fldd_CreatedDate datetime [not null]
+  fldv_UpdatedBy varchar(50)
+  fldd_UpdatedDate datetime
+}
+
+Table tbld_SMSAuditFindings {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50) [not null]
+  fldv_AuditCode nvarchar(50) [not null]
+  fldv_Title nvarchar(200) [not null]
+  fldv_Description nvarchar(2000) [not null]
+  fldv_Severity nvarchar(20) [not null]
+  fldv_Category nvarchar(100) [not null]
+  fldv_Status nvarchar(50) [not null]
+  fldd_DiscoveredDate datetime [not null]
+  fldd_TargetResolutionDate datetime
+  fldd_ActualResolutionDate datetime
+  fldv_ResponsiblePerson nvarchar(200)
+  fldv_CorrectiveAction nvarchar(2000)
+  fldv_RootCauseAnalysis nvarchar(2000)
+  fldb_VerificationRequired bit [not null]
+  fldv_VerifiedBy nvarchar(200)
+  fldd_VerificationDate datetime
+  fldv_Notes nvarchar(2000)
+  fldv_CreatedBy varchar(50) [not null]
+  fldd_CreatedDate datetime [not null]
+  fldv_UpdatedBy varchar(50)
+  fldd_UpdatedDate datetime
+}
+
+Table tbld_SMSAuditPlans {
+  fldi_ID int [pk, increment]
+  fldv_Code nvarchar(50) [not null]
+  fldv_Name nvarchar(200) [not null]
+  fldv_Description nvarchar(800)
+  fldv_AuditType nvarchar(60) [not null]
+  fldv_Scope nvarchar(800) [not null]
+  fldv_Objectives nvarchar(800)
+  fldd_PlannedStartDate datetime [not null]
+  fldd_PlannedEndDate datetime [not null]
+  fldv_LeadAuditor nvarchar(200) [not null]
+  fldv_AuditorTeam nvarchar(800)
+  fldv_ResponsibleDepartment nvarchar(200) [not null]
+  fldv_Status nvarchar(50) [not null]
+  fldv_Priority nvarchar(20) [not null]
+  fldv_RecurrencePattern nvarchar(60)
+  fldb_RequiresApproval bit [not null]
+  fldv_ApprovedBy nvarchar(200)
+  fldd_ApprovedDate datetime
+  fldi_ExpectedDurationHours int
+  fldv_Notes nvarchar(2000)
+  fldv_CreatedBy varchar(50) [not null]
+  fldd_CreatedDate datetime [not null]
+  fldv_UpdatedBy varchar(50)
+  fldd_UpdatedDate datetime
+
+  Indexes {
+    (fldv_Code) [unique]
+  }
+}
+
+Table tbld_SMSAudits {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50) [not null]
+  fldv_Name nvarchar(200) [not null]
+  fldv_Description nvarchar(800)
+  fldv_AuditPlanCode nvarchar(50)
+  fldv_AuditType nvarchar(60) [not null]
+  fldv_Scope nvarchar(800) [not null]
+  fldv_Objectives nvarchar(800)
+  fldd_ScheduledStartDate datetime [not null]
+  fldd_ScheduledEndDate datetime [not null]
+  fldd_ActualStartDate datetime
+  fldd_ActualEndDate datetime
+  fldv_LeadAuditor nvarchar(200) [not null]
+  fldv_AuditorTeam nvarchar(800)
+  fldv_ResponsibleDepartment nvarchar(200) [not null]
+  fldv_ContactPerson nvarchar(200)
+  fldv_AuditLocation nvarchar(200)
+  fldv_Status nvarchar(50) [not null]
+  fldv_Priority nvarchar(20) [not null]
+  fldi_TotalFindings int [not null]
+  fldi_CriticalFindings int [not null]
+  fldi_MajorFindings int [not null]
+  fldi_MinorFindings int [not null]
+  fldi_Observations int [not null]
+  fldd_ReportSubmittedDate datetime
+  fldv_ExecutiveSummary nvarchar(2000)
+  fldv_Notes nvarchar(2000)
+  fldv_CreatedBy varchar(50) [not null]
+  fldd_CreatedDate datetime [not null]
+  fldv_UpdatedBy varchar(50)
+  fldd_UpdatedDate datetime
+}
+
+Table tbld_SMSCompanies {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50) [not null]
+  fldv_Name nvarchar(200)
+  fldv_Description nvarchar(200)
+  fldv_ContactName nvarchar(50)
+  fldv_ContactEmail nvarchar(50)
+  fldv_ContactPhone nvarchar(20)
+  fldv_InternalRepresentative nvarchar(50)
+  fldv_CreatedBy nvarchar(50)
+  fldd_CreatedDate datetime2(7)
+  fldv_UpdatedBy nvarchar(200)
+  fldd_UpdatedDate datetime2(7)
+}
+
+Table tbld_SMSJobTitles {
+  fldi_Id int [increment]
+  fldv_Code nvarchar(50)
+  fldv_Name nvarchar(100)
+  fldv_CreatedBy nvarchar(50)
+  fldd_CreatedDate datetime2(7)
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime2(7)
+}
+
+Table tbld_SMSOrganizationalGroups {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50) [not null]
+  fldv_GroupName nvarchar(255) [not null]
+  fldv_Description nvarchar(1000)
+  fldv_ContactEmail nvarchar(100)
+  fldv_GroupType nvarchar(100) [not null]
+  fldv_AuthorityLevel nvarchar(100) [not null]
+  fldb_IsActive bit [not null]
+  fldv_CreatedBy nvarchar(100) [not null]
+  fldd_CreatedDate datetime2(7) [not null]
+  fldv_UpdatedBy nvarchar(100)
+  fldd_UpdatedDate datetime2(7)
+}
+
+Table tbld_SMSOrganizationalUsers {
+  fldi_ID int [pk, increment]
+  fldv_Code varchar(60) [not null]
+  fldv_FirstName nvarchar(100) [not null]
+  fldv_LastName nvarchar(100) [not null]
+  fldv_UserName nvarchar(50) [not null]
+  fldv_Password nvarchar(255) [not null]
+  fldv_Company nvarchar(100)
+  fldv_Organization nvarchar(100)
+  fldv_Title nvarchar(100)
+  fldv_JobFunction nvarchar(100)
+  fldv_Position nvarchar(100) [not null]
+  fldv_OrganizationLevel nvarchar(50) [not null]
+  fldb_IsActive bit [not null]
+  fldd_LastLoginDate datetime2(7)
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime2(7) [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime2(7)
+  fldb_RequiresPasswordChange bit [not null]
+  fldd_PasswordLastChanged datetime2(7)
+  fldi_FailedLoginAttempts int [not null]
+  fldd_AccountLockedUntil datetime2(7)
+  fldi_LoginCount int [not null]
+  fldv_SMSUserRoleCode nvarchar(100)
+  fldv_AuthorityLevel nvarchar(100)
+  fldv_RiskApprovalAuthority nvarchar(100)
+  fldv_TwoFactorSecretKey nvarchar(255)
+  fldb_TwoFactorEnabled bit
+  fldv_BackupCodes nvarchar(max)
+  fldd_TwoFactorSetupDate datetime2(7)
+  fldi_FailedTwoFactorAttempts int
+  fldd_TwoFactorLockedUntil datetime2(7)
+
+  Indexes {
+    (fldv_Code) [unique]
+    (fldv_UserName) [unique]
+  }
+}
+
+Table tbld_SMSOrganizations {
+  fldi_ID int [increment]
+  fldv_Code varchar(60)
+  fldv_Value varchar(120) [not null]
+  fldv_Name varchar(255) [not null]
+  fldv_Description varchar(1000)
+  fldv_CreatedBy varchar(50) [not null]
+  fldd_CreatedDate datetime2(7) [not null]
+  fldv_UpdatedBy varchar(50)
+  fldd_UpdatedDate datetime2(7)
+}
+
+Table tbld_SMSStakeholderGroups {
+  fldi_ID int [pk, increment]
+  fldv_Code varchar(60) [not null]
+  fldv_GroupName varchar(100) [not null]
+  fldv_Description varchar(500)
+  fldv_ContactEmail nvarchar(100)
+  fldb_IsActive bit [not null]
+  fldv_CreatedBy varchar(50) [not null]
+  fldd_CreatedDate datetime [not null]
+  fldv_UpdatedBy varchar(50)
+  fldd_UpdatedDate datetime
+
+  Indexes {
+    (fldv_Code) [unique]
+    (fldv_GroupName) [unique]
+  }
+}
+
+Table tbld_SMSStakeholderUsers {
+  fldi_ID int [increment]
+  fldv_Code varchar(60) [not null]
+  fldv_FirstName nvarchar(100) [not null]
+  fldv_LastName nvarchar(100) [not null]
+  fldv_UserName nvarchar(50) [not null]
+  fldv_Password nvarchar(255) [not null]
+  fldv_Company nvarchar(100)
+  fldv_Organization nvarchar(200)
+  fldv_Title nvarchar(100)
+  fldv_JobFunction nvarchar(100)
+  fldv_SMSUserRoleCode nvarchar(10) [not null]
+  fldb_IsActive bit [not null]
+  fldd_LastLoginDate datetime2(7)
+  fldv_CreatedBy nvarchar(50) [not null]
+  fldd_CreatedDate datetime2(7) [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime2(7)
+  fldb_RequiresPasswordChange bit [not null]
+  fldd_PasswordLastChanged datetime2(7)
+  fldi_FailedLoginAttempts int [not null]
+  fldd_AccountLockedUntil datetime2(7)
+  fldi_LoginCount int [not null]
+  fldb_IsPOPEmployee bit
+  fldv_TwoFactorSecretKey nvarchar(255)
+  fldb_TwoFactorEnabled bit
+  fldv_BackupCodes nvarchar(max)
+  fldd_TwoFactorSetupDate datetime2(7)
+  fldi_FailedTwoFactorAttempts int
+  fldd_TwoFactorLockedUntil datetime2(7)
+
+  Indexes {
+    (fldv_Code) [unique]
+  }
+}
+
+Table tbld_SPIDataPoints {
+  fldi_ID int [increment]
+  fldv_Code nvarchar(50)
+  fldv_SPICode nvarchar(50) [not null]
+  fldm_Value decimal(18, 4) [not null]
+  fldd_MeasurementDate datetime2(7) [not null]
+  fldv_Period nvarchar(50) [not null]
+  fldv_DataSource nvarchar(255)
+  fldv_Notes nvarchar(max)
+  fldb_IsVerified bit [not null]
+  fldv_VerifiedBy nvarchar(255)
+  fldd_VerifiedDate datetime2(7)
+  fldv_CreatedBy nvarchar(255) [not null]
+  fldd_CreatedDate datetime2(7) [not null]
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime2(7)
+}
+
+Table tblr_SMSApplicationGroupCompanies {
+  fldi_ID int
+  fldv_CompanyCode nvarchar(50)
+  fldv_GroupCode nvarchar(50)
+  fldd_AssignedDate datetime2(7)
+  fldv_AssignedBy nvarchar(50)
+  fldv_CreatedBy nvarchar(50)
+  fldd_CreatedDate datetime2(7)
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime2(7)
+}
+
+Table tblr_SMSApplicationUserGroups {
+  fldi_ID int [increment]
+  fldv_UserCode varchar(60) [not null]
+  fldv_GroupCode varchar(60) [not null]
+  fldd_AssignedDate datetime [not null]
+  fldv_AssignedBy varchar(50) [not null]
+  fldv_CreatedBy varchar(50) [not null]
+  fldd_CreatedDate datetime [not null]
+  fldv_UpdatedBy varchar(50)
+  fldd_UpdatedDate datetime
+}
+
+Table tblr_SMSOrganizationalGroupCompanies {
+  fldi_ID int
+  fldv_CompanyCode nvarchar(50)
+  fldv_GroupCode nvarchar(50)
+  fldd_AssignedDate datetime2(7)
+  fldv_AssignedBy nvarchar(50)
+  fldv_CreatedBy nvarchar(50)
+  fldd_CreatedDate datetime2(7)
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime2(7)
+}
+
+Table tblr_SMSOrganizationalUserGroups {
+  fldv_UserCode nvarchar(50) [not null]
+  fldv_GroupCode nvarchar(50) [not null]
+  fldd_AssignedDate datetime2(7) [not null]
+  fldv_AssignedBy nvarchar(100) [not null]
+}
+
+Table tblr_SMSStakeholderGroupCompanies {
+  fldi_ID int
+  fldv_CompanyCode nvarchar(50)
+  fldv_GroupCode nvarchar(50)
+  fldd_AssignedDate datetime2(7)
+  fldv_AssignedBy nvarchar(50)
+  fldv_CreatedBy nvarchar(50)
+  fldd_CreatedDate datetime2(7)
+  fldv_UpdatedBy nvarchar(50)
+  fldd_UpdatedDate datetime2(7)
+}
+
+Table tblr_SMSStakeholderUserGroups {
+  fldi_ID int [pk, increment]
+  fldv_UserCode varchar(60) [not null]
+  fldv_GroupCode varchar(60) [not null]
+  fldd_AssignedDate datetime [not null]
+  fldv_AssignedBy varchar(50) [not null]
+  fldv_CreatedBy varchar(50) [not null]
+  fldd_CreatedDate datetime [not null]
+  fldv_UpdatedBy varchar(50)
+  fldd_UpdatedDate datetime
+
+  Indexes {
+    (fldv_UserCode, fldv_GroupCode) [unique]
+  }
+}
+
+Table tbls_ApplicationUserTitles {
+  fldi_Id int
+  fldv_Code nchar(10)
+  fldv_Name nchar(60)
+}
+
+Table tbls_AuditLog {
+  fldv_UserID varchar(50) [not null]
+  fldv_Workstation varchar(50) [not null]
+  fldd_EventDateTime datetime [not null]
+  fldv_MessageType varchar(50) [not null]
+  fldv_Severity varchar(50) [not null]
+  fldv_Module varchar(50) [not null]
+  fldv_Function varchar(50) [not null]
+  fldv_Description varchar(8000)
+}
+
+Table tbls_SMSUserRolePermissions {
+  fldi_Id int [increment]
+  fldv_Code varchar(50)
+  fldv_SMSUserRoleCode varchar(50)
+  fldv_Module varchar(200)
+  fldb_Create bit
+  fldb_Read bit
+  fldb_Update bit
+  fldb_Delete bit
+}
+
+Table tbls_SMSUserRoles {
+  fldi_Id int [increment]
+  fldv_Code nchar(30)
+  fldv_Name nchar(30)
+}
+
+Ref FK_tbld_HazardFiles_tbld_Hazards: tbld_HazardFiles.fldv_HazardCode > tbld_Hazards.fldv_Code
+Ref FK_tbld_HazardFiles_tbld_Reports: tbld_HazardFiles.fldv_ReportCode > tbld_Reports.fldv_Code
+Ref FK_tbld_HazardLocations_tbld_Hazards: tbld_HazardLocations.fldv_HazardCode > tbld_Hazards.fldv_Code
+Ref FK_tbld_Hazards_tbld_Reports: tbld_Hazards.fldv_ReportCode > tbld_Reports.fldv_Code
+Ref FK_tbld_Investigations_tbld_Hazards: tbld_Investigations.fldv_HazardCode > tbld_Hazards.fldv_Code
+Ref FK_tbld_Investigations_tbld_Reports: tbld_Investigations.fldv_ReportCode > tbld_Reports.fldv_Code
+Ref FK_tbld_Mitigations_tbld_Hazards: tbld_Mitigations.fldv_HazardCode > tbld_Hazards.fldv_Code
+Ref FK_tbld_ReportValidations_tbld_Reports: tbld_ReportValidations.fldv_ReportCode > tbld_Reports.fldv_Code
+Ref FK_tbld_ScoringPanel_tbld_Hazards: tbld_ScoringPanel.fldv_HazardCode > tbld_Hazards.fldv_Code
+

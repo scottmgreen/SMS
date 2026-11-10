@@ -197,11 +197,11 @@ namespace SMS3.Api.Models;
         public DateTime? ReportUpdatedDate { get; init; }
         // public string HazardStatus { get; init; } = string.Empty;
 
-        public string ContactName { get; init; } = string.Empty;
-        public string ContactCell { get; init; } = string.Empty;
-        public string ContactEmail { get; init; } = string.Empty;
+        //public string ContactName { get; init; } = string.Empty;
+        //public string ContactCell { get; init; } = string.Empty;
+        //public string ContactEmail { get; init; } = string.Empty;
 
-        public string ContactCompany { get; init; } = string.Empty;
+        //public string ContactCompany { get; init; } = string.Empty;
 
         public string ReportValidationCode { get; init; } = string.Empty;
         public string ReportValidationDecision { get; init; } = string.Empty;
