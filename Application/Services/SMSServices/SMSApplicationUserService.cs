@@ -396,19 +396,29 @@ public sealed class SMSApplicationUserService : ISMSApplicationUserService
         }
     }
 
-    public Task<Result<bool>> UserNameExistsAsync(string userName, CancellationToken ct = default)
+    public Task<Result<bool>> AuthenticateAsync(string userName, string plainTextPassword, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        return AuthenticateSMSApplicationUserAsync(userName, plainTextPassword, ct);
     }
 
-    public Task<Result<SMSApplicationUser>> GetByUserNameAsync(string userName, CancellationToken ct = default)
+    public Task<Result<SMSApplicationUser>> CreateAsync(SMSApplicationUser user, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        return CreateSMSApplicationUserAsync(user, ct);
     }
 
-    public Task<Result<UserStatistics>> GetUserStatisticsAsync(CancellationToken ct = default)
+    public Task<Result<IEnumerable<SMSApplicationUser>>> GetAllAsync(CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        return GetAllSMSApplicationUsersAsync(ct);
+    }
+
+    public Task<Result<SMSApplicationUser>> GetByCodeAsync(string id, CancellationToken ct = default)
+    {
+        return GetSMSApplicationUserByCodeAsync(id, ct);
+    }
+
+    public Task<Result<SMSApplicationUser>> UpdateAsync(SMSApplicationUser user, CancellationToken ct = default)
+    {
+        return UpdateSMSApplicationUserAsync(user, ct);
     }
 }
 

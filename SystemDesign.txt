@@ -22,7 +22,7 @@ The dominant architectural style is clean/layered architecture:
 Primary responsibilities:
 - Render Blazor UI (.razor and .razor.cs code-behind files).
 - Provide module pages for SMS Risk Management, Assurance, Listings, Policy, and System administration.
-- Host Minimal API endpoints (PDXSMSApiEndpointsV1 and PDXSMSApiEndpointsV2).
+- Host Minimal API endpoints (PDXSMSApiEndpointsV2).
 - Configure runtime behavior in Program.cs and presentation dependency injection.
 - Handle UI-level events and page refresh triggers (for example SPIDashboard refresh handling).
 

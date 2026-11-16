@@ -320,5 +320,30 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
     }
 
     #endregion
+
+    public Task<Result<bool>> AuthenticateAsync(string userName, string plainTextPassword, CancellationToken ct = default)
+    {
+        return AuthenticateSMSOrganizationalUserAsync(userName, plainTextPassword, ct);
+    }
+
+    public Task<Result<SMSOrganizationalUser>> CreateAsync(SMSOrganizationalUser user, CancellationToken ct = default)
+    {
+        return CreateSMSOrganizationalUserAsync(user, ct);
+    }
+
+    public Task<Result<IEnumerable<SMSOrganizationalUser>>> GetAllAsync(CancellationToken ct = default)
+    {
+        return GetAllSMSOrganizationalUsersAsync(ct);
+    }
+
+    public Task<Result<SMSOrganizationalUser>> GetByCodeAsync(string id, CancellationToken ct = default)
+    {
+        return GetSMSOrganizationalUserByCodeAsync(id, ct);
+    }
+
+    public Task<Result<SMSOrganizationalUser>> UpdateAsync(SMSOrganizationalUser user, CancellationToken ct = default)
+    {
+        return UpdateSMSOrganizationalUserAsync(user, ct);
+    }
 }
 

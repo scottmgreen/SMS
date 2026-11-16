@@ -8,6 +8,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System.Text.RegularExpressions;
+
 namespace SMS_Domain.ValueObjects;
 
 /// <summary>
@@ -17,6 +19,9 @@ public sealed class UserName : BaseValueObject
 {
     public const int MaxLength = 50;
     public const int MinLength = 3;
+    private static readonly Regex StakeholderUserNameFormatRegex = new(
+        @"^s_[A-Za-z0-9]+\.[A-Za-z0-9]+_[A-Fa-f0-9]{8}$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public string Value { get; }
 
@@ -48,6 +53,16 @@ public sealed class UserName : BaseValueObject
                                 c == '-' ||
                                 c == '_' ||
                                 c == '@');
+    }
+
+    public static bool IsValidStakeholderUserNameFormat(string userName)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            return false;
+        }
+
+        return StakeholderUserNameFormatRegex.IsMatch(userName.Trim());
     }
 
     /// <summary>

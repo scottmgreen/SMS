@@ -113,38 +113,39 @@
         <RadzenDataGridColumn TItem="RiskAssessment" Title="Actions" Width="250px" Sortable="false" Filterable="false">
             <Template Context="assessment">
                 @{ var isLocked = IsRecordLocked(assessment.ReportCode); }
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                    
-                    @if (_currentUserService.CanRead("SMS_Listings_RiskAssessments"))
-                    {
-                        <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
-                                      Tooltip="View Assessment Details"
-                                      Click="@(() => ViewAssessment(assessment))"
-                                      Disabled="@isLocked" />
-                    }
-                    @if (_currentUserService.CanUpdate("SMS_Listings_RiskAssessments"))
-                    {
-                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
-                                      Tooltip="Edit Assessment"
-                                      Click="@(() => EditAssessment(assessment))"
-                                      Disabled="@isLocked" />
-                    }
+                <div class="sms-listing-action-grid" style="display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:flex-start;gap:0.2rem;white-space:nowrap;">
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        @if (_currentUserService.CanRead("SMS_Listings_RiskAssessments"))
+                        {
+                            <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
+                                          Tooltip="View Assessment Details"
+                                          Click="@(() => ViewAssessment(assessment))"
+                                          Disabled="@isLocked"
+                                          Style="margin:0;" />
+                        }
+                    </div>
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        @if (_currentUserService.CanUpdate("SMS_Listings_RiskAssessments"))
+                        {
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                          Tooltip="Edit Assessment"
+                                          Click="@(() => EditAssessment(assessment))"
+                                          Disabled="@isLocked"
+                                          Style="margin:0;" />
+                        }
+                    </div>
 
-                    @if (_currentUserService.CanDelete("SMS_Listings_RiskAssessments"))
-                    {
-                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                      Tooltip="Delete Assessment"
-                                      Click="@(() => DeleteAssessment(assessment))"
-                                      Disabled="@isLocked" />
-                    }
-
-                    
-                    
-                    
-                    
-                                       
-                    
-                </RadzenStack>
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        @if (_currentUserService.CanDelete("SMS_Listings_RiskAssessments"))
+                        {
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                          Tooltip="Delete Assessment"
+                                          Click="@(() => DeleteAssessment(assessment))"
+                                          Disabled="@isLocked"
+                                          Style="margin:0;" />
+                        }
+                    </div>
+                </div>
             </Template>
         </RadzenDataGridColumn>
     </Columns>

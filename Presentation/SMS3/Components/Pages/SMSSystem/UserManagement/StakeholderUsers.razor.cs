@@ -248,12 +248,28 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
             var normalizedTitle = NormalizeTitleSelection(_newUser.Title);
             var generatedUserName = BuildStakeholderUserName(_newFirstName, _newLastName);
             var generatedPassword = GenerateTemporaryPassword();
+            if (!UserName.IsValidStakeholderUserNameFormat(generatedUserName))
+            {
+                await ShowValidationErrorsAsync(new[]
+                {
+                    "Generated username must match format s_First.Last_XXXXXXXX."
+                });
+                return;
+            }
+
+            var userNameResult = UserName.Create(generatedUserName);
+            if (userNameResult.IsFailure)
+            {
+                await ShowValidationErrorsAsync(new[] { userNameResult.Error.Message });
+                return;
+            }
+
             var user = new SMSStakeholderUser(userId)
             {
                 Code = userId.Value,
                 FirstName = firstNameResult.Value,
                 LastName = lastNameResult.Value,
-                UserName = UserName.Create(generatedUserName).Value,
+                UserName = userNameResult.Value,
                 Password = Password.Create(generatedPassword).Value,
                 StakeholderType = normalizedTitle,
                 Organization = _newUser.Organization,
@@ -746,18 +762,65 @@ public partial class StakeholderUsers : ComponentBase, IEventReceiver, IDisposab
             return new string(value
                 .Trim()
                 .Where(char.IsLetterOrDigit)
-                .ToArray())
-                .ToLowerInvariant();
+                .ToArray());
+        }
+
+        static (string First, string Last) TrimNamePartsToFit(string first, string last, int maxCombinedLength)
+        {
+            if (first.Length + last.Length <= maxCombinedLength)
+            {
+                return (first, last);
+            }
+
+            var firstLength = Math.Min(first.Length, Math.Max(1, maxCombinedLength / 2));
+            var lastLength = Math.Min(last.Length, Math.Max(1, maxCombinedLength - firstLength));
+
+            if (firstLength + lastLength > maxCombinedLength)
+            {
+                lastLength = Math.Max(1, maxCombinedLength - firstLength);
+            }
+
+            var trimmedFirst = first[..firstLength];
+            var trimmedLast = last[..lastLength];
+
+            while (trimmedFirst.Length + trimmedLast.Length > maxCombinedLength)
+            {
+                if (trimmedFirst.Length >= trimmedLast.Length && trimmedFirst.Length > 1)
+                {
+                    trimmedFirst = trimmedFirst[..^1];
+                    continue;
+                }
+
+                if (trimmedLast.Length > 1)
+                {
+                    trimmedLast = trimmedLast[..^1];
+                    continue;
+                }
+
+                break;
+            }
+
+            return (trimmedFirst, trimmedLast);
         }
 
         var first = NormalizeNamePart(firstName);
         var last = NormalizeNamePart(lastName);
+        if (string.IsNullOrWhiteSpace(first))
+        {
+            first = "User";
+        }
 
-        var baseUserName = $"s_{first}.{last}".Trim('.');
-        var fallbackUserName = $"s_user.{Guid.NewGuid():N}";
-        return string.IsNullOrWhiteSpace(baseUserName) || string.Equals(baseUserName, "s_", StringComparison.OrdinalIgnoreCase)
-            ? fallbackUserName[..Math.Min(20, fallbackUserName.Length)]
-            : baseUserName;
+        if (string.IsNullOrWhiteSpace(last))
+        {
+            last = "User";
+        }
+
+        const int fixedSegmentLength = 12; // s_ + . + _ + 8 hex suffix
+        var maxCombinedNameLength = Math.Max(2, UserName.MaxLength - fixedSegmentLength);
+        (first, last) = TrimNamePartsToFit(first, last, maxCombinedNameLength);
+
+        var suffix = Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
+        return $"s_{first}.{last}_{suffix}";
     }
 
     private static string GenerateTemporaryPassword()

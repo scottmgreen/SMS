@@ -106,6 +106,10 @@ public abstract class HazardType : BaseEnum<HazardType>
     /// <summary>Slip, trip, and fall hazard</summary>
     public static readonly HazardType SlipTripFall = new SlipTripFallType();
 
+    public static readonly HazardType GSEOtherEquipment = new GSEOtherEquipmentType();  
+
+
+
     /// <summary>Other physical hazard</summary>
     public static readonly HazardType PhysicalOther = new PhysicalOtherType();
 
@@ -444,7 +448,12 @@ public abstract class HazardType : BaseEnum<HazardType>
         {
         }
     }
-
+    private sealed class GSEOtherEquipmentType : HazardType
+    {
+        public GSEOtherEquipmentType() : base("GSE_OTHEREQUIPMENT", "GSE Or Other Equipment", "GSE Or Other Equipment", "PHYSICAL")
+        {
+        }
+    }
     private sealed class PhysicalOtherType : HazardType
     {
         public PhysicalOtherType() : base("PHYSICAL_OTHER", "Other","Other physical hazard", "PHYSICAL")

@@ -120,27 +120,35 @@
                 
         <RadzenDataGridColumn TItem="HazardFile" Title="Actions" Width="120px" Sortable="false" Filterable="false">
             <Template Context="file">
-                @if (_currentUserService.CanRead("SMS_Listings_HazardFiles"))
-                {
-                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" 
-                                Click="@(() => ReadFile(file))" 
-                                Tooltip="View File"
-                                Style="margin-right: 5px;" />
-                }
-                 @if (_currentUserService.CanUpdate("SMS_Listings_HazardFiles"))
-                {
-                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small"
-                                  Click="@(() => EditFile(file))"
-                                  Tooltip="Edit File Metadata"
-                                  Style="margin-right: 5px;" />
-                }
-                @if (_currentUserService.CanDelete("SMS_Listings_HazardFiles"))
-                {
-                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                  Click="@(() => DeleteFile(file))"
-                                  Tooltip="Delete File" />
-                }
-                
+                <div class="sms-listing-action-grid" style="display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:flex-start;gap:0.2rem;white-space:nowrap;">
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        @if (_currentUserService.CanRead("SMS_Listings_HazardFiles"))
+                        {
+                            <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
+                                          Click="@(() => ReadFile(file))"
+                                          Tooltip="View File"
+                                          Style="margin:0;" />
+                        }
+                    </div>
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        @if (_currentUserService.CanUpdate("SMS_Listings_HazardFiles"))
+                        {
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small"
+                                          Click="@(() => EditFile(file))"
+                                          Tooltip="Edit File Metadata"
+                                          Style="margin:0;" />
+                        }
+                    </div>
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        @if (_currentUserService.CanDelete("SMS_Listings_HazardFiles"))
+                        {
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                          Click="@(() => DeleteFile(file))"
+                                          Tooltip="Delete File"
+                                          Style="margin:0;" />
+                        }
+                    </div>
+                </div>
             </Template>
         </RadzenDataGridColumn>
     </Columns>

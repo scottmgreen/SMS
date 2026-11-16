@@ -243,57 +243,14 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
     // Updated to use centralized helper for SMS Organization Level options
     private List<DropdownOption> _organizationLevelOptions => DropdownHelper.GetOrganizationLevelOptions();
 
-    // Update validation to check if role exists
-    private bool IsValidSMSRole(string roleId)
-    {
-        if (string.IsNullOrWhiteSpace(roleId)) return true; // Optional field
-
-        return SMSRoleOptions.Any(role => role.Value.Equals(roleId, StringComparison.OrdinalIgnoreCase));
-    }
     
 
-    // Helper method to get enum by value
-    private SMSOrganizationalLevel GetOrganizationLevelByValue(string value)
-    {
-        if (string.IsNullOrEmpty(value))
-            return SMSOrganizationalLevel.UnassignedLevel;
-
-        return SMSOrganizationalLevel.GetAllValues()
-            .FirstOrDefault(l => l.Value.Equals(value, StringComparison.OrdinalIgnoreCase))
-            ?? SMSOrganizationalLevel.UnassignedLevel;
-    }
-
-    // Update form validation
-    private bool IsValidOrganizationLevel(SMSOrganizationalLevel organizationLevel)
-    {
-        return organizationLevel is not null && organizationLevel != SMSOrganizationalLevel.UnassignedLevel;
-    }
-    #endregion
-
-    #region Form Validation Properties
-
-    private bool _isCreateFormValid =>
-        !string.IsNullOrWhiteSpace(_newFirstName) &&
-        !string.IsNullOrWhiteSpace(_newLastName) &&
-        !string.IsNullOrWhiteSpace(_newUserName) &&
-        !string.IsNullOrWhiteSpace(_newPassword) &&
-        _newPassword == _confirmPassword &&
-        !string.IsNullOrWhiteSpace(_newUser.Company) &&
-        IsValidOrganization(_newUser.Organization) &&
-        !string.IsNullOrWhiteSpace(_newUser.Title) &&
-        IsValidOrganizationLevel(_newOrganizationLevelId) &&
-        !string.IsNullOrWhiteSpace(_newUserRoleCode);
-
-    private bool _isEditFormValid =>
-        !string.IsNullOrWhiteSpace(_editFirstName) &&
-        !string.IsNullOrWhiteSpace(_editLastName) &&
-        !string.IsNullOrWhiteSpace(_editUser.Company) &&
-        IsValidOrganization(_editUser.Organization) &&
-        !string.IsNullOrWhiteSpace(_editUser.Title) &&
-        IsValidOrganizationLevel(_editOrganizationLevelId) &&
-        !string.IsNullOrWhiteSpace(_editUserRoleCode);
+    
+    
 
     
+
+        
     // Helper method to validate organization level
     private bool IsValidOrganizationLevel(string organizationLevel)
     {

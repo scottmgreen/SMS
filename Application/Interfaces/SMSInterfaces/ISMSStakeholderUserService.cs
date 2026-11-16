@@ -12,14 +12,12 @@ using SMS_Domain.Entities;
 
 namespace SMS_Application.Interfaces;
 
-public interface ISMSStakeholderUserService
+public interface ISMSStakeholderUserService : ISMSUserService<SMSStakeholderUser>
 {
     Task<Result<bool>> AuthenticateSMSStakeholderUserAsync(string userName, string plainTextPassword, CancellationToken ct = default);
     Task<Result<SMSStakeholderUser>> CreateSMSStakeholderUserAsync(SMSStakeholderUser user, CancellationToken ct = default);
-    
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetAllSMSStakeholderUsersAsync(CancellationToken ct = default);
     Task<Result<SMSStakeholderUser>> GetSMSStakeholderUserByCodeAsync(string id, CancellationToken ct = default);
     Task<Result<Dictionary<string, int>>> GetStakeholderTypeStatisticsAsync(CancellationToken ct = default);
-    Task<Result<IEnumerable<SMSStakeholderUser>>> GetUsersRequiringAOAAccessAsync(CancellationToken ct = default);
     Task<Result<SMSStakeholderUser>> UpdateSMSStakeholderUserAsync(SMSStakeholderUser user, CancellationToken ct = default);
 }

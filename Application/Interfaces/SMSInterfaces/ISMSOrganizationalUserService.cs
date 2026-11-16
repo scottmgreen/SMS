@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 namespace SMS_Application.Interfaces;
 
-public interface ISMSOrganizationalUserService
+public interface ISMSOrganizationalUserService : ISMSUserService<SMSOrganizationalUser>
 {
     Task<Result<bool>> AuthenticateSMSOrganizationalUserAsync(string userName, string plainTextPassword, CancellationToken ct = default);
     Task<Result<SMSOrganizationalUser>> CreateSMSOrganizationalUserAsync(SMSOrganizationalUser user, CancellationToken ct = default);

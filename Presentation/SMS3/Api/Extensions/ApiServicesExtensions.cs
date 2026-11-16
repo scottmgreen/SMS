@@ -47,13 +47,13 @@ namespace SMS3.Api.Extensions
             // Add API Versioning
             services.AddApiVersioning(options =>
             {
-                options.DefaultApiVersion = new ApiVersion(1, 0); // Default to v1.0
+                options.DefaultApiVersion = new ApiVersion(2, 0);
                 options.AssumeDefaultVersionWhenUnspecified = true;
                 options.ReportApiVersions = true; // Adds API version headers to responses
             }
             ).AddApiExplorer(options =>
             {
-                options.GroupNameFormat = "'v'VVV"; // e.g., v1, v2
+                options.GroupNameFormat = "'v'VVV";
                 options.SubstituteApiVersionInUrl = true;
             });
 
@@ -93,7 +93,6 @@ namespace SMS3.Api.Extensions
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(options =>
             {
-                options.SwaggerDoc("v1", new OpenApiInfo { Title = "SMS External Reporting API", Version = "v1" });
                 options.SwaggerDoc("v2", new OpenApiInfo { Title = "SMS External Reporting API", Version = "v2" });
 
                 // Use a predicate to control which endpoints are included in each document
@@ -105,7 +104,7 @@ namespace SMS3.Api.Extensions
                     }
 
                     // Fallback if no group metadata is detected
-                    return docName.Equals("v1", StringComparison.OrdinalIgnoreCase);
+                    return docName.Equals("v2", StringComparison.OrdinalIgnoreCase);
                 });
 
                 // Configure API Key Security
@@ -151,24 +150,17 @@ namespace SMS3.Api.Extensions
 
         public static WebApplication UseSMSSwagger(this WebApplication app)
         {
-            var v1ApiVersionSet = app.NewApiVersionSet()
-                 .HasApiVersion(new ApiVersion(1, 0))
-                 .ReportApiVersions()
-                 .Build();
-
             var v2ApiVersionSet = app.NewApiVersionSet()
                 .HasApiVersion(new ApiVersion(2, 0))
                 .ReportApiVersions()
                 .Build();
 
-            // Register endpoints for each version
-            app.MapPDXSMSApiEndpointsV1(v1ApiVersionSet);
+            // Register endpoints
             app.MapPDXSMSApiEndpointsV2(v2ApiVersionSet);
 
             app.UseSwagger();
             app.UseSwaggerUI(options =>
             {
-                options.SwaggerEndpoint("../swagger/v1/swagger.json", "V1");
                 options.SwaggerEndpoint("../swagger/v2/swagger.json", "V2");
                 options.RoutePrefix = "api-docs";
                 options.DocumentTitle = "SMS External Reporting API Documentation";

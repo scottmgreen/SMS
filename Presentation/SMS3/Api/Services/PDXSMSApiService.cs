@@ -153,6 +153,7 @@ namespace SMS3.Api.Services
                     IsAnonymous = report?.IsAnonymous ?? true,
                     SubmittedBy = report?.SubmittedBy ?? string.Empty,
                     SubmittedDate = report?.SubmittedDate,
+                    IncidentDateTime = report?.IncidentDateTime,
                     SubmittingDepartment = report?.SubmittingDepartment ?? string.Empty,
                     SubmittingDepartmentJobFunction = report?.SubmittingDepartmentJobFunction ?? string.Empty,
                     HazardCategory = hazardCategoryValue,
@@ -267,98 +268,6 @@ namespace SMS3.Api.Services
             }
 
             return MitigationStatus.FromValue(statusValue)?.Description ?? statusValue;
-        }
-
-        public async Task<Result<PDXSMSReportApiResponse>> ProcessReportSubmissionAsyncV1(
-            PDXSMSReportApiRequestV1 request, 
-            HttpContext httpContext)
-        {
-            try
-            {
-                // Step 1: Validate request
-                var validationResult = await ValidateRequestAsync(request);
-                if (validationResult.IsFailure)
-                {
-                    return Result<PDXSMSReportApiResponse>.Failure<PDXSMSReportApiResponse>(validationResult.Error);
-                }
-
-                // Step 2: Create parent report
-                var reportResult = await CreateReportAsync(request);
-                if (reportResult.IsFailure)
-                {
-                    return Result<PDXSMSReportApiResponse>.Failure<PDXSMSReportApiResponse>(reportResult.Error);
-                }
-
-                var actualReportCode = reportResult.Value.Code;
-                _logger.LogInformation("External report created: {ReportCode}", actualReportCode);
-
-                // Step 3: Create associated hazard
-                var hazardResult = await CreateHazardAsync(request, actualReportCode);
-                if (hazardResult.IsFailure)
-                {
-                    return Result<PDXSMSReportApiResponse>.Failure<PDXSMSReportApiResponse>(hazardResult.Error);
-                }
-
-                var createdHazard = hazardResult.Value;
-                _logger.LogInformation("External hazard created: {HazardCode} for Report: {ReportCode}", 
-                    createdHazard.Code, actualReportCode);
-
-                // Step 4: Create hazard location if coordinates provided
-                if (request.LocationLatitude.HasValue && request.LocationLongitude.HasValue)
-                {
-                    await CreateHazardLocationAsync(request, createdHazard.Code);
-                }
-
-                // Step 5: Create tracking record
-                var trackingResult = await CreateTrackingAsync(createdHazard);
-                if (trackingResult.IsFailure)
-                {
-                    return Result<PDXSMSReportApiResponse>.Failure<PDXSMSReportApiResponse>(trackingResult.Error);
-                }
-
-                var actualTrackingCode = trackingResult.Value.TrackingCode;
-                _logger.LogInformation("External tracking created: {TrackingCode}", actualTrackingCode);
-
-                // Step 6: Process file attachments
-                var (processedFiles, failedFiles) = await ProcessAttachmentsAsync(
-                    request.ReportAttachments, createdHazard.Code, actualReportCode);
-
-                await QueueHazardSubmissionNotificationAsync(
-                    createdHazard,
-                    request.HazardDescription,
-                    request.LocationLatitude,
-                    request.LocationLongitude,
-                    request.LocationDescription,
-                    httpContext);
-
-                await PublishReportSubmittedLiveUpdateAsync(createdHazard, actualTrackingCode);
-
-                // Step 7: Build success response
-                var response = new PDXSMSReportApiResponse
-                {
-                    TrackingId = actualTrackingCode,
-                    HazardId = createdHazard.Code,
-                    ReportId = actualReportCode,
-                    ReportSubmissionDateTime = DateTime.Now,
-                    Status = "Submitted",
-                    Message = $"Confidential report submitted successfully. Tracking ID: {actualTrackingCode}",
-                    ProcessedFiles = processedFiles,
-                    FailedFiles = failedFiles
-                };
-
-                _logger.LogInformation("PDX SMS API report submitted successfully. " +
-                    "TrackingId: {TrackingId}, ReportId: {ReportId}, HazardId: {HazardId}, Files: {ProcessedFiles}/{TotalFiles}", 
-                    actualTrackingCode, actualReportCode, createdHazard.Code, processedFiles, 
-                    request.ReportAttachments?.Count ?? 0);
-
-                return Result<PDXSMSReportApiResponse>.Success(response);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error processing external confidential report submission");
-                return Result<PDXSMSReportApiResponse>.Failure<PDXSMSReportApiResponse>(
-                    new Error("PDXSMS.ProcessingFailed", "An unexpected error occurred while processing your confidential report."));
-            }
         }
 
         public async Task<Result<PDXSMSReportApiResponse>> ProcessReportSubmissionAsyncV2(PDXSMSReportApiRequestV2 request,HttpContext httpContext)
@@ -477,6 +386,7 @@ namespace SMS3.Api.Services
                     HazardId = createdHazard.Code,
                     ReportId = actualReportCode,
                     ReportSubmissionDateTime = DateTime.Now,
+                    IncidentDateTime = reportResult.Value.IncidentDateTime,
                     Status = "Submitted",
                     Message = $"Confidential report submitted successfully. Tracking ID: {actualTrackingCode}",
                     ProcessedFiles = processedFiles,
@@ -496,60 +406,6 @@ namespace SMS3.Api.Services
                 return Result<PDXSMSReportApiResponse>.Failure<PDXSMSReportApiResponse>(
                     new Error("PDXSMS.ProcessingFailed", "An unexpected error occurred while processing your confidential report."));
             }
-        }
-
-        public async Task<Result<bool>> ValidateRequestAsync(PDXSMSReportApiRequestV1 request)
-        {
-            var validationErrors = new List<string>();
-            if (string.IsNullOrEmpty(request.HazardCategory))
-                validationErrors.Add("hazardCategory is required");
-
-            if (string.IsNullOrEmpty(request.HazardType))
-                validationErrors.Add("hazardType is required");
-            
-            if (string.IsNullOrEmpty(request.HazardDescription))
-                validationErrors.Add("description is required");
-
-            // Check if latitude is provided and valid
-            if (!request.LocationLatitude.HasValue)
-            {
-                validationErrors.Add("LocationLatitude is required");
-            }
-            else if (request.LocationLatitude.Value < -90 || request.LocationLatitude.Value > 90)
-            {
-                validationErrors.Add("LocationLatitude must be between -90 and 90 degrees");
-            }
-
-            // Check if longitude is provided and valid  
-            if (!request.LocationLongitude.HasValue)
-            {
-                validationErrors.Add("LocationLongitude is required");
-            }
-            else if (request.LocationLongitude.Value < -180 || request.LocationLongitude.Value > 180)
-            {
-                validationErrors.Add("LocationLongitude must be between -180 and 180 degrees");
-            }
-
-            // Optional: Check for obviously invalid coordinates (like 0,0 if that's not valid for your use case)
-            if (request.LocationLatitude.HasValue && request.LocationLongitude.HasValue &&
-                request.LocationLatitude.Value == 0 && request.LocationLongitude.Value == 0)
-            {
-                validationErrors.Add("Location coordinates (0, 0) are not valid for this application");
-            }
-
-            if (string.IsNullOrEmpty(request.LocationDescription))
-                validationErrors.Add("location is required");
-
-            if (request.HazardDescription?.Length > 2000)
-                validationErrors.Add("description cannot exceed 2000 characters");
-
-            if (validationErrors.Any())
-            {
-                var errorMessage = $"Validation failed: {string.Join(", ", validationErrors)}";
-                return Result<bool>.Failure<bool>(new Error("PDXSMS.ValidationFailed", errorMessage));
-            }
-
-            return Result<bool>.Success(true);
         }
 
         public async Task<(int ProcessedFiles, int FailedFiles)> ProcessAttachmentsAsync(
@@ -952,70 +808,6 @@ namespace SMS3.Api.Services
                 ],
                 footerHtml: $"Status escalation threshold: {thresholdHours} hour(s).",
                 logoUrl: logoUrl);
-        }
-
-        private async Task<Result<Report>> CreateReportAsync(PDXSMSReportApiRequestV1 request)
-        {
-            var report = new Report(new ReportID("RP-0000"))
-            {
-                Code = "RP-0000", // Database will generate actual code
-                Name = $"{request.HazardCategory}/{request.HazardType}",
-                Description = string.Empty,
-                SubmittedBy = SystemConstants.FlyPdxApiSource,
-                SubmittedDate = request.ReportSubmittedDate.Value,
-                SubmittingDepartment = request.ReportSubmittingDepartment ?? string.Empty,
-                SubmittingDepartmentJobFunction = request.ReportSubmittingDepartmentJobFunction ?? string.Empty,
-                IncidentDateTime = request.HazardIncidentDateTime ?? DateTime.Now,
-                IsAnonymous = request.ReportIsAnonymous.GetValueOrDefault(true),
-                ReportContactName = request.ReportContactName ?? string.Empty,
-                ReportContactCell = request.ReportContactCell ?? string.Empty,
-                ReportContactEmail = request.ReportContactEmail ?? string.Empty,
-                ReportContactCompany = request.ReportContactCompany ?? string.Empty,
-                Stage = "INITIAL",
-                Status = ReportStatus.NeedsValidation,
-                CreatedBy = SystemConstants.FlyPdxApiSource,
-                CreatedDate = DateTime.Now
-            };
-
-            return await _mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
-        }
-
-        private async Task<Result<Hazard>> CreateHazardAsync(PDXSMSReportApiRequestV1 request, string reportCode)
-        {
-            var hazard = new Hazard(new HazardID("HZ-0000"))
-            {
-                Code = "HZ-0000", // Database will generate actual code
-                Name = $"{request.HazardCategory}/{request.HazardType}",
-                Description = request.HazardDescription,
-                HazardCategory = request.HazardCategory ?? HazardCategory.Default.Value,
-                HazardType = request.HazardType ?? HazardType.Default.Value,
-                ReportCode = reportCode,
-                IsInitialHazard = true,
-                Status = HazardStatus.InitialRiskAssessment,
-                CreatedBy = SystemConstants.FlyPdxApiSource,
-                CreatedDate = DateTime.Now
-            };
-
-            return await _mediator.SendAsync(new CreateHazardCommand(hazard), CancellationToken.None);
-        }
-
-        private async Task<Result<HazardLocation>> CreateHazardLocationAsync(PDXSMSReportApiRequestV1 request, string hazardCode)
-        {
-            // TODO: Add check to prevent duplicate location creation
-            // Check if hazard location already exists for this hazard code
-
-            var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
-            {
-                HazardCode = hazardCode,
-                Latitude = request.LocationLatitude ?? 0,
-                Longitude = request.LocationLongitude ?? 0,
-                Description = request.LocationDescription
-            };
-
-            _logger.LogInformation("??? Creating hazard location for {HazardCode}: Lat={Latitude}, Lon={Longitude}, Desc='{Description}'", 
-                hazardCode, request.LocationLatitude, request.LocationLongitude, request.LocationDescription);
-
-            return await _mediator.SendAsync(new CreateHazardLocationCommand(hazardLocation), CancellationToken.None);
         }
 
         private async Task<Result<HazardReportTracking>> CreateTrackingAsync(Hazard hazard)

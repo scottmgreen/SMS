@@ -171,30 +171,31 @@
         <RadzenDataGridColumn TItem="Mitigation" Title="Actions" Width="200px" Sortable="false" Filterable="false">
             <Template Context="mitigation">
                 @{ var isLocked = IsRecordLocked(mitigation.ReportCode); }
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
-                                  Tooltip="View Mitigation Details"
-                                  Click="@(() => ViewMitigation(mitigation))"
-                                  Disabled="@isLocked" />
+                <div class="sms-listing-action-grid" style="display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:flex-start;gap:0.2rem;white-space:nowrap;">
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
+                                      Tooltip="View Mitigation Details"
+                                      Click="@(() => ViewMitigation(mitigation))"
+                                      Disabled="@isLocked"
+                                      Style="margin:0;" />
+                    </div>
 
-                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
-                                  Tooltip="Edit Mitigation"
-                                  Click="@(() => EditMitigation(mitigation))"
-                                  Disabled="@isLocked" />
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                      Tooltip="Edit Mitigation"
+                                      Click="@(() => EditMitigation(mitigation))"
+                                      Disabled="@isLocked"
+                                      Style="margin:0;" />
+                    </div>
 
-                   @*  @if (mitigation.Status != MitigationStatus.Approved)
-                    {
-                        <RadzenButton Icon="verified" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
-                                      Tooltip="Quick Approve"
-                                      Click="@(async () => await QuickApproveMitigation(mitigation))"
-                                      Disabled="@isLocked" />
-                    } *@
-
-                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                  Tooltip="Delete Mitigation"
-                                  Click="@(() => DeleteMitigation(mitigation))"
-                                  Disabled="@isLocked" />
-                </RadzenStack>
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                      Tooltip="Delete Mitigation"
+                                      Click="@(() => DeleteMitigation(mitigation))"
+                                      Disabled="@isLocked"
+                                      Style="margin:0;" />
+                    </div>
+                </div>
             </Template>
         </RadzenDataGridColumn>
     </Columns>

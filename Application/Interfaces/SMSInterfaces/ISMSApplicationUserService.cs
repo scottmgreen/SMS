@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 namespace SMS_Application.Interfaces;
 
-public interface ISMSApplicationUserService
+public interface ISMSApplicationUserService : ISMSUserService<SMSApplicationUser>
 {
     Task<Result<bool>> AuthenticateSMSApplicationUserAsync(string userName, string plainTextPassword, CancellationToken ct = default);
     Task<Result<bool>> ChangePasswordAsync(string userId, string currentPassword, string newPassword, CancellationToken ct = default);
@@ -25,7 +25,4 @@ public interface ISMSApplicationUserService
     Task<Result<IEnumerable<SMSApplicationUser>>> GetSMSApplicationUsersByRoleAsync(string applicationRole, CancellationToken ct = default);
     Task<Result<UserStatistics>> GetSMSApplicationUserStatisticsAsync(CancellationToken ct = default);
     Task<Result<SMSApplicationUser>> UpdateSMSApplicationUserAsync(SMSApplicationUser user, CancellationToken ct = default);
-    Task<Result<bool>> UserNameExistsAsync(string userName, CancellationToken ct = default);
-    Task<Result<SMSApplicationUser>> GetByUserNameAsync(string userName, CancellationToken ct = default);
-    Task<Result<UserStatistics>> GetUserStatisticsAsync(CancellationToken ct = default);
 }

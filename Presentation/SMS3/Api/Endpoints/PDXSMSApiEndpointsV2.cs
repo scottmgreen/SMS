@@ -13,30 +13,6 @@ using SMS_Infrastructure.Security;
 
 using SMS3.Api.Models;
 using SMS3.Api.Services;
-
-
-
-
-//app.UseSwaggerUI(options =>
-//{
-//    options.SwaggerEndpoint("/swagger/v1/swagger.json", "V1");
-//    options.SwaggerEndpoint("/swagger/v2/swagger.json", "V2");
-//});
-
-
-//builder.Services.AddSwaggerGen(c =>
-//{
-//    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
-//    c.SwaggerDoc("v2", new OpenApiInfo { Title = "My API", Version = "v2" });
-//});
-
-//http://localhost:5115/api-docs/index.html?urls.primaryName=V1
-//http://localhost:5115/api-docs/index.html?urls.primaryName=V2
-
-//No operations defined in spec!
-
-
-
 namespace SMS3.Api.Endpoints
 {
     /// <summary>

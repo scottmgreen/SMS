@@ -46,82 +46,6 @@ namespace SMS3.Api.Models;
     }
 
     /// <summary>
-    /// Request model for external confidential report submissions
-    /// </summary>
-    public record PDXSMSReportApiRequestV1
-    {
-        /// <summary>
-        /// The category of the hazard (required). Use GET /api/pdxsms/hazard-categories to see all valid values.
-        /// Examples: "INCIDENT", "FOD", "WILDLIFE", "OPERATIONAL_CHANGE"
-        /// </summary>
-        /// <example>INCIDENT</example>
-        [Required]
-        public string HazardCategory { get; init; } = SMS_Domain.Enums.HazardCategory.Default.Value;
-
-        /// <summary>
-        /// Specific type of hazard being reported (required). Must match a valid value for the selected category.
-        /// Use GET /api/pdxsms/hazard-types?category={categoryValue} to see valid types for a category.
-        /// Examples: "AIRCRAFT_INCIDENT", "BIRD_STRIKE", "METAL_FOD"
-        /// </summary>
-        /// <example>AIRCRAFT_INCIDENT</example>
-        [Required]
-        public string HazardType { get; init; } = SMS_Domain.Enums.HazardType.Default.Value;
-
-        /// <summary>
-        /// Detailed description of the hazard or incident (required, max 2000 characters)
-        /// </summary>
-        /// <example>Aircraft experienced engine failure during takeoff roll, aborting takeoff safely</example>
-        [Required]
-        [StringLength(5000)]
-        public string HazardDescription { get; init; } = string.Empty;
-
-        public string? ReportSubmittedBy { get; init; }
-        public DateTime? ReportSubmittedDate { get; init; }
-        public string? ReportSubmittingDepartment { get; init; } = SystemConstants.FlyPdxApiSource;
-        public string? ReportSubmittingDepartmentJobFunction { get; init; } = SystemConstants.FlyPdxApiSource;
-        public bool? ReportIsAnonymous { get; init; }
-        public string? ReportContactName { get; init; }
-        public string? ReportContactCell { get; init; }
-        public string? ReportContactEmail { get; init; }
-
-        public string? ReportContactCompany { get; init; }
-        /// <summary>
-        /// Location where the hazard occurred (required)
-        /// </summary>
-        /// <example>Runway 28L, approximately 2000ft from threshold</example>
-        [Required]
-        public string LocationDescription { get; init; } = string.Empty;
-
-        /// <summary>
-        /// Optional latitude coordinate for precise location (decimal degrees)
-        /// </summary>
-        /// <example>45.5898</example>
-        public decimal? LocationLatitude { get; init; }
-
-        /// <summary>
-        /// Optional longitude coordinate for precise location (decimal degrees)
-        /// </summary>
-        /// <example>-122.5951</example>
-        public decimal? LocationLongitude { get; init; }
-
-        /// <summary>
-        /// Optional incident date/time (if not provided, current time is used)
-        /// </summary>
-        /// <example>2024-01-15T14:30:00Z</example>
-        public DateTime? HazardIncidentDateTime { get; init; }
-
-        /// <summary>
-        /// Optional file attachments as base64 encoded strings (max 10MB per file)
-        /// </summary>
-        [JsonConverter(typeof(SingleOrArrayConverter<FileAttachment>))]
-        public List<FileAttachment>? ReportAttachments { get; init; }
-    }
-
-    
-
-
-
-    /// <summary>
     /// Response model for confidential report submissions - Enhanced for production
     /// </summary>
     public record PDXSMSReportApiResponse
@@ -145,6 +69,11 @@ namespace SMS3.Api.Models;
         /// Timestamp when the submission was processed
         /// </summary>
         public DateTime ReportSubmissionDateTime { get; init; }
+
+        /// <summary>
+        /// Incident date/time from the created report entity.
+        /// </summary>
+        public DateTime IncidentDateTime { get; init; }
         
         /// <summary>
         /// Processing status
@@ -186,6 +115,7 @@ namespace SMS3.Api.Models;
 
         public string SubmittedBy { get; init; } = string.Empty;
         public DateTime? SubmittedDate { get; init; }
+        public DateTime? IncidentDateTime { get; init; }
         public string SubmittingDepartment { get; init; } = string.Empty;
         public string SubmittingDepartmentJobFunction { get; init; } = string.Empty;
 

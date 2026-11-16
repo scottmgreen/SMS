@@ -108,27 +108,33 @@
         <RadzenDataGridColumn TItem="HazardLocation" Title="Actions" Width="140px" Sortable="false" Filterable="false">
             <Template Context="location">
                 @{ var isLocked = IsRecordLocked(GetReportCodeForLocation(location)); }
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                    @if (_currentUserService.CanRead("SMS_Listings_HazardLocations"))
-                    {
-                        <RadzenButton ButtonStyle="ButtonStyle.Base"
-                                      Size="ButtonSize.Small"
-                                      Click="@(() => ViewLocationMap(location))"
-                                      Disabled="@(isLocked || !HasValidCoordinates(location))"
-                                      title="@(HasValidCoordinates(location) ? "View location on map" : "No valid coordinates available")"
-                                      Icon="visibility" />
-                    }
+                <div class="sms-listing-action-grid" style="display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:flex-start;gap:0.2rem;white-space:nowrap;">
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        @if (_currentUserService.CanRead("SMS_Listings_HazardLocations"))
+                        {
+                            <RadzenButton ButtonStyle="ButtonStyle.Base"
+                                          Size="ButtonSize.Small"
+                                          Click="@(() => ViewLocationMap(location))"
+                                          Disabled="@(isLocked || !HasValidCoordinates(location))"
+                                          title="@(HasValidCoordinates(location) ? "View location on map" : "No valid coordinates available")"
+                                          Icon="visibility"
+                                          Style="margin:0;" />
+                        }
+                    </div>
 
-                    @if (_currentUserService.CanUpdate("SMS_Listings_HazardLocations") && !location.IsValidated)
-                    {
-                        <RadzenButton ButtonStyle="ButtonStyle.Primary"
-                                      Size="ButtonSize.Small"
-                                      Click="@(() => ValidateLocation(location))"
-                                      Disabled="@(isLocked || !HasValidCoordinates(location))"
-                                      title="@(HasValidCoordinates(location) ? "Validate location" : "No valid coordinates available")"
-                                      Icon="edit" />
-                    }
-                </RadzenStack>
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        @if (_currentUserService.CanUpdate("SMS_Listings_HazardLocations") && !location.IsValidated)
+                        {
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                          Size="ButtonSize.Small"
+                                          Click="@(() => ValidateLocation(location))"
+                                          Disabled="@(isLocked || !HasValidCoordinates(location))"
+                                          title="@(HasValidCoordinates(location) ? "Validate location" : "No valid coordinates available")"
+                                          Icon="edit"
+                                          Style="margin:0;" />
+                        }
+                    </div>
+                </div>
             </Template>
         </RadzenDataGridColumn>       
     </Columns>

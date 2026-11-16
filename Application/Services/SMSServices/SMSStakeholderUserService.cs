@@ -47,6 +47,12 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
+            if (!SMS_Domain.ValueObjects.UserName.IsValidStakeholderUserNameFormat(user.UserName?.Value ?? string.Empty))
+            {
+                _logger.LogApplicationWarning("CreateSMSStakeholderUserAsync rejected invalid stakeholder username format: {UserName}", user.UserName?.Value);
+                return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.UserNameError.InvalidFormat);
+            }
+
             // Business validation - ensure user is active by default
             if (!user.IsActive)
             {
@@ -54,12 +60,8 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
                 user.Activate();
             }
 
-            // Business validation - validate stakeholder type and organization combination
-            await ValidateStakeholderTypeOrganizationCombination(user.StakeholderType, user.Organization);
-
-            // Business validation - set appropriate access level based on stakeholder type
-            //await ValidateAndAdjustAccessLevel(user);
-
+            
+            
             var result = await _dataService.AddAsync(user, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
@@ -114,44 +116,7 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
         }
     }
 
-    /// <summary>
-    /// Gets users requiring AOA access with security validation
-    /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetUsersRequiringAOAAccessAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogApplicationInformation("Retrieving users requiring AOA access");
-
-            var result = await _dataService.GetAllAsync(ct).ConfigureAwait(false);
-
-            if (result.IsSuccess)
-            {
-                var aoaUsers = result.Value;
-                _logger.LogApplicationInformation("Found {Count} users requiring AOA access", aoaUsers.Count());
-
-                // Business analysis - security monitoring
-                //foreach (var user in aoaUsers.Where(u => u.AccessLevel == "Full"))
-                //{
-                //    _logger.LogApplicationInformation("Full access AOA user: {UserName} from {Organization}",
-                //        user.UserName.Value, user.Organization);
-                //}
-
-                // Business rule - log if too many users have AOA access
-                if (aoaUsers.Count() > 100)
-                {
-                    _logger.LogApplicationWarning("High number of users with AOA access: {Count}. Review access levels.", aoaUsers.Count());
-                }
-            }
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError(ex, "Unexpected error retrieving users requiring AOA access");
-            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
-        }
-    }
+   
 
     /// <summary>
     /// Updates an existing SMS Stakeholder User with business validation
@@ -168,6 +133,12 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
+            if (!SMS_Domain.ValueObjects.UserName.IsValidStakeholderUserNameFormat(user.UserName?.Value ?? string.Empty))
+            {
+                _logger.LogApplicationWarning("UpdateSMSStakeholderUserAsync rejected invalid stakeholder username format: {UserName}", user.UserName?.Value);
+                return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.UserNameError.InvalidFormat);
+            }
+
             // Business validation - check if user exists
             var existingUserResult = await _dataService.GetByCodeAsync(user.Code, ct).ConfigureAwait(false);
             if (existingUserResult.IsFailure)
@@ -177,16 +148,6 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
             }
 
             var existingUser = existingUserResult.Value;
-
-            // Business rule - log access level changes for security
-            //if (existingUser.AccessLevel != user.AccessLevel)
-            //{
-            //    _logger.LogApplicationWarning("Access level change for user {UserName}: {OldLevel} -> {NewLevel}",
-            //        user.UserName.Value, existingUser.AccessLevel, user.AccessLevel);
-            //}
-
-            // Business validation - validate stakeholder type and organization combination
-            //await ValidateStakeholderTypeOrganizationCombination(user.StakeholderType, user.Organization);
 
             var result = await _dataService.UpdateAsync(user, ct).ConfigureAwait(false);
 
@@ -235,23 +196,6 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
             if (result.IsSuccess)
             {
                 var user = result.Value;
-
-                // Business rule - check if user is active
-                //if (!user.IsActive)
-                //{
-                //    _logger.LogApplicationWarning("Authentication failed - user is inactive: {UserName}", userName);
-                //    return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.BaseUserError.InactiveUser);
-                //}
-
-                // Business rule - security logging for external users
-                //_logger.LogApplicationInformation("External stakeholder authenticated: {UserName} from {Organization} ({StakeholderType})",
-                //    userName, user.Organization, user.StakeholderType);
-
-                //// Business rule - additional validation for high-access users
-                //if (user.AccessLevel == "Full")
-                //{
-                //    _logger.LogApplicationInformation("High-privilege stakeholder login: {UserName} with Full access", userName);
-                //}
             }
             else
             {
@@ -302,84 +246,31 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
         }
     }
 
-    #region Private Business Logic Helpers
-
-    /// <summary>
-    /// Validates if stakeholder type is valid (business rule)
-    /// </summary>
-    private bool IsValidStakeholderType(string stakeholderType)
+    public Task<Result<bool>> AuthenticateAsync(string userName, string plainTextPassword, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(stakeholderType))
-            return false;
-
-        var validTypes = new[]
-        {
-            "Airline", "Ground Handler", "Contractor", "Tenant", "Government Agency",
-            "Service Provider", "Vendor", "Emergency Services", "Regulatory Body"
-        };
-
-        return validTypes.Contains(stakeholderType, StringComparer.OrdinalIgnoreCase);
+        return AuthenticateSMSStakeholderUserAsync(userName, plainTextPassword, ct);
     }
 
-    /// <summary>
-    /// Validates stakeholder type and organization combination (business rule)
-    /// </summary>
-    private async Task ValidateStakeholderTypeOrganizationCombination(string stakeholderType, string organization)
+    public Task<Result<SMSStakeholderUser>> CreateAsync(SMSStakeholderUser user, CancellationToken ct = default)
     {
-        // Business rule - certain organizations should only have specific stakeholder types
-        var knownAirlines = new[] { "Delta", "American", "United", "Southwest", "Alaska", "JetBlue" };
-        var knownGroundHandlers = new[] { "Swissport", "Menzies", "DNata", "Signature Flight Support" };
-
-        if (knownAirlines.Any(airline => organization.Contains(airline, StringComparison.OrdinalIgnoreCase)))
-        {
-            if (!stakeholderType.Equals("Airline", StringComparison.OrdinalIgnoreCase))
-            {
-                _logger.LogApplicationWarning("Organization {Organization} appears to be an airline but stakeholder type is {Type}",
-                    organization, stakeholderType);
-            }
-        }
-
-        if (knownGroundHandlers.Any(handler => organization.Contains(handler, StringComparison.OrdinalIgnoreCase)))
-        {
-            if (!stakeholderType.Equals("Ground Handler", StringComparison.OrdinalIgnoreCase))
-            {
-                _logger.LogApplicationWarning("Organization {Organization} appears to be a ground handler but stakeholder type is {Type}",
-                    organization, stakeholderType);
-            }
-        }
-
-        await Task.CompletedTask; // Placeholder for potential async validation
+        return CreateSMSStakeholderUserAsync(user, ct);
     }
 
-    /// <summary>
-    /// Validates and adjusts access level based on stakeholder type (business rule)
-    /// </summary>
-    //private async Task ValidateAndAdjustAccessLevel(SMSStakeholderUser user)
-    //{
-    //    // Business rule - government agencies typically get extended access
-    //    if (user.StakeholderType.Contains("Government", StringComparison.OrdinalIgnoreCase) ||
-    //        user.StakeholderType.Contains("Regulatory", StringComparison.OrdinalIgnoreCase))
-    //    {
-    //        if (user.AccessLevel == "Limited")
-    //        {
-    //            _logger.LogApplicationInformation("Upgrading access level for government/regulatory user: {UserName}", user.UserName.Value);
-    //            user.UpdateStakeholderInfo(user.StakeholderType, user.Organization, "Extended");
-    //        }
-    //    }
+    public Task<Result<IEnumerable<SMSStakeholderUser>>> GetAllAsync(CancellationToken ct = default)
+    {
+        return GetAllSMSStakeholderUsersAsync(ct);
+    }
 
-    //    // Business rule - vendors typically have limited access
-    //    if (user.StakeholderType.Equals("Vendor", StringComparison.OrdinalIgnoreCase) ||
-    //        user.StakeholderType.Equals("Service Provider", StringComparison.OrdinalIgnoreCase))
-    //    {
-    //        if (user.AccessLevel == "Full")
-    //        {
-    //            _logger.LogApplicationWarning("Full access granted to vendor/service provider: {UserName} - requires approval", user.UserName.Value);
-    //        }
-    //    }
+    public Task<Result<SMSStakeholderUser>> GetByCodeAsync(string id, CancellationToken ct = default)
+    {
+        return GetSMSStakeholderUserByCodeAsync(id, ct);
+    }
 
-    //    await Task.CompletedTask; // Placeholder for potential async validation
-    //}
+    public Task<Result<SMSStakeholderUser>> UpdateAsync(SMSStakeholderUser user, CancellationToken ct = default)
+    {
+        return UpdateSMSStakeholderUserAsync(user, ct);
+    }
 
-    #endregion
+    
 }
 

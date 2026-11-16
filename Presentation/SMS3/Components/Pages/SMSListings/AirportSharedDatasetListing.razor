@@ -85,31 +85,49 @@
         
         <RadzenDataGridColumn TItem="AirportSharedDataset" Title="Actions" Width="220px" Sortable="false" Filterable="false">
             <Template Context="dataset">
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" 
-                                Tooltip="View Dataset Details"
-                                Click="@(() => ViewDataset(dataset))" />
-                    
-                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
-                                Tooltip="Edit Dataset"
-                                Click="@(() => EditDataset(dataset))" />
-                    
-                    <RadzenButton Icon="download" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" 
-                                Tooltip="Export Dataset"
-                                Click="@(() => ExportDataset(dataset))" />
-                                
-                    <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" 
-                                Tooltip="Duplicate Dataset"
-                                Click="@(() => DuplicateDataset(dataset))" />
-                    
-                    <RadzenButton Icon="history" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small" 
-                                Tooltip="View History"
-                                Click="@(() => ViewHistory(dataset))" />
-                    
-                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
-                                Tooltip="Delete Dataset"
-                                Click="@(() => DeleteDataset(dataset))" />
-                </RadzenStack>
+                <div class="sms-listing-action-grid" style="display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:flex-start;gap:0.2rem;white-space:nowrap;">
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
+                                      Tooltip="View Dataset Details"
+                                      Click="@(() => ViewDataset(dataset))"
+                                      Style="margin:0;" />
+                    </div>
+
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                      Tooltip="Edit Dataset"
+                                      Click="@(() => EditDataset(dataset))"
+                                      Style="margin:0;" />
+                    </div>
+
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        <RadzenButton Icon="download" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                      Tooltip="Export Dataset"
+                                      Click="@(() => ExportDataset(dataset))"
+                                      Style="margin:0;" />
+                    </div>
+
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"
+                                      Tooltip="Duplicate Dataset"
+                                      Click="@(() => DuplicateDataset(dataset))"
+                                      Style="margin:0;" />
+                    </div>
+
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        <RadzenButton Icon="history" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small"
+                                      Tooltip="View History"
+                                      Click="@(() => ViewHistory(dataset))"
+                                      Style="margin:0;" />
+                    </div>
+
+                    <div class="sms-listing-action-slot" style="flex:0 0 1.8rem;width:1.8rem;min-width:1.8rem;display:flex;align-items:center;justify-content:center;">
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                      Tooltip="Delete Dataset"
+                                      Click="@(() => DeleteDataset(dataset))"
+                                      Style="margin:0;" />
+                    </div>
+                </div>
             </Template>
         </RadzenDataGridColumn>
     </Columns>
