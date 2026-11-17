@@ -9,11 +9,70 @@ const PDX_SMS_TILE_URL = 'https://cdn.portofportland.com/maps/sms_260702/{z}/{x}
 const PDX_SMS_FALLBACK_ZOOM = 16;
 const STANDARD_MAX_ZOOM = 20;
 const DEFAULT_INITIAL_ZOOM = 14;
+const DEFAULT_BOUNDS_CONFIG = {
+    forceBoundsCheck: false,
+    fencePoints: []
+};
+
+function drawBoundsFence(map, mapBoundsConfig) {
+    if (!map || !Array.isArray(mapBoundsConfig.fencePoints) || mapBoundsConfig.fencePoints.length < 3) {
+        return null;
+    }
+
+    const latLngPoints = mapBoundsConfig.fencePoints.map(point => [point.latitude, point.longitude]);
+
+    const fenceLayer = L.polygon(latLngPoints, {
+        color: '#ff0000',
+        weight: 2,
+        opacity: 0.9,
+        fillColor: '#ff0000',
+        fillOpacity: 0.08,
+        dashArray: '6,4'
+    }).addTo(map);
+
+    fenceLayer.bringToFront();
+    return fenceLayer;
+}
+
+function normalizeBoundsConfig(boundsConfig) {
+    if (!boundsConfig || typeof boundsConfig !== 'object') {
+        return { ...DEFAULT_BOUNDS_CONFIG };
+    }
+
+    const forceBoundsCheck = Boolean(boundsConfig.forceBoundsCheck);
+    const inputFencePoints = Array.isArray(boundsConfig.fencePoints) ? boundsConfig.fencePoints : [];
+    const fencePoints = inputFencePoints
+        .map(point => {
+            if (!point || typeof point !== 'object') {
+                return null;
+            }
+
+            const latitudeValue = point.latitude ?? point.Latitude;
+            const longitudeValue = point.longitude ?? point.Longitude;
+
+            const latitude = Number(latitudeValue);
+            const longitude = Number(longitudeValue);
+
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+                return null;
+            }
+
+            return { latitude, longitude };
+        })
+        .filter(point => point !== null);
+
+    return {
+        forceBoundsCheck,
+        fencePoints
+    };
+}
 
 /**
  * Initialize a read-only map for displaying a location
  */
-export function initializeReadOnlyMap(containerId, lat, lng, zoomLevel, locationTitle, showZoomControls, showLayerControls) {
+export function initializeReadOnlyMap(containerId, lat, lng, zoomLevel, locationTitle, showZoomControls, showLayerControls, boundsConfig) {
+    const mapBoundsConfig = normalizeBoundsConfig(boundsConfig);
+
     try {
         // Check if Leaflet is available
         if (typeof L === 'undefined') {
@@ -32,7 +91,7 @@ export function initializeReadOnlyMap(containerId, lat, lng, zoomLevel, location
         const mapContainer = document.getElementById(containerId);
         if (!mapContainer) {
             console.error(`Map container '${containerId}' not found - retrying in 100ms`);
-            setTimeout(() => initializeReadOnlyMap(containerId, lat, lng, zoomLevel, locationTitle, showZoomControls, showLayerControls), 100);
+            setTimeout(() => initializeReadOnlyMap(containerId, lat, lng, zoomLevel, locationTitle, showZoomControls, showLayerControls, boundsConfig), 100);
             return;
         }
 
@@ -110,10 +169,15 @@ export function initializeReadOnlyMap(containerId, lat, lng, zoomLevel, location
                     pdxSmsMap.addTo(map);
                 }
                 pdxSmsMap.bringToFront();
+                if (boundsFenceLayer) {
+                    boundsFenceLayer.bringToFront();
+                }
             } catch (overlayError) {
                 console.warn('Unable to enforce required PDX SMS overlay.', overlayError);
             }
         });
+
+        const boundsFenceLayer = drawBoundsFence(map, mapBoundsConfig);
 
         // Add layer control if requested
         if (showLayerControls) {

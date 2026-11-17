@@ -296,14 +296,14 @@
                                             <RadzenColumn Size="12" SizeLG="5">
                                                 @if (hazard.HazardLocation is not null && hazard.HazardLocation.Latitude.HasValue && hazard.HazardLocation.Longitude.HasValue)
                                                 {
-                                                    <ReadOnlyLocationMap Latitude="@(hazard.HazardLocation.Latitude.Value)"
-                                                                         Longitude="@(hazard.HazardLocation.Longitude.Value)"
-                                                                         LocationId="@hazard.HazardLocation.Code"
-                                                                         LocationDescription="@(hazard.HazardLocation.Description ?? hazard.Code)"
-                                                                         MapHeight="220px"
-                                                                         ShowZoomControls="false"
-                                                                         ShowLocationDetails="true"
-                                                                         ZoomLevel="16" />
+                                                    <HazardLocationView HazardCode="@hazard.Code"
+                                                                        HazardLocationData="@hazard.HazardLocation"
+                                                                        FallbackLocationArea="@hazard.LocationArea"
+                                                                        FallbackLocationSubArea="@hazard.LocationSubArea"
+                                                                        MapHeight="220px"
+                                                                        ShowZoomControls="false"
+                                                                        ShowLocationDetails="true"
+                                                                        ZoomLevel="16" />
                                                 }
                                                 else
                                                 {

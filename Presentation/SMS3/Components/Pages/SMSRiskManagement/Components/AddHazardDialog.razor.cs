@@ -61,15 +61,24 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         SelectedGeoLocation.Latitude.HasValue &&
         SelectedGeoLocation.Longitude.HasValue &&
         SelectedGeoLocation.IsValidated;
+    public bool IsMapReadOnlyMode => IsEditMode && HasGeoLocation && !_isMapEditModeEnabled;
+    public string MapSelectionButtonText => IsMapReadOnlyMode ? "View on Map" : "Select on Map";
+    public string MapModalTitle => IsMapReadOnlyMode ? "View Hazard Location" : "Select Hazard Location";
     public bool HasValidCoordinates => SelectedLatitude != 0 && SelectedLongitude != 0;
     public bool HasLocationDescription => !string.IsNullOrWhiteSpace(LocationDescription);
-    public bool CanUseSelectedMapLocation => HasValidCoordinates && HasLocationDescription;
+    public bool CanUseSelectedMapLocation => HasValidCoordinates && HasLocationDescription && !IsMapReadOnlyMode;
     public string GeoLocationDisplay => HasGeoLocation ? $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}" : "No coordinates selected";
 
     // JavaScript module reference - EXACTLY like HazardReporting
     private IJSObjectReference? _mapModule;
     private DotNetObjectReference<AddHazardDialog>? _dotNetRef;
     private HazardMappingBoundsSettings _hazardMappingBounds = new();
+    private bool _isMapEditModeEnabled;
+    private decimal _mapOriginalLatitude;
+    private decimal _mapOriginalLongitude;
+    private string _mapOriginalLocationDescription = string.Empty;
+    private HazardLocation _mapOriginalGeoLocation = new() { IsValid = false, IsValidated = false };
+    private bool _mapSelectionConfirmed;
 
     // Airport coordinates - EXACTLY like HazardReporting
     private double _airportCenterLatitude => 45.5898;
@@ -792,6 +801,23 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     /// </summary>
     public async Task OpenMapSelector()
     {
+        _mapOriginalLatitude = SelectedLatitude;
+        _mapOriginalLongitude = SelectedLongitude;
+        _mapOriginalLocationDescription = LocationDescription;
+        _mapOriginalGeoLocation = new HazardLocation
+        {
+            Code = SelectedGeoLocation?.Code ?? string.Empty,
+            HazardCode = SelectedGeoLocation?.HazardCode ?? string.Empty,
+            Latitude = SelectedGeoLocation?.Latitude,
+            Longitude = SelectedGeoLocation?.Longitude,
+            Description = SelectedGeoLocation?.Description,
+            IsValidated = SelectedGeoLocation?.IsValidated ?? false,
+            IsValid = SelectedGeoLocation?.IsValid ?? false,
+            DateSelected = SelectedGeoLocation?.DateSelected ?? DateTime.Now
+        };
+        _mapSelectionConfirmed = false;
+        _isMapEditModeEnabled = false;
+
         _showMapModal = true;
         StateHasChanged();
 
@@ -804,7 +830,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
             try
             {
                 // Always reinitialize the map since the DOM element is recreated
-                await _mapModule.InvokeVoidAsync("initializeMap",_airportCenterLatitude, _airportCenterLongitude, _defaultZoomLevel, _dotNetRef, _hazardMappingBounds);
+                await _mapModule.InvokeVoidAsync("initializeMap", _airportCenterLatitude, _airportCenterLongitude, _defaultZoomLevel, _dotNetRef, _hazardMappingBounds, !IsMapReadOnlyMode);
 
                 _logger?.LogInformation("Map reinitialized for modal opening");
 
@@ -847,7 +873,45 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     /// </summary>
     public void CloseMapSelector()
     {
+        if (!_mapSelectionConfirmed)
+        {
+            SelectedLatitude = _mapOriginalLatitude;
+            SelectedLongitude = _mapOriginalLongitude;
+            LocationDescription = _mapOriginalLocationDescription;
+            SelectedGeoLocation = new HazardLocation
+            {
+                Code = _mapOriginalGeoLocation.Code,
+                HazardCode = _mapOriginalGeoLocation.HazardCode,
+                Latitude = _mapOriginalGeoLocation.Latitude,
+                Longitude = _mapOriginalGeoLocation.Longitude,
+                Description = _mapOriginalGeoLocation.Description,
+                IsValidated = _mapOriginalGeoLocation.IsValidated,
+                IsValid = _mapOriginalGeoLocation.IsValid,
+                DateSelected = _mapOriginalGeoLocation.DateSelected
+            };
+        }
+
         _showMapModal = false;
+        _isMapEditModeEnabled = false;
+        StateHasChanged();
+    }
+
+    public async Task EnableLocationEditMode()
+    {
+        _isMapEditModeEnabled = true;
+
+        if (_mapModule is not null)
+        {
+            try
+            {
+                await _mapModule.InvokeVoidAsync("setMapInteractionEnabled", true);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "Unable to enable map interaction mode.");
+            }
+        }
+
         StateHasChanged();
     }
 
@@ -878,41 +942,12 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         _logger?.LogInformation("Location set - Lat: {Lat}, Lng: {Lng}, IsValid: {IsValid}, HasGeoLocation: {HasGeoLocation}", 
             SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude, SelectedGeoLocation.IsValid, HasGeoLocation);
 
+        _mapSelectionConfirmed = true;
         _showMapModal = false;
+        _isMapEditModeEnabled = false;
         StateHasChanged();
 
         _logger?.LogInformation("Location successfully set: {GeoLocationDisplay}", GeoLocationDisplay);
-    }
-
-    /// <summary>
-    /// Clear map selection - EXACTLY like HazardReporting
-    /// </summary>
-    public async Task ClearMapSelection()
-    {
-        SelectedLatitude = 0;
-        SelectedLongitude = 0;
-        LocationDescription = string.Empty;
-        SelectedGeoLocation = new HazardLocation
-        {
-            IsValid = false,
-            IsValidated = false
-        };
-
-        if (_mapModule is not null)
-        {
-            try
-            {
-                await _mapModule.InvokeVoidAsync("clearSelection");
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogWarning(ex, "Error clearing map selection");
-            }
-        }
-
-        StateHasChanged();
-
-        _logger?.LogInformation("Map selection cleared");
     }
 
     /// <summary>
@@ -921,6 +956,11 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     [JSInvokable]
     public async Task OnMapLocationSelected(double latitude, double longitude, string description)
     {
+        if (IsMapReadOnlyMode)
+        {
+            return;
+        }
+
         SelectedLatitude = (decimal)latitude;
         SelectedLongitude = (decimal)longitude;
         LocationDescription = description; // This will set the description automatically!

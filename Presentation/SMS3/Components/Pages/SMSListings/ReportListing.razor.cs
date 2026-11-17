@@ -120,6 +120,10 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
     private string _activeRecordLockKey = string.Empty;
     private string _activeReportCode = string.Empty;
     private bool _holdRecordLockAcrossNavigation = false;
+    private bool _showHazardLocationMapModal = false;
+    private Hazard? _selectedHazardMapItem;
+    private string _selectedHazardMapTitle = string.Empty;
+    private string _selectedHazardMapSubtitle = string.Empty;
 
     private static readonly PropertyInfo[] ReportExportProperties = typeof(Report)
         .GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -2736,96 +2740,28 @@ public async Task OnResetReportAsync(Report report)
             var title = $"Location Map - {hazard.Code}";
             var subtitle = $"Hazard: {hazard.Name ?? "Unnamed Hazard"}";
 
-            await _dialogService.OpenAsync(title, ds =>
-            {
-                var content = new RenderFragment(builder =>
-                {
-                    builder.OpenElement(0, "div");
-                    builder.AddAttribute(1, "style", "width: 100%; height: 100%;");
-
-                    // Add subtitle if available
-                    if (!string.IsNullOrEmpty(subtitle))
-                    {
-                        builder.OpenElement(2, "div");
-                        builder.AddAttribute(3, "class", "mb-3 text-muted");
-                        builder.AddAttribute(4, "style", "font-size: 0.9rem;");
-                        builder.AddContent(5, subtitle);
-                        builder.CloseElement();
-                    }
-
-                    // Add HazardLocationDisplay component (same as HazardLocationListing)
-                    builder.OpenComponent<SMS3.Components.Shared.HazardLocationDisplay>(10);
-                    builder.AddAttribute(11, "Hazard", hazard);
-                    builder.AddAttribute(12, "Title", "");
-                    builder.AddAttribute(13, "MapHeight", "400px");
-                    builder.AddAttribute(14, "ShowCoordinates", true);
-                    builder.AddAttribute(15, "ShowLocationDetails", true);
-                    builder.AddAttribute(16, "ShowZoomControls", true);
-                    builder.AddAttribute(17, "ShowLayerControls", false);
-                    builder.AddAttribute(18, "ZoomLevel", 18);
-                    builder.CloseComponent();
-
-                    // Add location details
-                    builder.OpenElement(20, "div");
-                    builder.AddAttribute(21, "class", "mt-3 p-3 bg-light rounded");
-                    builder.AddAttribute(22, "style", "border-left: 4px solid #007bff;");
-
-                    builder.OpenElement(23, "h6");
-                    builder.AddAttribute(24, "class", "text-primary mb-2");
-                    builder.AddContent(25, "Location Details");
-                    builder.CloseElement();
-
-                    builder.OpenElement(26, "div");
-                    builder.AddAttribute(27, "class", "row");
-
-                    // Left column
-                    builder.OpenElement(28, "div");
-                    builder.AddAttribute(29, "class", "col-md-6");
-
-                    builder.AddMarkupContent(30, $"<strong>Hazard Code:</strong> {hazard.Code}<br/>");
-                    builder.AddMarkupContent(31, $"<strong>Report Code:</strong> {hazard.ReportCode}<br/>");
-                    if (hazard.HazardLocation.Latitude.HasValue && hazard.HazardLocation.Longitude.HasValue)
-                    {
-                        builder.AddMarkupContent(32, $"<strong>Coordinates:</strong> {hazard.HazardLocation.Latitude:F6}, {hazard.HazardLocation.Longitude:F6}<br/>");
-                    }
-
-                    builder.CloseElement(); // col-md-6
-
-                    // Right column
-                    builder.OpenElement(35, "div");
-                    builder.AddAttribute(36, "class", "col-md-6");
-
-                    builder.AddMarkupContent(37, $"<strong>Created:</strong> {hazard.HazardLocation.CreatedDate:yyyy-MM-dd HH:mm}<br/>");
-                    builder.AddMarkupContent(38, $"<strong>Created By:</strong> {hazard.HazardLocation.CreatedBy ?? "Unknown"}<br/>");
-                    if (!string.IsNullOrEmpty(hazard.HazardLocation.Description))
-                    {
-                        builder.AddMarkupContent(39, $"<strong>Description:</strong> {hazard.HazardLocation.Description}");
-                    }
-
-                    builder.CloseElement(); // col-md-6
-                    builder.CloseElement(); // row
-                    builder.CloseElement(); // details container
-                    builder.CloseElement(); // main div
-                });
-
-                return content;
-            },
-            new DialogOptions() 
-            { 
-                Width = "1200px", 
-                Height = "900px", 
-                Resizable = true, 
-                Draggable = true,
-                CloseDialogOnOverlayClick = false
-            });
+            _selectedHazardMapItem = hazard;
+            _selectedHazardMapTitle = title;
+            _selectedHazardMapSubtitle = subtitle;
+            _showHazardLocationMapModal = true;
 
             await _notificationHelper.ShowInfoAsync( $"Opened location map for {hazard.Code}");
+            await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error opening location map for hazard {HazardCode}", hazard.Code);
             await _notificationHelper.ShowErrorAsync( "Error opening location map");
         }
+    }
+
+    private async Task CloseHazardLocationMapModal()
+    {
+        _showHazardLocationMapModal = false;
+        _selectedHazardMapItem = null;
+        _selectedHazardMapTitle = string.Empty;
+        _selectedHazardMapSubtitle = string.Empty;
+        await InvokeAsync(StateHasChanged);
     }
 
     /// <summary>

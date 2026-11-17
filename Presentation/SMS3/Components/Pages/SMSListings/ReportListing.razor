@@ -389,14 +389,14 @@
                                             <RadzenColumn Size="12" SizeLG="5">
                                                 @if (hazard.HazardLocation is not null && hazard.HazardLocation.Latitude.HasValue && hazard.HazardLocation.Longitude.HasValue)
                                                 {
-                                                    <ReadOnlyLocationMap Latitude="@(hazard.HazardLocation.Latitude.Value)"
-                                                                         Longitude="@(hazard.HazardLocation.Longitude.Value)"
-                                                                         LocationId="@hazard.HazardLocation.Code"
-                                                                         LocationDescription="@(hazard.HazardLocation.Description ?? hazard.Code)"
-                                                                         MapHeight="220px"
-                                                                         ShowZoomControls="false"
-                                                                         ShowLocationDetails="true"
-                                                                         ZoomLevel="16" />
+                                                    <HazardLocationView HazardCode="@hazard.Code"
+                                                                        HazardLocationData="@hazard.HazardLocation"
+                                                                        FallbackLocationArea="@hazard.LocationArea"
+                                                                        FallbackLocationSubArea="@hazard.LocationSubArea"
+                                                                        MapHeight="220px"
+                                                                        ShowZoomControls="false"
+                                                                        ShowLocationDetails="true"
+                                                                        ZoomLevel="16" />
                                                 }
                                                 else
                                                 {
@@ -435,6 +435,80 @@
                                     Icon="close"
                                     Click="@CloseDetailsModal"
                                     Size="ButtonSize.Medium" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (_showHazardLocationMapModal && _selectedHazardMapItem?.HazardLocation is not null)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-xxl">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <div class="d-flex justify-content-between align-items-start w-100">
+                        <div>
+                            <h5 class="sms-modal-title mb-0">
+                                <i class="fas fa-map-marker-alt"></i> @_selectedHazardMapTitle
+                            </h5>
+                            @if (!string.IsNullOrWhiteSpace(_selectedHazardMapSubtitle))
+                            {
+                                <div class="sms-modal-subtitle">@_selectedHazardMapSubtitle</div>
+                            }
+                        </div>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Text"
+                                      Icon="close"
+                                      Size="ButtonSize.Small"
+                                      Click="@CloseHazardLocationMapModal" />
+                    </div>
+                </div>
+                <div class="sms-modal-body p-4">
+                    <HazardLocationView HazardCode="@_selectedHazardMapItem.Code"
+                                        HazardLocationData="@_selectedHazardMapItem.HazardLocation"
+                                        FallbackLocationDescription="@(_selectedHazardMapItem.Name ?? _selectedHazardMapItem.Code)"
+                                        FallbackLocationArea="@_selectedHazardMapItem.LocationArea"
+                                        FallbackLocationSubArea="@_selectedHazardMapItem.LocationSubArea"
+                                        ShowHeader="false"
+                                        MapHeight="400px"
+                                        ShowCoordinates="true"
+                                        ShowLocationDetails="false"
+                                        ShowZoomControls="true"
+                                        ShowLayerControls="true"
+                                        ZoomLevel="18"
+                                        ShowCloseButton="false" />
+
+                    <div class="mt-3 p-3 bg-light rounded" style="border-left: 4px solid #007bff;">
+                        <h6 class="text-primary mb-2">Location Details</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Hazard Code:</strong> @_selectedHazardMapItem.Code<br />
+                                <strong>Report Code:</strong> @_selectedHazardMapItem.ReportCode<br />
+                                @if (_selectedHazardMapItem.HazardLocation.Latitude.HasValue && _selectedHazardMapItem.HazardLocation.Longitude.HasValue)
+                                {
+                                    <strong>Coordinates:</strong> @($"{_selectedHazardMapItem.HazardLocation.Latitude.Value:F6}, {_selectedHazardMapItem.HazardLocation.Longitude.Value:F6}")<br />
+                                }
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Created:</strong> @(_selectedHazardMapItem.HazardLocation.CreatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "Unknown")<br />
+                                <strong>Created By:</strong> @(_selectedHazardMapItem.HazardLocation.CreatedBy ?? "Unknown")<br />
+                                @if (!string.IsNullOrWhiteSpace(_selectedHazardMapItem.HazardLocation.Description))
+                                {
+                                    <strong>Description:</strong> @_selectedHazardMapItem.HazardLocation.Description
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                      Text="Close"
+                                      Icon="close"
+                                      Click="@CloseHazardLocationMapModal"
+                                      Size="ButtonSize.Medium" />
                     </div>
                 </div>
             </div>
@@ -630,6 +704,12 @@
 .sms-modal-title {
     margin: 0;
     font-weight: 600;
+}
+
+.sms-modal-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    margin-top: 0.2rem;
 }
 
 .sms-modal-body {

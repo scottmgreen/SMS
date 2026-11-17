@@ -1,0 +1,171 @@
+@using Radzen
+@using Radzen.Blazor
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@inject ILogger<HazardLocationReadOnly> Logger
+
+<div class="readonly-location-map-container">
+    @if (HasValidLocation)
+    {
+        <RadzenCard Variant="Variant.Outlined" Class="map-card">
+            <RadzenStack Gap="0.5rem">
+                @if (ShowHeader)
+                {
+                    <div class="sms-modal-header sms-header-primary hazard-location-header">
+                        <h5 class="sms-modal-title mb-0">
+                            <RadzenIcon Icon="place" class="me-2" />
+                            @(Title ?? "Location Information")
+                        </h5>
+                        @if (!string.IsNullOrWhiteSpace(HeaderSubtitle))
+                        {
+                            <div class="hazard-location-subtitle">@HeaderSubtitle</div>
+                        }
+                    </div>
+                }
+
+                <!-- Map Container -->
+                <div id="@MapContainerId" style="height: @MapHeight; width: 100%; border: 1px solid #ddd; border-radius: 4px; position: relative;">
+                    <!-- Map will be rendered here -->
+                </div>
+
+                <!-- Location Details -->
+                @if (ShowLocationDetails)
+                {
+                    <RadzenCard Variant="Variant.Text" Class="location-details">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; font-weight: 600;">
+                                Location Information
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                <strong>Location ID:</strong> @(string.IsNullOrWhiteSpace(LocationId) ? "Not Available" : LocationId)
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                <strong>Coordinates:</strong> @(HasCoordinates ? CoordinateDisplay : "Not Available")
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                <strong>Description:</strong> @(string.IsNullOrWhiteSpace(LocationDescription) ? "Not Available" : LocationDescription)
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else
+    {
+        <!-- No Location Available -->
+        <RadzenCard Variant="Variant.Text" Class="no-location-card">
+            @if (ShowHeader)
+            {
+                <div class="sms-modal-header sms-header-primary hazard-location-header">
+                    <h5 class="sms-modal-title mb-0">
+                        <RadzenIcon Icon="place" class="me-2" />
+                        @(Title ?? "Location Information")
+                    </h5>
+                    @if (!string.IsNullOrWhiteSpace(HeaderSubtitle))
+                    {
+                        <div class="hazard-location-subtitle">@HeaderSubtitle</div>
+                    }
+                </div>
+            }
+            <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Center" Class="rz-p-3">
+                <RadzenIcon Icon="location_off" Style="color: var(--rz-text-secondary-color); font-size: 2rem;" />
+                <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                    No location information available
+                </RadzenText>
+                @if (!string.IsNullOrEmpty(LocationDescription))
+                {
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: var(--rz-text-tertiary-color);">
+                        @LocationDescription
+                    </RadzenText>
+                }
+            </RadzenStack>
+        </RadzenCard>
+    }
+
+    @if (ShowCloseButton)
+    {
+        <div class="hazard-location-footer d-flex justify-content-end mt-3">
+            <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                          Text="Close"
+                          Icon="close"
+                          Click="@CloseAsync"
+                          Size="ButtonSize.Medium" />
+        </div>
+    }
+</div>
+
+<!-- Leaflet.js CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+<!-- Leaflet.js JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<style>
+.readonly-location-map-container {
+    width: 100%;
+}
+
+.sms-modal-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sms-header-primary {
+    background-color: var(--sms-brand-primary, #212e61);
+    color: white;
+}
+
+.sms-modal-title {
+    color: white;
+    font-weight: 600;
+}
+
+.hazard-location-header {
+    margin: -1rem -1rem 1rem -1rem;
+    border-radius: 0.25rem 0.25rem 0 0;
+}
+
+.hazard-location-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
+.hazard-location-footer {
+    width: 100%;
+}
+
+.map-card {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.location-details {
+    background-color: rgba(13, 110, 253, 0.05);
+    border-left: 3px solid var(--rz-primary);
+}
+
+.no-location-card {
+    background-color: #f8f9fa;
+    border: 1px dashed #dee2e6;
+}
+
+#@MapContainerId {
+    cursor: default !important;
+}
+
+::deep .leaflet-container {
+    cursor: default !important;
+}
+
+::deep .leaflet-control-zoom {
+    display: @(ShowZoomControls ? "block" : "none") !important;
+}
+
+::deep .leaflet-control-layers {
+    display: @(ShowLayerControls ? "block" : "none") !important;
+}
+</style>

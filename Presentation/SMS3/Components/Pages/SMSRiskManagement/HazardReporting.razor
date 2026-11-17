@@ -708,18 +708,15 @@ else
                                               Size="ButtonSize.Medium"
                                               Click="EnableLocationEditMode" />
                             }
-                            <RadzenButton ButtonStyle="ButtonStyle.Warning" 
-                                        Text="Clear Selection" 
-                                        Icon="clear"
-                                        Size="ButtonSize.Medium"
-                                        Click="ClearMapSelection"
-                                        Disabled="@(!CanClearMapSelection)" />
-                            <RadzenButton ButtonStyle="ButtonStyle.Success" 
-                                        Text="@MapModalConfirmButtonText" 
-                                        Icon="check"
-                                        Size="ButtonSize.Medium"
-                                        Click="UseSelectedLocation"
-                                        Disabled="@(!CanUseSelectedMapLocation)" />
+                            else
+                            {
+                                <RadzenButton ButtonStyle="ButtonStyle.Success" 
+                                            Text="@MapModalConfirmButtonText" 
+                                            Icon="check"
+                                            Size="ButtonSize.Medium"
+                                            Click="UseSelectedLocation"
+                                            Disabled="@(!CanUseSelectedMapLocation)" />
+                            }
                         </div>
                     </div>
                 </div>

@@ -1,0 +1,41 @@
+
+@using SMS3.Components.Shared.Components
+@using SMS_Application.Interfaces
+@using SMS_Application.Queries
+@using SMS_Domain.Entities
+@inject IBaseMediator Mediator
+@inject ILogger<HazardLocationView> Logger
+@namespace SMS3.Components.Shared.Components
+@* 
+Hazard Location View Component
+Displays a hazard location using the HazardLocationReadOnly component
+Uses CQRS pattern to fetch HazardLocation entity data when needed
+*@
+
+@if (IsLoading)
+{
+    <div class="d-flex justify-content-center align-items-center" style="height: @MapHeight;">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium" />
+        <RadzenText TextStyle="TextStyle.Body2" Style="margin-left: 0.5rem;">Loading location data...</RadzenText>
+    </div>
+}
+else
+{
+    <HazardLocationReadOnly Latitude="@GetLatitude()"
+                            Longitude="@GetLongitude()"
+                            LocationId="@GetLocationId()"
+                            LocationDescription="@GetLocationDescription()"
+                            LocationArea="@GetLocationArea()"
+                            LocationSubArea="@GetLocationSubArea()"
+                            Title="@(Title ?? "Hazard Location")"
+                            HeaderSubtitle="@HeaderSubtitle"
+                            MapHeight="@MapHeight"
+                            ShowCoordinates="@ShowCoordinates"
+                            ShowLocationDetails="@ShowLocationDetails"
+                            ShowZoomControls="@ShowZoomControls"
+                            ShowLayerControls="@ShowLayerControls"
+                            ZoomLevel="@ZoomLevel"
+                            ShowHeader="@ShowHeader"
+                            ShowCloseButton="@ShowCloseButton"
+                            OnClose="@OnClose" />
+}

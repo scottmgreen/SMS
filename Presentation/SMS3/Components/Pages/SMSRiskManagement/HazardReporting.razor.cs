@@ -206,7 +206,6 @@ public partial class HazardReporting : ComponentBase, IDisposable
             ? $"View Hazard Location {ActiveLocationForValidation?.Code}"
             : (IsLocationValidationMode ? $"Confirm Hazard Location {ActiveLocationForValidation?.Code}" : "Select Hazard Location");
     public string MapModalConfirmButtonText => IsLocationValidationMode ? "Confirm Location" : "Use Selected Location";
-    public bool CanClearMapSelection => !IsLocationValidationMode && !IsMapReadOnlyMode;
     public string? MapModalLocationCaption
     {
         get
@@ -389,7 +388,6 @@ public partial class HazardReporting : ComponentBase, IDisposable
     private string _mapOriginalLocationDescription = string.Empty;
     private HazardLocation _mapOriginalGeoLocation = new() { IsValid = false, IsValidated = false };
     private bool _mapSelectionConfirmed;
-    private bool _mapSelectionCleared;
 
     #endregion
 
@@ -1258,7 +1256,6 @@ public partial class HazardReporting : ComponentBase, IDisposable
             DateSelected = SelectedGeoLocation?.DateSelected ?? DateTime.Now
         };
         _mapSelectionConfirmed = false;
-        _mapSelectionCleared = false;
 
         _isMapEditModeEnabled = false;
         ShowMapModal = true;
@@ -1273,7 +1270,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             try
             {
                 // Always reinitialize the map since the DOM element is recreated
-            await _mapModule.InvokeVoidAsync("initializeMap",_airportCenterLatitude, _airportCenterLongitude, _defaultZoomLevel, _dotNetRef, _hazardMappingBounds);
+            await _mapModule.InvokeVoidAsync("initializeMap", _airportCenterLatitude, _airportCenterLongitude, _defaultZoomLevel, _dotNetRef, _hazardMappingBounds, !IsMapReadOnlyMode);
 
                 _logger.LogInformation("Map reinitialized for modal opening");
 
@@ -1310,7 +1307,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
         if (IsMapReadOnlyMode)
         {
-            await _notificationHelper.ShowInfoAsync( "Viewing validated location. Click Edit Location to modify and revalidate.");
+            await _notificationHelper.ShowInfoAsync("Viewing validated location. Click Edit Location to enable pin movement and update the location.");
         }
         else
         {
@@ -1318,9 +1315,22 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
     }
 
-    public void EnableLocationEditMode()
+    public async Task EnableLocationEditMode()
     {
         _isMapEditModeEnabled = true;
+        if (_mapModule is not null)
+        {
+            try
+            {
+                await _mapModule.InvokeVoidAsync("setMapInteractionEnabled", true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Unable to enable map interaction mode.");
+            }
+        }
+
+        await _notificationHelper.ShowInfoAsync("Edit mode enabled. Click on the map to move the location pin.");
         StateHasChanged();
     }
 
@@ -1329,7 +1339,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     public void CloseMapSelector()
     {
-        if (!_mapSelectionConfirmed && !_mapSelectionCleared)
+        if (!_mapSelectionConfirmed)
         {
             SelectedLatitude = _mapOriginalLatitude;
             SelectedLongitude = _mapOriginalLongitude;
@@ -1445,45 +1455,6 @@ public partial class HazardReporting : ComponentBase, IDisposable
         StateHasChanged();
 
         await _notificationHelper.ShowSuccessAsync( $"Location selected: {GeoLocationDisplay}");
-        
-    }
-
-    /// <summary>
-    /// Clear map selection
-    /// </summary>
-    public async Task ClearMapSelection()
-    {
-        if (!CanClearMapSelection)
-        {
-            return;
-        }
-
-        SelectedLatitude = 0;
-        SelectedLongitude = 0;
-        SelectedLocationDescription = string.Empty;
-        SelectedGeoLocation = new HazardLocation
-        {
-            IsValid = false,
-            IsValidated = false
-        };
-        HazardReport.Location = "";
-        _mapSelectionCleared = true;
-        _mapSelectionConfirmed = false;
-
-        if (_mapModule is not null)
-        {
-            try
-            {
-                await _mapModule.InvokeVoidAsync("clearSelection");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error clearing map selection");
-            }
-        }
-
-        StateHasChanged();
-        await _notificationHelper.ShowInfoAsync( "Map selection has been cleared.");
         
     }
 

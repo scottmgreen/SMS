@@ -52,6 +52,11 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
     private readonly HashSet<string> _lockedRecordKeys = new(StringComparer.OrdinalIgnoreCase);
     private string _activeRecordLockKey = string.Empty;
     private string _activeReportCode = string.Empty;
+    private bool _showLocationMapModal;
+    private HazardLocation? _selectedMapLocation;
+    private Hazard? _selectedMapHazard;
+    private string _selectedMapTitle = string.Empty;
+    private string _selectedMapSubtitle = string.Empty;
     #endregion
     
     #region Lifecycle Methods
@@ -687,15 +692,17 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
 
             if (!HasValidCoordinates(location))
             {
+                await ReleaseActiveRecordLockAsync("ViewMapNoCoordinates").ConfigureAwait(false);
                 await ShowErrorAsyncNotification("This location does not have valid coordinates to display on the map.");
                 return;
             }
 
-            // First, get the associated Hazard entity since HazardLocationDisplay expects a Hazard parameter
+            // First, get the associated Hazard entity to provide standardized map input data
             var hazard = await GetHazardForLocation(location);
             
             if (hazard is null)
             {
+                await ReleaseActiveRecordLockAsync("ViewMapNoHazard").ConfigureAwait(false);
                 await ShowErrorAsyncNotification($"Could not find associated hazard for location {location.Code}");
                 return;
             }
@@ -705,89 +712,14 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
                 ? location.Description 
                 : $"Hazard: {location.HazardCode}";
 
-            // Open modal dialog with HazardLocationDisplay component
-            await _dialogService.OpenAsync(title,
-                ds => 
-                {
-                    var content = new RenderFragment(builder =>
-                    {
-                        // Add subtitle
-                        if (!string.IsNullOrEmpty(subtitle))
-                        {
-                            builder.OpenElement(0, "div");
-                            builder.AddAttribute(1, "class", "mb-3 text-muted");
-                            builder.AddAttribute(2, "style", "font-size: 0.9rem;");
-                            builder.AddContent(3, subtitle);
-                            builder.CloseElement();
-                        }
+            _selectedMapLocation = location;
+            _selectedMapHazard = hazard;
+            _selectedMapTitle = title;
+            _selectedMapSubtitle = subtitle;
+            _showLocationMapModal = true;
 
-                        // Add HazardLocationDisplay component
-                        builder.OpenComponent<SMS3.Components.Shared.HazardLocationDisplay>(10);
-                        builder.AddAttribute(11, "Hazard", hazard);
-                        builder.AddAttribute(12, "Title", "");
-                        builder.AddAttribute(13, "MapHeight", "400px");
-                        builder.AddAttribute(14, "ShowCoordinates", true);
-                        builder.AddAttribute(15, "ShowLocationDetails", true);
-                        builder.AddAttribute(16, "ShowZoomControls", true);
-                        builder.AddAttribute(17, "ShowLayerControls", false);
-                        builder.AddAttribute(18, "ZoomLevel", 18);
-                        builder.CloseComponent();
-
-                        // Add location details
-                        builder.OpenElement(20, "div");
-                        builder.AddAttribute(21, "class", "mt-3 p-3 bg-light rounded");
-                        builder.AddAttribute(22, "style", "border-left: 4px solid #007bff;");
-                        
-                        builder.OpenElement(23, "h6");
-                        builder.AddAttribute(24, "class", "text-primary mb-2");
-                        builder.AddContent(25, "Location Details");
-                        builder.CloseElement();
-                        
-                        builder.OpenElement(26, "div");
-                        builder.AddAttribute(27, "class", "row");
-                        
-                        // Left column
-                        builder.OpenElement(28, "div");
-                        builder.AddAttribute(29, "class", "col-md-6");
-                        
-                        builder.AddMarkupContent(30, $"<strong>Code:</strong> {location.Code}<br/>");
-                        builder.AddMarkupContent(31, $"<strong>Hazard:</strong> {location.HazardCode}<br/>");
-                        if (location.Latitude.HasValue && location.Longitude.HasValue)
-                        {
-                            builder.AddMarkupContent(32, $"<strong>Coordinates:</strong> {location.Latitude:F6}, {location.Longitude:F6}<br/>");
-                        }
-                        
-                        builder.CloseElement(); // col-md-6
-                        
-                        // Right column
-                        builder.OpenElement(35, "div");
-                        builder.AddAttribute(36, "class", "col-md-6");
-                        
-                        builder.AddMarkupContent(37, $"<strong>Created:</strong> {location.CreatedDate:yyyy-MM-dd HH:mm}<br/>");
-                        builder.AddMarkupContent(38, $"<strong>Created By:</strong> {location.CreatedBy ?? "Unknown"}<br/>");
-                        if (!string.IsNullOrEmpty(location.Description))
-                        {
-                            builder.AddMarkupContent(39, $"<strong>Description:</strong> {location.Description}");
-                        }
-                        
-                        builder.CloseElement(); // col-md-6
-                        builder.CloseElement(); // row
-                        builder.CloseElement(); // details container
-                    });
-                    
-                    return content;
-                },
-                new DialogOptions() 
-                { 
-                    Width = "1200px", 
-                    Height = "900px", 
-                    Resizable = true, 
-                    Draggable = true,
-                    CloseDialogOnOverlayClick = false
-                });
-
-            await ReleaseActiveRecordLockAsync("ViewMapClosed").ConfigureAwait(false);
             await ShowInfoAsyncNotification($"Opened location map for {location.Code}");
+            await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
@@ -795,6 +727,18 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
             _logger.LogError(ex, "Error opening location map for {LocationCode}", location.Code);
             await ShowErrorAsyncNotification("Error opening location map");
         }
+    }
+
+    private async Task CloseLocationMapModal()
+    {
+        _showLocationMapModal = false;
+        _selectedMapLocation = null;
+        _selectedMapHazard = null;
+        _selectedMapTitle = string.Empty;
+        _selectedMapSubtitle = string.Empty;
+
+        await ReleaseActiveRecordLockAsync("ViewMapClosed").ConfigureAwait(false);
+        await InvokeAsync(StateHasChanged);
     }
 
     /// <summary>

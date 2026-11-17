@@ -9,6 +9,7 @@ let selectedMarker = null;
 let dotNetRef = null;
 let pdxOverlayLayer = null;
 let boundsFenceLayer = null;
+let clickHandlerAttached = false;
 const PDX_SMS_TILE_URL = 'https://cdn.portofportland.com/maps/sms_260702/{z}/{x}/{y}.png';
 const PDX_SMS_FALLBACK_ZOOM = 16;
 const PDX_SMS_NATIVE_ZOOM = 20;
@@ -20,13 +21,15 @@ const DEFAULT_BOUNDS_CONFIG = {
 };
 
 let mapBoundsConfig = { ...DEFAULT_BOUNDS_CONFIG };
+let mapSelectionEnabled = true;
 
 /**
  * Initialize the interactive map
  */
-export function initializeMap(centerLat, centerLng, zoomLevel, dotNetReference, boundsConfig) {
+export function initializeMap(centerLat, centerLng, zoomLevel, dotNetReference, boundsConfig, selectionEnabled = true) {
     dotNetRef = dotNetReference;
     mapBoundsConfig = normalizeBoundsConfig(boundsConfig);
+    mapSelectionEnabled = selectionEnabled !== false;
     
     try {
         // Always remove existing map if it exists to prevent conflicts
@@ -36,13 +39,14 @@ export function initializeMap(centerLat, centerLng, zoomLevel, dotNetReference, 
             selectedMarker = null;
             pdxOverlayLayer = null;
             boundsFenceLayer = null;
+            clickHandlerAttached = false;
         }
 
         // Wait for DOM element to be available
         const mapContainer = document.getElementById('hazardLocationMap');
         if (!mapContainer) {
             console.error('Map container not found - retrying in 100ms');
-            setTimeout(() => initializeMap(centerLat, centerLng, zoomLevel, dotNetReference, boundsConfig), 100);
+            setTimeout(() => initializeMap(centerLat, centerLng, zoomLevel, dotNetReference, boundsConfig, selectionEnabled), 100);
             return;
         }
 
@@ -62,8 +66,8 @@ export function initializeMap(centerLat, centerLng, zoomLevel, dotNetReference, 
             trackResize: true
         });
 
-        // Set crosshair cursor
-        mapContainer.style.cursor = 'crosshair';
+        // Set cursor and interaction mode based on current state
+        applyInteractionState();
 
         // Add OpenStreetMap tiles
         const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -135,8 +139,8 @@ export function initializeMap(centerLat, centerLng, zoomLevel, dotNetReference, 
 
         drawBoundsFence();
 
-        // Add click event listener
-        map.on('click', onMapClick);
+        // Ensure map interaction state is consistently applied after init
+        applyInteractionState();
 
         console.log('Map initialized successfully');
 
@@ -161,11 +165,6 @@ function drawBoundsFence() {
         dashArray: '6,4'
     }).addTo(map);
 
-    boundsFenceLayer.bindTooltip('Hazard Mapping Bounds', {
-        sticky: true,
-        direction: 'top'
-    });
-
     boundsFenceLayer.bringToFront();
 }
 
@@ -173,6 +172,10 @@ function drawBoundsFence() {
  * Handle map click events
  */
 function onMapClick(e) {
+    if (!mapSelectionEnabled) {
+        return;
+    }
+
     const lat = e.latlng.lat;
     const lng = e.latlng.lng;
     
@@ -183,15 +186,51 @@ function onMapClick(e) {
         alert('Selected location is out of bounds. Please select a location within the PDX airport area.');
         return;
     }
-    
+
     // Description is intentionally blank and required for user entry
     setMapLocation(lat, lng, '');
+}
+
+function setMapCursor() {
+    const mapContainer = document.getElementById('hazardLocationMap');
+    if (!mapContainer) {
+        return;
+    }
+
+    mapContainer.style.cursor = mapSelectionEnabled ? 'crosshair' : 'default';
+}
+
+function applyInteractionState() {
+    if (!map) {
+        return;
+    }
+
+    setMapCursor();
+
+    if (mapSelectionEnabled) {
+        if (!clickHandlerAttached) {
+            map.on('click', onMapClick);
+            clickHandlerAttached = true;
+        }
+    } else if (clickHandlerAttached) {
+        map.off('click', onMapClick);
+        clickHandlerAttached = false;
+    }
+}
+
+export function setMapInteractionEnabled(enabled) {
+    mapSelectionEnabled = Boolean(enabled);
+    applyInteractionState();
 }
 
 /**
  * Set map location with marker and notify Blazor
  */
 function setMapLocation(lat, lng, description) {
+    if (!map) {
+        return;
+    }
+
     const effectiveDescription = description ?? '';
 
     // Remove existing marker
@@ -390,6 +429,8 @@ export function destroyMap() {
         map = null;
         selectedMarker = null;
     }
+    clickHandlerAttached = false;
+    mapSelectionEnabled = true;
     dotNetRef = null;
     console.log('Map destroyed');
 }
