@@ -118,7 +118,7 @@
         @if (!PreviewOnly)
         {
             <RadzenButton Text="Discard" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@Close" />
-            <RadzenButton Text="Send" Icon="send" ButtonStyle="ButtonStyle.Primary" Click="@HandleSendAsync" Disabled="@IsSending" />
+            <RadzenButton Text="Send" Icon="send" ButtonStyle="ButtonStyle.Primary" Click="@HandleSendAsync" Disabled="@(IsSending || ParseRecipients(ToAddressesText).Count == 0)" />
         }
         else
         {

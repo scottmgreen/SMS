@@ -679,6 +679,10 @@ public static class DomainErrors
         public static Error FailedSendManualResend => new Error(
             "EventDispatch.FailedSendManualResend",
             "FAILED SEND - READY FOR MANUAL RESEND");
+
+        public static Error FailedSendManualResendBlockedNoRecipients => new Error(
+            "EventDispatch.FailedSendManualResendBlockedNoRecipients",
+            "FAILED SEND - MANUAL RESEND BLOCKED: NO ELIGIBLE GROUP CONTACT RECIPIENTS");
     }
 
     /// <summary>

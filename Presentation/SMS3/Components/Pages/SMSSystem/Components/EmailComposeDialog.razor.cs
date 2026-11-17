@@ -32,6 +32,9 @@ public class EmailComposeDialogBase : ComponentBase
     protected string CcEntryText { get; set; } = string.Empty;
     private EmailNotification? _lastInitialModelReference;
 
+    protected bool HasValidToRecipients => Model.To.Any(r => !string.IsNullOrWhiteSpace(r));
+    protected bool IsSendBlocked => Model.HasToValidationError || !HasValidToRecipients;
+
     
 
 
@@ -194,6 +197,20 @@ public class EmailComposeDialogBase : ComponentBase
         }
 
         // Basic validation to keep things Outlook-simple
+        Model.To = NormalizeList(Model.To);
+        Model.Cc = NormalizeList(Model.Cc);
+        Model.Bcc = NormalizeList(Model.Bcc);
+
+        if (Model.HasToValidationError)
+        {
+            var validationMessage = string.IsNullOrWhiteSpace(Model.ToValidationMessage)
+                ? "No valid group ContactEmail recipients were resolved for the To field."
+                : Model.ToValidationMessage;
+
+            await NotificationHelper.ShowErrorAsync($"Cannot send: {validationMessage}");
+            return;
+        }
+
         var errors = ValidateModel(Model);
         if (errors.Any())
         {

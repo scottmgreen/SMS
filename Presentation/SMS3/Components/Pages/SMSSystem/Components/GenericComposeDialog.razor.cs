@@ -33,6 +33,9 @@ public class GenericComposeDialogBase : EmailComposeDialogBase
         Model.To = ParseRecipients(ToAddressesText);
         Model.Cc = ParseRecipients(CcAddressesText);
         Model.Bcc = ParseRecipients(BccAddressesText);
+        Model.AllowDirectToRecipients = true;
+        Model.HasToValidationError = false;
+        Model.ToValidationMessage = null;
 
         if (!string.IsNullOrWhiteSpace(FromAddress))
         {
@@ -46,7 +49,7 @@ public class GenericComposeDialogBase : EmailComposeDialogBase
         await SendAsync();
     }
 
-    private static List<string> ParseRecipients(string? recipients)
+    protected static List<string> ParseRecipients(string? recipients)
     {
         if (string.IsNullOrWhiteSpace(recipients))
         {

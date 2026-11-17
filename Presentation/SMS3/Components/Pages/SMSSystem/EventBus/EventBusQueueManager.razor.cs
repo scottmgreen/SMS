@@ -435,95 +435,108 @@ public partial class EventBusQueueManager
             {
                 try
                 {
-                    var emailEvent = System.Text.Json.JsonSerializer.Deserialize<SMS_Domain.Events.EmailNotificationEvent>(queuedEvent.EventData);
-                    if (emailEvent != null)
+                    if (!TryValidateEmailPayloadForTemplateSelection(queuedEvent.EventData, out var payloadValidationMessage))
                     {
-                        var subject = emailEvent.Subject ?? string.Empty;
-                        var body = emailEvent.Body ?? string.Empty;
+                        _logger.LogWarning("Cannot execute email queue event {QueueCode}: {Reason}", queueCode, payloadValidationMessage);
+                        await _notificationHelper.ShowErrorAsync($"Email Queue Event Invalid: {payloadValidationMessage} Rebuild or cancel this queued email event.", 5000);
+                        return;
+                    }
 
-                        AppendEmailPreviewDetails(queuedEvent, emailEvent, ref subject, ref body);
+                    var emailEvent = System.Text.Json.JsonSerializer.Deserialize<SMS_Domain.Events.EmailNotificationEvent>(queuedEvent.EventData);
+                    if (emailEvent == null)
+                    {
+                        _logger.LogWarning("Cannot execute email queue event {QueueCode}: deserialized EmailNotificationEvent is null.", queueCode);
+                        await _notificationHelper.ShowErrorAsync("Email Queue Event Invalid: Could not load email details for template selection. Rebuild or cancel this queued email event.", 5000);
+                        return;
+                    }
 
-                        var previewToRecipients = await ResolvePreviewRecipientsAsync(emailEvent.ToRecipients, enforceGroupContactOnly: true);
-                        var previewCcRecipients = await ResolvePreviewRecipientsAsync(emailEvent.CcRecipients, enforceGroupContactOnly: false);
-                        var previewBccRecipients = await ResolvePreviewRecipientsAsync(emailEvent.BccRecipients, enforceGroupContactOnly: false);
+                    var subject = emailEvent.Subject ?? string.Empty;
+                    var body = emailEvent.Body ?? string.Empty;
 
-                        var model = new EmailNotification
+                    AppendEmailPreviewDetails(queuedEvent, emailEvent, ref subject, ref body);
+
+                    var previewToRecipients = await ResolvePreviewRecipientsAsync(emailEvent.ToRecipients, enforceGroupContactOnly: true);
+                    var previewCcRecipients = await ResolvePreviewRecipientsAsync(emailEvent.CcRecipients, enforceGroupContactOnly: false);
+                    var previewBccRecipients = await ResolvePreviewRecipientsAsync(emailEvent.BccRecipients, enforceGroupContactOnly: false);
+
+                    var model = new EmailNotification
+                    {
+                        To = previewToRecipients,
+                        Cc = previewCcRecipients,
+                        Bcc = previewBccRecipients,
+                        Subject = subject,
+                        BodyHtml = emailEvent.IsHtmlContent ? ((MarkupString)body).Value : body.Replace("\n", "<br />")
+                    };
+
+                    if (previewToRecipients.Count == 0)
+                    {
+                        var unresolvedToTokens = await GetUnresolvedToRecipientTokensAsync(emailEvent.ToRecipients);
+                        if (unresolvedToTokens.Count > 0)
                         {
-                            To = previewToRecipients,
-                            Cc = previewCcRecipients,
-                            Bcc = previewBccRecipients,
-                            Subject = subject,
-                            BodyHtml = emailEvent.IsHtmlContent ? ((MarkupString)body).Value : body.Replace("\n", "<br />")
-                        };
-
-                        if (previewToRecipients.Count == 0)
-                        {
-                            var unresolvedToTokens = await GetUnresolvedToRecipientTokensAsync(emailEvent.ToRecipients);
-                            if (unresolvedToTokens.Count > 0)
-                            {
-                                model.HasToValidationError = true;
-                                model.ToValidationMessage =
-                                    $"Approver group ContactEmail is missing or unresolved for: {string.Join(", ", unresolvedToTokens)}. " +
-                                    "Add ContactEmail to the approver group(s) and rebuild this email event.";
-                            }
+                            model.HasToValidationError = true;
+                            model.ToValidationMessage =
+                                $"Approver group ContactEmail is missing or unresolved for: {string.Join(", ", unresolvedToTokens)}. " +
+                                "Add ContactEmail to the approver group(s) and rebuild this email event.";
                         }
+                    }
 
-                        var templateSelection = await _dialogService.Confirm(
-                            "Do you want to use the SMS Integrated Email Template or the Generic Email Template?",
-                            "Choose Email Template",
-                            new ConfirmOptions
-                            {
-                                OkButtonText = "SMS Integrated Template",
-                                CancelButtonText = "Generic Template"
-                            });
-
-                        if (templateSelection is null)
+                    var templateSelection = await _dialogService.Confirm(
+                        "Do you want to use the SMS Integrated Email Template or the Generic Email Template?",
+                        "Choose Email Template",
+                        new ConfirmOptions
                         {
-                            _logger.LogInformation("Email template selection dialog dismissed for queue event {QueueCode}; queue status remains unchanged.", queueCode);
-                            return;
-                        }
+                            OkButtonText = "SMS Integrated Template",
+                            CancelButtonText = "Generic Template"
+                        });
 
-                        var dialogTitle = templateSelection == true
-                            ? "SMS Integrated Email Template"
-                            : "Generic Email Template";
+                    if (templateSelection is null)
+                    {
+                        _logger.LogInformation("Email template selection dialog dismissed for queue event {QueueCode}; queue status remains unchanged.", queueCode);
+                        return;
+                    }
 
-                        var dialogParameters = new Dictionary<string, object?>
-                        {
-                            { "InitialModel", model },
-                            { "DeferSendToQueueExecution", queuedEvent.Status == QueuedEventStatus.Pending },
-                            { "DialogTitleOverride", dialogTitle }
-                        };
+                    var dialogTitle = templateSelection == true
+                        ? "SMS Integrated Email Template"
+                        : "Generic Email Template";
 
-                        var dialogResult = templateSelection == true
-                            ? await _dialogService.OpenAsync<Components.EmailComposeDialog>(
-                                string.Empty,
-                                dialogParameters,
-                                new DialogOptions { Width = "1050px", Height = "900px", Resizable = true, Draggable = true, ShowClose = false, ShowTitle = false, CssClass = "sms-email-compose-dialog" })
-                            : await _dialogService.OpenAsync<Components.GenericComposeDialog>(
-                                string.Empty,
-                                dialogParameters,
-                                new DialogOptions { Width = "1050px", Height = "900px", Resizable = true, Draggable = true, ShowClose = false, ShowTitle = false, CssClass = "sms-email-compose-dialog" });
+                    var dialogParameters = new Dictionary<string, object?>
+                    {
+                        { "InitialModel", model },
+                        { "DeferSendToQueueExecution", queuedEvent.Status == QueuedEventStatus.Pending },
+                        { "DialogTitleOverride", dialogTitle }
+                    };
 
-                        var emailSent = dialogResult is bool sent && sent;
+                    var dialogResult = templateSelection == true
+                        ? await _dialogService.OpenAsync<Components.EmailComposeDialog>(
+                            string.Empty,
+                            dialogParameters,
+                            new DialogOptions { Width = "1050px", Height = "900px", Resizable = true, Draggable = true, ShowClose = false, ShowTitle = false, CssClass = "sms-email-compose-dialog" })
+                        : await _dialogService.OpenAsync<Components.GenericComposeDialog>(
+                            string.Empty,
+                            dialogParameters,
+                            new DialogOptions { Width = "1050px", Height = "900px", Resizable = true, Draggable = true, ShowClose = false, ShowTitle = false, CssClass = "sms-email-compose-dialog" });
 
-                        if (!emailSent)
-                        {
-                            _logger.LogInformation("Email dialog cancelled for queue event {QueueCode}; queue status remains unchanged.", queueCode);
-                            return;
-                        }
+                    var emailSent = dialogResult is bool sent && sent;
 
-                        if (queuedEvent.Status != QueuedEventStatus.Pending)
-                        {
-                            await _notificationHelper.ShowSuccessAsync("Email Re-Sent: Email was sent again without changing the original queue record.", 3000);
+                    if (!emailSent)
+                    {
+                        _logger.LogInformation("Email dialog cancelled for queue event {QueueCode}; queue status remains unchanged.", queueCode);
+                        return;
+                    }
 
-                            _logger.LogInformation("Email queue event {QueueCode} re-sent from queue manager for status {Status}", queueCode, queuedEvent.Status);
-                            return;
-                        }
+                    if (queuedEvent.Status != QueuedEventStatus.Pending)
+                    {
+                        await _notificationHelper.ShowSuccessAsync("Email Re-Sent: Email was sent again without changing the original queue record.", 3000);
+
+                        _logger.LogInformation("Email queue event {QueueCode} re-sent from queue manager for status {Status}", queueCode, queuedEvent.Status);
+                        return;
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to preview EmailNotificationEvent for queue event {QueueCode}; continuing with execution", queueCode);
+                    _logger.LogWarning(ex, "Cannot execute email queue event {QueueCode}: invalid email payload prevented template prompt.", queueCode);
+                    await _notificationHelper.ShowErrorAsync("Email Queue Event Invalid: Could not load email payload for template selection. Rebuild or cancel this queued email event.", 5000);
+                    return;
                 }
             }
 
@@ -631,6 +644,50 @@ public partial class EventBusQueueManager
         catch
         {
             // Leave original preview content unchanged if payload parsing fails.
+        }
+    }
+
+    private static bool TryValidateEmailPayloadForTemplateSelection(string? eventData, out string validationMessage)
+    {
+        if (string.IsNullOrWhiteSpace(eventData))
+        {
+            validationMessage = "Queued email payload is empty.";
+            return false;
+        }
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(eventData);
+            var root = doc.RootElement;
+
+            var toRecipientsProperty = root
+                .EnumerateObject()
+                .FirstOrDefault(property => string.Equals(property.Name, "ToRecipients", StringComparison.OrdinalIgnoreCase));
+
+            if (toRecipientsProperty.Value.ValueKind != System.Text.Json.JsonValueKind.Array)
+            {
+                validationMessage = "Queued email payload is missing ToRecipients.";
+                return false;
+            }
+
+            var hasEligibleRecipient = toRecipientsProperty.Value
+                .EnumerateArray()
+                .Any(item => item.ValueKind == System.Text.Json.JsonValueKind.String
+                    && !string.IsNullOrWhiteSpace(item.GetString()));
+
+            if (!hasEligibleRecipient)
+            {
+                validationMessage = "Queued email has no eligible To recipients.";
+                return false;
+            }
+
+            validationMessage = string.Empty;
+            return true;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            validationMessage = "Queued email payload is not valid JSON.";
+            return false;
         }
     }
 

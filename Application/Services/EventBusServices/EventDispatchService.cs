@@ -162,8 +162,17 @@ public sealed class EventDispatchService : IBaseEventBus
     {
         try
         {
-            if (integrationEvent is not EmailNotificationEvent)
+            if (integrationEvent is not EmailNotificationEvent emailNotificationEvent)
             {
+                return false;
+            }
+
+            if (!HasEligibleToRecipients(emailNotificationEvent))
+            {
+                _logger.LogApplicationWarning(
+                    "Skipping manual resend queue for email integration event {EventType}: {Reason}",
+                    integrationEvent.EventType,
+                    DomainErrors.EventDispatchError.FailedSendManualResendBlockedNoRecipients.Message);
                 return false;
             }
 
@@ -192,6 +201,9 @@ public sealed class EventDispatchService : IBaseEventBus
             return false;
         }
     }
+
+    private static bool HasEligibleToRecipients(EmailNotificationEvent emailEvent)
+        => emailEvent.ToRecipients.Any(recipient => !string.IsNullOrWhiteSpace(recipient));
 
     private async Task MarkAuditEventCancelledAsync(string queueCode)
     {
@@ -543,9 +555,14 @@ public sealed class EventDispatchService : IBaseEventBus
                     }
                     else
                     {
+                        var manualResendStatusMessage = integrationEvent is EmailNotificationEvent emailEvent
+                            && !HasEligibleToRecipients(emailEvent)
+                            ? DomainErrors.EventDispatchError.FailedSendManualResendBlockedNoRecipients.Message
+                            : DomainErrors.EventDispatchError.FailedSendManualResend.Message;
+
                         await MarkDomainAuditEventFailedAsync(
                             auditQueueCode,
-                            $"{failureMessage} | {DomainErrors.EventDispatchError.FailedSendManualResend.Message}").ConfigureAwait(false);
+                            $"{failureMessage} | {manualResendStatusMessage}").ConfigureAwait(false);
                     }
                 }
             }

@@ -29,6 +29,8 @@ namespace SMS_Application.EventHandlers;
 /// </summary>
 public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNotificationEvent>
 {
+    private const string AllowDirectToRecipientsMetadataKey = "AllowDirectToRecipients";
+
     private readonly IEmailService _emailService;
     private readonly ILogger<EmailNotificationEventHandler> _logger;
     private readonly IBaseMediator _mediator;
@@ -90,7 +92,8 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
                 return Result.Success();
             }
 
-            await ResolveGroupContactRecipientsAsync(integrationEvent, cancellationToken);
+            var enforceGroupContactOnlyForTo = !ShouldAllowDirectToRecipients(integrationEvent);
+            await ResolveGroupContactRecipientsAsync(integrationEvent, cancellationToken, enforceGroupContactOnlyForTo);
 
             _logger.LogApplicationInformation("[EMAIL HANDLER] Processing email notification: '{Subject}' to {RecipientCount} recipients (Priority: {Priority}) - UseSimulation: {UseSimulation}",
                 integrationEvent.Subject, integrationEvent.ToRecipients.Count, integrationEvent.Priority, _useSimulation);
@@ -417,14 +420,32 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
            || string.Equals(status, ReportStatus.ReportCloserHazardEliminated.Value, StringComparison.OrdinalIgnoreCase)
            || string.Equals(status, ReportStatus.ReportCloserHazardEliminated.Name, StringComparison.OrdinalIgnoreCase);
 
-    private async Task ResolveGroupContactRecipientsAsync(EmailNotificationEvent emailEvent, CancellationToken cancellationToken)
+    private static bool ShouldAllowDirectToRecipients(EmailNotificationEvent emailEvent)
+    {
+        if (!emailEvent.EmailMetadata.TryGetValue(AllowDirectToRecipientsMetadataKey, out var value) || value is null)
+        {
+            return false;
+        }
+
+        return value switch
+        {
+            bool booleanValue => booleanValue,
+            string stringValue => bool.TryParse(stringValue, out var parsed) && parsed,
+            System.Text.Json.JsonElement jsonElement when jsonElement.ValueKind == System.Text.Json.JsonValueKind.True => true,
+            System.Text.Json.JsonElement jsonElement when jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
+                && bool.TryParse(jsonElement.GetString(), out var parsed) => parsed,
+            _ => false
+        };
+    }
+
+    private async Task ResolveGroupContactRecipientsAsync(EmailNotificationEvent emailEvent, CancellationToken cancellationToken, bool enforceGroupContactOnlyForTo)
     {
         var unresolvedTo = new List<string>();
 
         var resolvedTo = await ResolveRecipientsAsync(
             emailEvent.ToRecipients,
             cancellationToken,
-            enforceGroupContactOnly: true,
+            enforceGroupContactOnly: enforceGroupContactOnlyForTo,
             unresolvedGroupRecipients: unresolvedTo);
         var resolvedCc = await ResolveRecipientsAsync(emailEvent.CcRecipients, cancellationToken, enforceGroupContactOnly: false);
         var resolvedBcc = await ResolveRecipientsAsync(emailEvent.BccRecipients, cancellationToken, enforceGroupContactOnly: false);

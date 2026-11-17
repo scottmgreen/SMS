@@ -457,7 +457,13 @@ public class EventQueueService : IEventQueueService
                 return Result.Failure<string>(new Error("QUEUE_REBUILD_INVALID_STATUS", $"Event {queueCode} cannot be rebuilt from status {queuedEvent.Status}."));
             }
 
-                var emailEvent = JsonSerializer.Deserialize<EmailNotificationEvent>(queuedEvent.EventData, _eventJsonOptions);
+            if (!TryValidateQueuedEmailPayload(queuedEvent.EventData, out var payloadValidationMessage))
+            {
+                _logger.LogApplicationWarning("[QUEUE] Cannot rebuild queued email event {QueueCode}: {Reason}", queueCode, payloadValidationMessage);
+                return Result.Failure<string>(new Error("QUEUE_REBUILD_INVALID_EMAIL_PAYLOAD", payloadValidationMessage));
+            }
+
+            var emailEvent = JsonSerializer.Deserialize<EmailNotificationEvent>(queuedEvent.EventData, _eventJsonOptions);
             if (emailEvent is null)
             {
                 return Result.Failure<string>(new Error("QUEUE_REBUILD_DESERIALIZE_FAILED", "Unable to deserialize queued EmailNotificationEvent."));
@@ -1120,6 +1126,47 @@ public class EventQueueService : IEventQueueService
         return false;
     }
 
+    private static bool TryValidateQueuedEmailPayload(string? eventData, out string validationMessage)
+    {
+        if (string.IsNullOrWhiteSpace(eventData))
+        {
+            validationMessage = "Queued email payload is empty.";
+            return false;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(eventData);
+            var root = doc.RootElement;
+
+            if (!TryGetJsonProperty(root, "ToRecipients", out var toRecipientsElement)
+                || toRecipientsElement.ValueKind != JsonValueKind.Array)
+            {
+                validationMessage = "Queued email payload is missing ToRecipients.";
+                return false;
+            }
+
+            var hasRecipient = toRecipientsElement
+                .EnumerateArray()
+                .Any(item => item.ValueKind == JsonValueKind.String
+                    && !string.IsNullOrWhiteSpace(item.GetString()));
+
+            if (!hasRecipient)
+            {
+                validationMessage = "Queued email has no eligible To recipients.";
+                return false;
+            }
+
+            validationMessage = string.Empty;
+            return true;
+        }
+        catch (JsonException)
+        {
+            validationMessage = "Queued email payload is not valid JSON.";
+            return false;
+        }
+    }
+
     /// <summary>
     /// Executes an integration event by reconstructing it and publishing it immediately
     /// </summary>
@@ -1132,6 +1179,13 @@ public class EventQueueService : IEventQueueService
                 var knownTypes = string.Join(", ", _queuedEventTypeRegistry.GetKnownTypes(EventCategory.IntegrationEvent).OrderBy(x => x));
                 _logger.LogApplicationWarning("[QUEUE] Unknown integration event type {EventType}. Known integration types: {KnownTypes}", queuedEvent.EventType, knownTypes);
                 return Result.Failure(new Error("UNKNOWN_INTEGRATION_EVENT_TYPE", $"Unknown integration event type: {queuedEvent.EventType}"));
+            }
+
+            if (string.Equals(queuedEvent.EventType, SMS_Domain.Enums.EventType.EmailNotification.Value, StringComparison.OrdinalIgnoreCase)
+                && !TryValidateQueuedEmailPayload(queuedEvent.EventData, out var payloadValidationMessage))
+            {
+                _logger.LogApplicationWarning("[QUEUE] Cannot execute queued email event {QueueCode}: {Reason}", queuedEvent.QueueCode, payloadValidationMessage);
+                return Result.Failure(new Error("INVALID_EMAIL_EVENT_PAYLOAD", payloadValidationMessage));
             }
 
             var integrationEvent = (IBaseIntegrationEvent?)System.Text.Json.JsonSerializer.Deserialize(queuedEvent.EventData, eventType);

@@ -173,7 +173,7 @@
         @if (!PreviewOnly)
         {
             <RadzenButton Text="Discard" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@Close" />
-            <RadzenButton Text="Send" Icon="send" ButtonStyle="ButtonStyle.Primary" Click="@SendAsync" Disabled="@IsSending" />
+            <RadzenButton Text="Send" Icon="send" ButtonStyle="ButtonStyle.Primary" Click="@SendAsync" Disabled="@(IsSending || IsSendBlocked)" />
         }
         else
         {
