@@ -66,8 +66,8 @@ public class Program
                 .SetApplicationName(dataProtectionApplicationName ?? "PDXSMS");
         }
 
-        // Register mock email sender for development/testing
-        builder.Services.AddScoped<IEmailSender, SMS3.Components.Pages.SMSSystem.Services.MockEmailSender>();
+        // Register compose-dialog sender that routes through EventBus integration handlers
+        builder.Services.AddScoped<IEmailSender, SMS3.Components.Pages.SMSSystem.Services.EventBusEmailSender>();
         
         // ?? FEATURE MANAGEMENT - Must be registered early**
         builder.Services.AddSharedServices(builder.Configuration);

@@ -1,6 +1,7 @@
+using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-
 using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
@@ -8,11 +9,11 @@ using SMS_Domain.Events;
 
 namespace SMS3.Components.Pages.SMSSystem.Services
 {
-    public class MockEmailSender : IEmailSender
+    public sealed class EventBusEmailSender : IEmailSender
     {
         private readonly IBaseEventBus _eventBus;
 
-        public MockEmailSender(IBaseEventBus eventBus)
+        public EventBusEmailSender(IBaseEventBus eventBus)
         {
             _eventBus = eventBus;
         }

@@ -506,12 +506,12 @@
 }
 
 <!-- Shared Password Change Modal -->
-<PasswordChangeDialog IsVisible="@_showPasswordModal" 
-                    UserCode="@_passwordUserCode" 
-                    UserDisplayName="@_passwordUserDisplayName" 
-                    UserType="Organizational"
-                    OnPasswordChanged="@OnPasswordChangedSuccess" 
-                    OnCancel="@ClosePasswordChangeModal" />
+<PasswordChange IsVisible="@_showPasswordModal" 
+                UserCode="@_passwordUserCode" 
+                UserDisplayName="@_passwordUserDisplayName" 
+                UserType="Organizational"
+                OnPasswordChanged="@OnPasswordChangedSuccess" 
+                OnCancel="@ClosePasswordChangeModal" />
 
 <!-- Group Management Modal -->
 @if (_showGroupsModal && !string.IsNullOrEmpty(_groupManagementUserCode))

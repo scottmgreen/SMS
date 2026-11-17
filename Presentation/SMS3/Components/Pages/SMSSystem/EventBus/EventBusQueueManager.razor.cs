@@ -483,21 +483,26 @@ public partial class EventBusQueueManager
                             return;
                         }
 
+                        var dialogTitle = templateSelection == true
+                            ? "SMS Integrated Email Template"
+                            : "Generic Email Template";
+
                         var dialogParameters = new Dictionary<string, object?>
                         {
                             { "InitialModel", model },
-                            { "DeferSendToQueueExecution", queuedEvent.Status == QueuedEventStatus.Pending }
+                            { "DeferSendToQueueExecution", queuedEvent.Status == QueuedEventStatus.Pending },
+                            { "DialogTitleOverride", dialogTitle }
                         };
 
                         var dialogResult = templateSelection == true
                             ? await _dialogService.OpenAsync<Components.EmailComposeDialog>(
-                                "SMS Integrated Email Template",
+                                string.Empty,
                                 dialogParameters,
-                                new DialogOptions { Width = "1050px", Height = "900px", Resizable = true, Draggable = true, ShowClose = false })
+                                new DialogOptions { Width = "1050px", Height = "900px", Resizable = true, Draggable = true, ShowClose = false, ShowTitle = false, CssClass = "sms-email-compose-dialog" })
                             : await _dialogService.OpenAsync<Components.GenericComposeDialog>(
-                                "Generic Email Template",
+                                string.Empty,
                                 dialogParameters,
-                                new DialogOptions { Width = "1050px", Height = "900px", Resizable = true, Draggable = true, ShowClose = false });
+                                new DialogOptions { Width = "1050px", Height = "900px", Resizable = true, Draggable = true, ShowClose = false, ShowTitle = false, CssClass = "sms-email-compose-dialog" });
 
                         var emailSent = dialogResult is bool sent && sent;
 

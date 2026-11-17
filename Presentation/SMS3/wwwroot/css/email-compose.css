@@ -1,5 +1,27 @@
 /* Email Compose Dialog Styles */
 
+.sms-email-compose-dialog .rz-dialog-content {
+    padding: 0;
+}
+
+.sms-email-compose-dialog .sms-modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.sms-email-compose-dialog .sms-header-primary {
+    background-color: #212e61;
+    color: white;
+}
+
+.sms-email-compose-dialog .sms-modal-title {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
 .compose-root {
     background: #fff;
     border-radius: 8px;

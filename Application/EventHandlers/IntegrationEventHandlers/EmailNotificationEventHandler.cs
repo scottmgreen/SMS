@@ -96,10 +96,11 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
                 integrationEvent.Subject, integrationEvent.ToRecipients.Count, integrationEvent.Priority, _useSimulation);
 
             // Validate email event before processing
-            if (!ValidateEmailEvent(integrationEvent))
+            var validationResult = ValidateEmailEvent(integrationEvent);
+            if (validationResult.IsFailure)
             {
-                _logger.LogApplicationError("[EMAIL HANDLER] Email event validation failed for: {Subject}", integrationEvent.Subject);
-                return Result.Failure(new Error("INVALID_EMAIL_EVENT", "Email event validation failed"));
+                _logger.LogApplicationError("[EMAIL HANDLER] Email event validation failed for: {Subject}. {Error}", integrationEvent.Subject, validationResult.Error?.Message ?? "Unknown validation error");
+                return validationResult;
             }
 
             Result deliveryResult;
@@ -315,9 +316,31 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
         return content.ToString();
     }
 
-    private bool ValidateEmailEvent(EmailNotificationEvent emailEvent)
+    private static Result ValidateEmailEvent(EmailNotificationEvent emailEvent)
     {
-        return !string.IsNullOrEmpty(emailEvent.Subject) && emailEvent.ToRecipients.Any();
+        if (string.IsNullOrWhiteSpace(emailEvent.Subject))
+        {
+            return Result.Failure(new Error("INVALID_EMAIL_EVENT", "Email subject is required."));
+        }
+
+        if (emailEvent.ToRecipients.Any())
+        {
+            return Result.Success();
+        }
+
+        var errorMessage = "No eligible group ContactEmail recipients were resolved for the To field.";
+        if (emailEvent.EmailMetadata.TryGetValue("UnresolvedToRecipientTokens", out var unresolvedTokensObj) &&
+            unresolvedTokensObj is List<string> unresolvedTokens &&
+            unresolvedTokens.Count > 0)
+        {
+            errorMessage = $"{errorMessage} Unresolved recipient token(s): {string.Join(", ", unresolvedTokens)}. Ensure each token maps to a group with ContactEmail.";
+        }
+        else
+        {
+            errorMessage = $"{errorMessage} Ensure each recipient maps to a group with ContactEmail.";
+        }
+
+        return Result.Failure(new Error("INVALID_EMAIL_EVENT", errorMessage));
     }
 
     private async Task<Result<bool>> ShouldSkipReportStatusEscalationAsync(EmailNotificationEvent emailEvent, CancellationToken cancellationToken)
@@ -396,7 +419,13 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
 
     private async Task ResolveGroupContactRecipientsAsync(EmailNotificationEvent emailEvent, CancellationToken cancellationToken)
     {
-        var resolvedTo = await ResolveRecipientsAsync(emailEvent.ToRecipients, cancellationToken, enforceGroupContactOnly: true);
+        var unresolvedTo = new List<string>();
+
+        var resolvedTo = await ResolveRecipientsAsync(
+            emailEvent.ToRecipients,
+            cancellationToken,
+            enforceGroupContactOnly: true,
+            unresolvedGroupRecipients: unresolvedTo);
         var resolvedCc = await ResolveRecipientsAsync(emailEvent.CcRecipients, cancellationToken, enforceGroupContactOnly: false);
         var resolvedBcc = await ResolveRecipientsAsync(emailEvent.BccRecipients, cancellationToken, enforceGroupContactOnly: false);
 
@@ -408,12 +437,21 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
 
         emailEvent.BccRecipients.Clear();
         emailEvent.BccRecipients.AddRange(resolvedBcc);
+
+        if (unresolvedTo.Count > 0)
+        {
+            emailEvent.EmailMetadata["UnresolvedToRecipientTokens"] = unresolvedTo
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            emailEvent.EmailMetadata["UnresolvedToRecipientCount"] = unresolvedTo.Count;
+        }
     }
 
     private async Task<List<string>> ResolveRecipientsAsync(
         IEnumerable<string> recipients,
         CancellationToken cancellationToken,
-        bool enforceGroupContactOnly)
+        bool enforceGroupContactOnly,
+        List<string>? unresolvedGroupRecipients = null)
     {
         var resolved = new List<string>();
         var unresolved = new List<string>();
@@ -442,6 +480,7 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
             if (enforceGroupContactOnly)
             {
                 unresolved.Add(normalizedRecipient);
+                unresolvedGroupRecipients?.Add(normalizedRecipient);
             }
             else
             {

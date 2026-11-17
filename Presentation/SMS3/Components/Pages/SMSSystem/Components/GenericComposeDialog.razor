@@ -9,6 +9,13 @@
 @inherits GenericComposeDialogBase
 
 <RadzenTemplateForm Data="@Model" Submit="@HandleSendAsync" TItem="EmailNotification" class="compose-root">
+    <div class="sms-modal-header sms-header-primary">
+        <RadzenText TextStyle="TextStyle.H5" class="sms-modal-title" Style="color:white">
+            <RadzenIcon Icon="mail" Style="margin-right: 0.5rem;" />
+            @DialogTitle
+        </RadzenText>
+    </div>
+
     <div class="compose-header">
         
         <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center" class="mt-2">

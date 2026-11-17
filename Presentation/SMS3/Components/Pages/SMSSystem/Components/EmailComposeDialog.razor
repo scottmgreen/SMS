@@ -12,11 +12,12 @@
 
 <RadzenTemplateForm Data="@Model" Submit="@SendAsync" TItem="EmailNotification" class="compose-root">
 
-
-    <!-- Title bar -->
-    @* <div class="compose-titlebar">
-        <div class="compose-title">@DialogTitle</div>
-    </div> *@
+    <div class="sms-modal-header sms-header-primary">
+        <RadzenText TextStyle="TextStyle.H5" class="sms-modal-title" Style="color:white">
+            <RadzenIcon Icon="mail" Style="margin-right: 0.5rem;" />
+            @DialogTitle
+        </RadzenText>
+    </div>
 
     <!-- Header fields (Outlook-like) -->
     <div class="compose-header">
