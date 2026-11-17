@@ -45,6 +45,12 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
                 return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
+            if (!SMS_Domain.ValueObjects.UserName.IsValidOrganizationalUserNameFormat(user.UserName?.Value ?? string.Empty))
+            {
+                _logger.LogApplicationWarning("CreateSMSOrganizationalUserAsync rejected invalid organizational username format: {UserName}", user.UserName?.Value);
+                return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.UserNameError.InvalidFormat);
+            }
+
             // Business validation - ensure user is active by default
             if (!user.IsActive)
             {

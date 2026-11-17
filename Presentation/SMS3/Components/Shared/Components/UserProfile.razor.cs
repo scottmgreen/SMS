@@ -10,7 +10,7 @@ using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
 namespace SMS3.Components.Shared.Components;
 
-public partial class UserProfileDialog
+public partial class UserProfile
 {
 
 [Parameter] public ICurrentUserService? _currentUserService { get; set; }

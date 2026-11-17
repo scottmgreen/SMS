@@ -268,14 +268,11 @@
                
                 <div class="navbar-nav ms-auto d-flex flex-row align-items-right">
 
-                    @if (ShowSessionTimerInNav)
-                    {
-                        <div class="nav-item me-2">
-                            <SessionTimer OnSessionExpired="@OnSessionTimerExpired"
-                                          OnSessionWarning="@OnSessionWarning"
-                                          ShowTimer='@ShowSessionTimerInNav' />
-                        </div>
-                    }
+                    <SessionMonitor OnSessionExpired="@OnSessionTimerExpired"
+                                    OnSessionWarning="@OnSessionWarning"
+                                    OnLogout="@OnLogoutRequested"
+                                    OnContinue="@OnSessionContinued"
+                                    ShowTimer='@ShowSessionTimerInNav' />
 
 
 
@@ -384,10 +381,6 @@
         </div>
     </div>
 </nav>
-
-<!-- Session Timeout Dialog -->
-<SessionTimeoutDialog OnLogout="@OnLogoutRequested" 
-                     OnContinue="@OnSessionContinued" />
 
 <script>
 window.smsSessionActivity = window.smsSessionActivity || {

@@ -86,6 +86,7 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
     private string _newFirstName { get; set; } = string.Empty;
     private string _newLastName { get; set; } = string.Empty;
     private string _newUserName { get; set; } = string.Empty;
+    private string GeneratedOrganizationalUserName => UserName.BuildOrganizationalUserName(_newFirstName, _newLastName);
     private string _newPassword { get; set; } = string.Empty;
     private SMSOrganizationalUser _newUser { get; set; } = CreateEmptyOrganizationalUser();
     private string _newOrganizationLevelId { get; set; } =  string.Empty;
@@ -302,6 +303,7 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
     private bool ValidateCreateForm(out List<string> validationErrors)
     {
         validationErrors = new List<string>();
+        _newUserName = GeneratedOrganizationalUserName;
 
         var firstNameResult = FirstName.Create(_newFirstName ?? string.Empty);
         _isCreateFirstNameValid = firstNameResult.IsSuccess;
@@ -318,10 +320,15 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
         }
 
         var userNameResult = UserName.Create(_newUserName ?? string.Empty);
-        _isCreateUserNameValid = userNameResult.IsSuccess;
+        var isOrganizationalUserNameFormatValid = UserName.IsValidOrganizationalUserNameFormat(_newUserName ?? string.Empty);
+        _isCreateUserNameValid = userNameResult.IsSuccess && isOrganizationalUserNameFormatValid;
         if (userNameResult.IsFailure)
         {
             validationErrors.Add(userNameResult.Error.Message);
+        }
+        else if (!isOrganizationalUserNameFormatValid)
+        {
+            validationErrors.Add("Generated username must match format o_firstname.lastname (lowercase, no spaces).");
         }
 
         var passwordResult = Password.Create(_newPassword ?? string.Empty);
@@ -655,6 +662,7 @@ public partial class OrganizationalUsers : ComponentBase, IEventReceiver, IDispo
     private async Task CreateUser()
     {
         _createValidationActive = true;
+        _newUserName = GeneratedOrganizationalUserName;
 
         if (!ValidateCreateForm(out var validationErrors))
         {

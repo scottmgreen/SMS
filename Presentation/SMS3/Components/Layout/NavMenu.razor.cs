@@ -756,7 +756,7 @@ public partial class NavMenu
             ShowClose = true
         };
 
-        await _dialogService.OpenAsync<UserProfileDialog>("User Profile & Permissions",
+        await _dialogService.OpenAsync<UserProfile>("User Profile & Permissions",
             new Dictionary<string, object?>()
             {
                 { "_currentUserService", _currentUserService }                

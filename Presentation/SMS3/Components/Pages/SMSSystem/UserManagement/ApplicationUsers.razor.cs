@@ -147,6 +147,7 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
     private string _newFirstName { get; set; } = string.Empty;
     private string _newLastName { get; set; } = string.Empty;
     private string _newUserName { get; set; } = string.Empty;
+    private string GeneratedApplicationUserName => UserName.BuildApplicationUserName(_newFirstName, _newLastName);
     private string _newPassword { get; set; } = string.Empty;
     private string _confirmPassword { get; set; } = string.Empty;
     private string _newUserRoleCode { get; set; } = string.Empty;
@@ -534,6 +535,7 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
     private async Task CreateUser()
     {
         _createValidationActive = true;
+        _newUserName = GeneratedApplicationUserName;
 
         if (!ValidateCreateForm(out var validationErrors))
         {
@@ -656,7 +658,7 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
     private bool _isCreateFormValid =>
         !string.IsNullOrWhiteSpace(_newFirstName) &&
         !string.IsNullOrWhiteSpace(_newLastName) &&
-        !string.IsNullOrWhiteSpace(_newUserName) &&
+        !string.IsNullOrWhiteSpace(GeneratedApplicationUserName) &&
         !string.IsNullOrWhiteSpace(_newPassword) &&
         _newPassword == _confirmPassword &&
         !string.IsNullOrWhiteSpace(_newUserRoleCode);
@@ -898,6 +900,7 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
     private bool ValidateCreateForm(out List<string> validationErrors)
     {
         validationErrors = new List<string>();
+        _newUserName = GeneratedApplicationUserName;
 
         var firstNameResult = FirstName.Create(_newFirstName ?? string.Empty);
         _isCreateFirstNameValid = firstNameResult.IsSuccess;
@@ -914,10 +917,15 @@ public partial class ApplicationUsers : ComponentBase, IEventReceiver, IDisposab
         }
 
         var userNameResult = UserName.Create(_newUserName ?? string.Empty);
-        _isCreateUserNameValid = userNameResult.IsSuccess;
+        var isApplicationUserNameFormatValid = UserName.IsValidApplicationUserNameFormat(_newUserName ?? string.Empty);
+        _isCreateUserNameValid = userNameResult.IsSuccess && isApplicationUserNameFormatValid;
         if (userNameResult.IsFailure)
         {
             validationErrors.Add(userNameResult.Error.Message);
+        }
+        else if (!isApplicationUserNameFormatValid)
+        {
+            validationErrors.Add("Generated username must match format firstname.lastname (lowercase, no spaces).");
         }
 
         var passwordResult = Password.Create(_newPassword ?? string.Empty);

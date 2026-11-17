@@ -19,8 +19,14 @@ public sealed class UserName : BaseValueObject
 {
     public const int MaxLength = 50;
     public const int MinLength = 3;
+    private static readonly Regex ApplicationUserNameFormatRegex = new(
+        @"^[a-z0-9]+\.[a-z0-9]+$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex OrganizationalUserNameFormatRegex = new(
+        @"^o_[a-z0-9]+\.[a-z0-9]+$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private static readonly Regex StakeholderUserNameFormatRegex = new(
-        @"^s_[A-Za-z0-9]+\.[A-Za-z0-9]+_[A-Fa-f0-9]{8}$",
+        @"^s_[A-Za-z0-9_]{1,41}\.[A-Za-z0-9_]{1,41}_[A-Fa-f0-9]{8}$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public string Value { get; }
@@ -63,6 +69,100 @@ public sealed class UserName : BaseValueObject
         }
 
         return StakeholderUserNameFormatRegex.IsMatch(userName.Trim());
+    }
+
+    public static bool IsValidApplicationUserNameFormat(string userName)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            return false;
+        }
+
+        return ApplicationUserNameFormatRegex.IsMatch(userName.Trim());
+    }
+
+    public static bool IsValidOrganizationalUserNameFormat(string userName)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            return false;
+        }
+
+        return OrganizationalUserNameFormatRegex.IsMatch(userName.Trim());
+    }
+
+    public static string BuildApplicationUserName(string? firstName, string? lastName)
+    {
+        var firstSegment = BuildAlphaNumericSegment(firstName, "user", allowUnderscore: false, maxLength: 41);
+        var lastSegment = BuildAlphaNumericSegment(lastName, "user", allowUnderscore: false, maxLength: 41);
+        (firstSegment, lastSegment) = TrimNameSegmentsToFit(firstSegment, lastSegment, MaxLength - 1);
+        return $"{firstSegment}.{lastSegment}".ToLowerInvariant();
+    }
+
+    public static string BuildOrganizationalUserName(string? firstName, string? lastName)
+    {
+        var firstSegment = BuildAlphaNumericSegment(firstName, "user", allowUnderscore: false, maxLength: 41);
+        var lastSegment = BuildAlphaNumericSegment(lastName, "user", allowUnderscore: false, maxLength: 41);
+        (firstSegment, lastSegment) = TrimNameSegmentsToFit(firstSegment, lastSegment, MaxLength - 3);
+        return $"o_{firstSegment}.{lastSegment}".ToLowerInvariant();
+    }
+
+    public static string BuildStakeholderUserName(string? firstName, string? lastName)
+    {
+        var firstSegment = BuildAlphaNumericSegment(firstName, "s_user", allowUnderscore: true, maxLength: 41);
+        var lastSegment = BuildAlphaNumericSegment(lastName, "s_user", allowUnderscore: true, maxLength: 41);
+        var suffix = Guid.NewGuid().ToString("N")[^8..];
+        return $"s_{firstSegment}.{lastSegment}_{suffix}";
+    }
+
+    private static string BuildAlphaNumericSegment(string? value, string fallback, bool allowUnderscore, int maxLength)
+    {
+        var source = string.IsNullOrWhiteSpace(value)
+            ? fallback
+            : value.Trim();
+
+        var normalized = new string(source
+            .Where(c => char.IsLetterOrDigit(c) || (allowUnderscore && c == '_'))
+            .ToArray());
+
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            normalized = fallback;
+        }
+
+        return normalized.Length > maxLength
+            ? normalized[..maxLength]
+            : normalized;
+    }
+
+    private static (string FirstSegment, string LastSegment) TrimNameSegmentsToFit(string firstSegment, string lastSegment, int maxCombinedLength)
+    {
+        if (firstSegment.Length + lastSegment.Length <= maxCombinedLength)
+        {
+            return (firstSegment, lastSegment);
+        }
+
+        var trimmedFirst = firstSegment;
+        var trimmedLast = lastSegment;
+
+        while (trimmedFirst.Length + trimmedLast.Length > maxCombinedLength)
+        {
+            if (trimmedFirst.Length >= trimmedLast.Length && trimmedFirst.Length > 1)
+            {
+                trimmedFirst = trimmedFirst[..^1];
+                continue;
+            }
+
+            if (trimmedLast.Length > 1)
+            {
+                trimmedLast = trimmedLast[..^1];
+                continue;
+            }
+
+            break;
+        }
+
+        return (trimmedFirst, trimmedLast);
     }
 
     /// <summary>

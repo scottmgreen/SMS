@@ -46,6 +46,12 @@ public sealed class SMSApplicationUserService : ISMSApplicationUserService
                 return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
+            if (!SMS_Domain.ValueObjects.UserName.IsValidApplicationUserNameFormat(user.UserName?.Value ?? string.Empty))
+            {
+                _logger.LogApplicationWarning("CreateSMSApplicationUserAsync rejected invalid application username format: {UserName}", user.UserName?.Value);
+                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.UserNameError.InvalidFormat);
+            }
+
             // Business validation - ensure user is active by default
             if (!user.IsActive)
             {

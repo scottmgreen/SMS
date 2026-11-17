@@ -1,11 +1,23 @@
-@using SMS_Application.Services
+@using Microsoft.Extensions.Configuration
 @using SMS_Application.Interfaces
+@using SMS_Application.Services
 @implements IDisposable
-@inject SessionTimerService SessionTimerService
-@inject ICurrentUserService _currentUserService  
+@inject SessionTimerService SessionTimerSvc
+@inject ICurrentUserService _currentUserService
 @inject NavigationManager _navigation
-@inject ILogger<SessionTimeoutDialog> Logger
+@inject ILogger<SessionMonitor> Logger
+@inject IConfiguration Configuration
 @inject IJSRuntime JSRuntime
+
+@if (_currentUserService.IsAuthenticated && ShowTimer && IsSessionTimerEnabled())
+{
+    <div class="session-timer-container d-flex align-items-center me-3">
+        <i class="fas fa-clock me-1 @GetIconClass()" title="@GetTooltipText()"></i>
+        <span class="session-timer @SessionTimerSvc.GetTimerCssClass()" title="@GetTooltipText()">
+          @SessionTimerSvc.FormatRemainingTime()
+        </span>
+    </div>
+}
 
 @if (IsVisible)
 {
@@ -19,24 +31,24 @@
                         <h4 class="modal-title text-white mb-0">Session Expiring Soon</h4>
                     </div>
                 </div>
-                
+
                 <div class="modal-body-custom">
                     <div class="d-flex align-items-center mb-3">
                         <i class="fas fa-clock me-2"></i>
                         <span class="text-primary">Your session is about to expire in <strong class="countdown-text">@FormatRemainingTime()</strong> due to inactivity. </span>
                     </div>
-                                                          
+
                     <div class="session-progress mb-3">
                         <div class="progress" style="height: 3px;">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
-                                 style="width: @GetProgressPercentage()%" 
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                                 style="width: @GetProgressPercentage()%"
                                  role="progressbar">
                             </div>
                         </div>
                     </div>
-                    
+
                 </div>
-                
+
                 <div class="modal-footer-custom">
                     <button type="button" class="btn btn-danger me-2 modal-btn" @onclick="OnLogoutClick">
                         <i class="fas fa-sign-out-alt me-1"></i>
@@ -53,6 +65,57 @@
 }
 
 <style>
+.session-timer-container {
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    /* border-radius: 0.25rem; */
+    /* background-color: rgba(255, 255, 255, 0.1); */
+    /* border: 1px solid rgba(255, 255, 255, 0.2); */
+}
+
+.session-timer {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+}
+
+.session-normal {
+        /* color: yellow; */
+        color: white;
+}
+
+.session-warning {
+    /* color: orangered; */
+        color: white;
+}
+
+.session-critical {
+    /* color: #dc3545; */
+        color: yellow;
+    font-weight: bold;
+}
+
+.session-expired {
+    /* color: #dc3545; */
+        color: yellow;
+    font-weight: bold;
+}
+
+.timer-icon-normal {
+    /* color: #28a745; */
+    color: white;
+}
+
+.timer-icon-warning {
+    /* color: #ffc107; */
+    color: white;
+}
+
+.timer-icon-critical {
+    color: #dc3545;
+}
+
 /* Modal overlay - highest priority */
 .session-timeout-modal-overlay {
     position: fixed !important;
@@ -189,4 +252,3 @@ body.modal-open {
     transform: translateY(0) !important;
 }
 </style>
-
