@@ -17,6 +17,7 @@ namespace SMS_Domain.Events;
 public class SPIDashboardRefreshEvent : IBaseUIEvent
 {
     public const string TypeValue = "UI.SPIDashboard.Refresh";
+    private const string UiEventCategoryName = "UIEvent";
 
     public Guid EventId { get; private set; }
     public DateTime OccurredOn { get; private set; }
@@ -24,6 +25,10 @@ public class SPIDashboardRefreshEvent : IBaseUIEvent
     public string ReportId { get; private set; }
     public string TargetComponent { get; private set; }
     public UIEventPriority Priority { get; private set; }
+    public string EventClassName => GetType().Name;
+    public string EventCategoryName => UiEventCategoryName;
+    public string TriggerEventKey => $"{EventCategoryName}:{EventClassName}";
+    public string TriggerDisplayName => EventClassName;
 
     // SPI-specific refresh data
     public List<string> AffectedSPICodes { get; private set; }

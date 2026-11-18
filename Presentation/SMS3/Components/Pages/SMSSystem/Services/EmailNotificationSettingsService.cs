@@ -10,64 +10,14 @@ namespace SMS3.Components.Pages.SMSSystem.Services;
 
 public sealed class EmailNotificationSettingsService : IEmailNotificationSettingsService, IEmailNotificationExecutionModeResolver
 {
-
-    private static readonly IReadOnlyList<NotificationDefinition> NotificationDefinitions =
-    [
-        new(
-            "MitigationApproval",
-            "MitigationApprovalRequestedEvent",
-            "NotificationEvents:MitigationApproval:Channels:Email",
-            NotificationExecutionMode.Manual,
-            "Email"),
-        new(
-            "MitigationApproved",
-            "MitigationStatusChangedEvent",
-            "NotificationEvents:MitigationApproved:Channels:Email",
-            NotificationExecutionMode.Manual,
-            "Email"),
-        new(
-            "MitigationTargetDateNotification",
-            "Mitigation target-date scan trigger",
-            "NotificationEvents:MitigationTargetDateNotification:Channels:Email",
-            NotificationExecutionMode.Manual,
-            "Email"),
-        new(
-            "HazardSubmissionStatusEscalation",
-            "Report status escalation scan + API escalation",
-            "NotificationEvents:HazardSubmissionStatusEscalation:Channels:Email",
-            NotificationExecutionMode.Manual,
-            "Email"),
-        new(
-            "UINotificationError",
-            "UINotificationEvent severity Error",
-            "NotificationEvents:UINotificationError:Channels:UI",
-            NotificationExecutionMode.Immediate,
-            "UI"),
-        new(
-            "UINotificationSuccess",
-            "UINotificationEvent severity Success",
-            "NotificationEvents:UINotificationSuccess:Channels:UI",
-            NotificationExecutionMode.Immediate,
-            "UI"),
-        new(
-            "UINotificationWarning",
-            "UINotificationEvent severity Warning",
-            "NotificationEvents:UINotificationWarning:Channels:UI",
-            NotificationExecutionMode.Immediate,
-            "UI"),
-        new(
-            "UINotificationInfo",
-            "UINotificationEvent severity Info",
-            "NotificationEvents:UINotificationInfo:Channels:UI",
-            NotificationExecutionMode.Immediate,
-            "UI"),
-        new(
-            "DomainEventPublishing",
-            "Domain EventBus publish control",
-            "NotificationEvents:DomainEventPublishing:Channels:Domain",
-            NotificationExecutionMode.Immediate,
-            "Domain")
-    ];
+    private const string NotificationEventsSectionName = "NotificationEvents";
+    private const string ChannelDisplayNamesSectionName = "ChannelDisplayNames";
+    private const string EnabledPropertyName = "Enabled";
+    private const string TriggerEventKeyPropertyName = "TriggerEventKey";
+    private const string TriggerDisplayNamePropertyName = "TriggerDisplayName";
+    private const string TriggerPropertyName = "Trigger";
+    private const string ChannelsSectionName = "Channels";
+    private const string ExecutionModePropertyName = "ExecutionMode";
 
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _environment;
@@ -85,11 +35,13 @@ public sealed class EmailNotificationSettingsService : IEmailNotificationSetting
 
     public IReadOnlyList<NotificationSetting> GetAllNotificationSettings()
     {
-        return NotificationDefinitions
+        return GetNotificationDefinitions()
             .Select(definition => new NotificationSetting
             {
                 NotificationType = definition.NotificationType,
                 Enabled = ReadEnabled(definition),
+                TriggerEventKey = definition.TriggerEventKey,
+                TriggerDisplayName = definition.TriggerDisplayName,
                 TriggerDomainEvent = definition.TriggerDomainEvent,
                 AppSettingsSection = definition.SectionPath,
                 ChannelName = definition.ChannelName,
@@ -106,15 +58,13 @@ public sealed class EmailNotificationSettingsService : IEmailNotificationSetting
             return defaultValue;
         }
 
-        var definition = NotificationDefinitions.FirstOrDefault(x =>
-            string.Equals(x.NotificationType, normalizedNotificationType, StringComparison.OrdinalIgnoreCase));
-
-        if (definition is null)
+        var section = _configuration.GetSection($"{NotificationEventsSectionName}:{normalizedNotificationType}");
+        if (!section.Exists())
         {
             return defaultValue;
         }
 
-        return ReadEnabled(definition);
+        return section.GetValue<bool?>(EnabledPropertyName) ?? defaultValue;
     }
 
     public NotificationExecutionMode ResolveExecutionMode(string? notificationType, NotificationExecutionMode fallbackMode)
@@ -125,15 +75,21 @@ public sealed class EmailNotificationSettingsService : IEmailNotificationSetting
             return fallbackMode;
         }
 
-        var definition = NotificationDefinitions.FirstOrDefault(x =>
-            string.Equals(x.NotificationType, normalizedNotificationType, StringComparison.OrdinalIgnoreCase));
+        var definitions = GetNotificationDefinitions();
+        var preferredChannelName = GetPreferredChannelName(normalizedNotificationType);
+
+        var definition = definitions.FirstOrDefault(x =>
+                             string.Equals(x.NotificationType, normalizedNotificationType, StringComparison.OrdinalIgnoreCase)
+                             && string.Equals(x.ChannelName, preferredChannelName, StringComparison.OrdinalIgnoreCase))
+                         ?? definitions.FirstOrDefault(x =>
+                             string.Equals(x.NotificationType, normalizedNotificationType, StringComparison.OrdinalIgnoreCase));
 
         if (definition is null)
         {
             return fallbackMode;
         }
 
-        var configured = _configuration.GetValue<string>($"{definition.SectionPath}:ExecutionMode");
+        var configured = _configuration.GetValue<string>($"{definition.SectionPath}:{ExecutionModePropertyName}");
         return ParseAllowedMode(configured, definition.DefaultMode);
     }
 
@@ -158,31 +114,64 @@ public sealed class EmailNotificationSettingsService : IEmailNotificationSetting
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to load appsettings.json for email workflow settings update.");
+            _logger.LogError(ex, "Failed to load appsettings.json for notification settings update.");
             return Result.Failure(new SMS_Domain.Common.Error("EMAIL_NOTIFICATION_SETTINGS_READ_FAILED", "Failed to read appsettings.json for email notification settings."));
         }
 
         var updatedAppSettingsText = appSettingsText;
         var updatedEntryCount = 0;
+        var notificationDefinitions = GetNotificationDefinitions();
 
-        foreach (var definition in NotificationDefinitions)
+        if (notificationDefinitions.Count == 0)
+        {
+            return Result.Failure(new SMS_Domain.Common.Error(
+                "EMAIL_NOTIFICATION_SETTINGS_SECTION_NOT_FOUND",
+                "No NotificationEvents channel settings were discovered in appsettings.json."));
+        }
+
+        var requestedEnabledByNotification = requestedSettings
+            .Where(x => !string.IsNullOrWhiteSpace(x.NotificationType))
+            .GroupBy(x => x.NotificationType.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                x => x.Key,
+                x => x.Last().Enabled,
+                StringComparer.OrdinalIgnoreCase);
+
+        var requestedModeByChannelKey = requestedSettings
+            .Where(x => !string.IsNullOrWhiteSpace(x.NotificationType) && !string.IsNullOrWhiteSpace(x.ChannelName))
+            .GroupBy(
+                x => BuildNotificationChannelKey(x.NotificationType, x.ChannelName),
+                StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                x => x.Key,
+                x => x.Last().ExecutionMode,
+                StringComparer.OrdinalIgnoreCase);
+
+        foreach (var definition in notificationDefinitions)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var requested = requestedSettings.FirstOrDefault(x =>
-                string.Equals(x.NotificationType, definition.NotificationType, StringComparison.OrdinalIgnoreCase));
+            var channelKey = BuildNotificationChannelKey(definition.NotificationType, definition.ChannelName);
+            var hasRequestedMode = requestedModeByChannelKey.TryGetValue(channelKey, out var requestedMode);
+            var hasRequestedEnabled = requestedEnabledByNotification.TryGetValue(definition.NotificationType, out var requestedEnabled);
 
-            if (requested is null)
+            if (!hasRequestedMode && !hasRequestedEnabled)
             {
                 continue;
             }
 
-            var parsedMode = ParseAllowedMode(requested.ExecutionMode.ToString(), definition.DefaultMode);
+            var parsedMode = hasRequestedMode
+                ? ParseAllowedMode(requestedMode.ToString(), definition.DefaultMode)
+                : ReadExecutionMode(definition);
+
+            var enabledValue = hasRequestedEnabled
+                ? requestedEnabled
+                : ReadEnabled(definition);
 
             var replacementResult = ReplaceNotificationSettings(
                 updatedAppSettingsText,
                 definition.NotificationType,
-                requested.Enabled,
+                enabledValue,
                 parsedMode.ToString(),
                 definition.ChannelName);
             updatedAppSettingsText = replacementResult.UpdatedText;
@@ -193,7 +182,7 @@ public sealed class EmailNotificationSettingsService : IEmailNotificationSetting
         {
             return Result.Failure(new SMS_Domain.Common.Error(
                 "EMAIL_NOTIFICATION_SETTINGS_SECTION_NOT_FOUND",
-                "No NotificationEvents email execution mode entries were updated. Verify appsettings contains NotificationEvents entries for configured notification types."));
+                "No NotificationEvents entries were updated. Verify appsettings contains NotificationEvents entries for the configured notification/channel types."));
         }
 
         try
@@ -284,13 +273,145 @@ public sealed class EmailNotificationSettingsService : IEmailNotificationSetting
 
     private NotificationExecutionMode ReadExecutionMode(NotificationDefinition definition)
     {
-        var configured = _configuration.GetValue<string>($"{definition.SectionPath}:ExecutionMode");
+        var configured = _configuration.GetValue<string>($"{definition.SectionPath}:{ExecutionModePropertyName}");
         return ParseAllowedMode(configured, definition.DefaultMode);
     }
 
     private bool ReadEnabled(NotificationDefinition definition)
     {
         return _configuration.GetValue<bool?>(definition.EnabledSectionPath) ?? definition.DefaultEnabled;
+    }
+
+    private IReadOnlyList<NotificationDefinition> GetNotificationDefinitions()
+    {
+        var notificationEventsSection = _configuration.GetSection(NotificationEventsSectionName);
+        if (!notificationEventsSection.Exists())
+        {
+            return [];
+        }
+
+        var definitions = new List<NotificationDefinition>();
+
+        foreach (var notificationSection in notificationEventsSection.GetChildren())
+        {
+            if (IsMetadataSection(notificationSection.Key))
+            {
+                continue;
+            }
+
+            var channelsSection = notificationSection.GetSection(ChannelsSectionName);
+            if (!channelsSection.Exists())
+            {
+                continue;
+            }
+
+            var metadata = ResolveEventMetadata(notificationSection.Key);
+
+            var triggerEventKey = notificationSection.GetValue<string>(TriggerEventKeyPropertyName);
+            if (string.IsNullOrWhiteSpace(triggerEventKey))
+            {
+                triggerEventKey = notificationSection.GetValue<string>(TriggerPropertyName);
+            }
+
+            if (string.IsNullOrWhiteSpace(triggerEventKey))
+            {
+                triggerEventKey = metadata?.TriggerEventKey;
+            }
+
+            if (string.IsNullOrWhiteSpace(triggerEventKey))
+            {
+                triggerEventKey = notificationSection.Key;
+            }
+
+            var triggerDisplayName = notificationSection.GetValue<string>(TriggerDisplayNamePropertyName);
+            if (string.IsNullOrWhiteSpace(triggerDisplayName))
+            {
+                triggerDisplayName = metadata?.TriggerDisplayName;
+            }
+
+            if (string.IsNullOrWhiteSpace(triggerDisplayName))
+            {
+                triggerDisplayName = triggerEventKey;
+            }
+
+            var triggerDomainEvent = triggerDisplayName ?? string.Empty;
+            var defaultEnabled = notificationSection.GetValue<bool?>(EnabledPropertyName) ?? true;
+
+            foreach (var channelSection in channelsSection.GetChildren())
+            {
+                if (string.IsNullOrWhiteSpace(channelSection.Key))
+                {
+                    continue;
+                }
+
+                definitions.Add(new NotificationDefinition(
+                    notificationSection.Key,
+                    triggerEventKey ?? string.Empty,
+                    triggerDisplayName ?? string.Empty,
+                    triggerDomainEvent,
+                    channelSection.Path,
+                    GetDefaultExecutionMode(channelSection.Key),
+                    channelSection.Key,
+                    defaultEnabled));
+            }
+        }
+
+        return definitions
+            .OrderBy(x => GetGroupSortOrder(x.ChannelName))
+            .ThenBy(x => x.NotificationType, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => x.ChannelName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static NotificationExecutionMode GetDefaultExecutionMode(string channelName)
+    {
+        if (string.Equals(channelName, "UI", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(channelName, "Domain", StringComparison.OrdinalIgnoreCase))
+        {
+            return NotificationExecutionMode.Immediate;
+        }
+
+        return NotificationExecutionMode.Manual;
+    }
+
+    private static string GetPreferredChannelName(string notificationType)
+    {
+        if (string.Equals(notificationType, "DomainEventPublishing", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Domain";
+        }
+
+        if (notificationType.StartsWith("UINotification", StringComparison.OrdinalIgnoreCase))
+        {
+            return "UI";
+        }
+
+        return "Email";
+    }
+
+    private static bool IsMetadataSection(string sectionName)
+    {
+        return string.Equals(sectionName, ChannelDisplayNamesSectionName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static int GetGroupSortOrder(string channelName)
+    {
+        if (string.Equals(channelName, "Domain", StringComparison.OrdinalIgnoreCase))
+        {
+            return 0;
+        }
+
+        if (string.Equals(channelName, "UI", StringComparison.OrdinalIgnoreCase))
+        {
+            return 2;
+        }
+
+        return 1;
+    }
+
+    private static string BuildNotificationChannelKey(string notificationType, string channelName)
+    {
+        return $"{notificationType.Trim()}::{channelName.Trim()}";
     }
 
     private static NotificationExecutionMode ParseAllowedMode(string? configured, NotificationExecutionMode defaultMode)
@@ -305,16 +426,66 @@ public sealed class EmailNotificationSettingsService : IEmailNotificationSetting
             : defaultMode;
     }
 
+    private static TriggerMetadata? ResolveEventMetadata(string notificationType)
+    {
+        if (string.IsNullOrWhiteSpace(notificationType))
+        {
+            return null;
+        }
+
+        if (string.Equals(notificationType, "MitigationApproval", StringComparison.OrdinalIgnoreCase))
+        {
+            return new TriggerMetadata("DomainEvent:MitigationApprovalRequestedEvent", "MitigationApprovalRequestedEvent");
+        }
+
+        if (string.Equals(notificationType, "MitigationApproved", StringComparison.OrdinalIgnoreCase))
+        {
+            return new TriggerMetadata("DomainEvent:MitigationStatusChangedEvent", "MitigationStatusChangedEvent");
+        }
+
+        if (string.Equals(notificationType, "MitigationTargetDateNotification", StringComparison.OrdinalIgnoreCase))
+        {
+            return new TriggerMetadata("ScheduledTask:MitigationTargetDateNotification", "Mitigation target-date scan trigger");
+        }
+
+        if (string.Equals(notificationType, "HazardSubmissionStatusEscalation", StringComparison.OrdinalIgnoreCase))
+        {
+            return new TriggerMetadata("ScheduledTask:HazardSubmissionStatusEscalation", "Report status escalation scan + API escalation");
+        }
+
+        if (notificationType.StartsWith("UINotification", StringComparison.OrdinalIgnoreCase))
+        {
+            var severity = notificationType["UINotification".Length..].Trim();
+            if (string.IsNullOrWhiteSpace(severity))
+            {
+                severity = "Info";
+            }
+
+            return new TriggerMetadata($"UIEvent:UINotificationEvent:{severity}", $"UINotificationEvent severity {severity}");
+        }
+
+        if (string.Equals(notificationType, "DomainEventPublishing", StringComparison.OrdinalIgnoreCase))
+        {
+            return new TriggerMetadata("DomainControl:DomainEventPublishing", "Domain EventBus publish control");
+        }
+
+        return null;
+    }
+
     private sealed record NotificationDefinition(
         string NotificationType,
+        string TriggerEventKey,
+        string TriggerDisplayName,
         string TriggerDomainEvent,
         string SectionPath,
         NotificationExecutionMode DefaultMode,
         string ChannelName,
         bool DefaultEnabled = true)
     {
-        public string EnabledSectionPath => $"NotificationEvents:{NotificationType}:Enabled";
+        public string EnabledSectionPath => $"{NotificationEventsSectionName}:{NotificationType}:{EnabledPropertyName}";
     }
+
+    private sealed record TriggerMetadata(string TriggerEventKey, string TriggerDisplayName);
 
     private sealed record ReplacementResult(string UpdatedText, int ReplacementCount);
 }

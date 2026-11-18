@@ -15,7 +15,7 @@ namespace SMS_Domain.Interfaces;
 /// Integration events handle external system notifications, third-party integrations,
 /// and cross-system communication requirements
 /// </summary>
-public interface IBaseIntegrationEvent
+public interface IBaseIntegrationEvent : IEventMetadata
 {
     /// <summary>
     /// Unique identifier for this integration event instance

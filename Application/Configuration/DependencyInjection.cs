@@ -116,6 +116,7 @@ namespace SMS_Application.Configuration
             // NEW: EventBus Queue Service - Scoped because it depends on scoped infrastructure services
             services.AddScoped<IEventQueueService, EventQueueService>();
             services.AddSingleton<QueuedEventTypeRegistry>();
+            services.AddSingleton<IEventLifecycleRegistry, EventLifecycleRegistry>();
 
             // NEW: Email Services - SMTP (real email delivery)
             services.AddTransient<IEmailService, SmtpEmailService>();
@@ -129,8 +130,7 @@ namespace SMS_Application.Configuration
             // NEW: Phase 3 - Integration Event Handlers for external system coordination
             services.AddTransient<EmailNotificationEventHandler>();
 
-            // NEW: Phase 3 - UI Event Handlers for user interface updates
-            services.AddTransient<HazardCreatedNotificationHandler>();
+            // UI notification event handling is owned in Presentation (SMS3.EventHandlers.UIEventHandler)
 
             // NEW: SPI Initialization Service - Default SPI setup
             services.AddScoped<SPIInitializationService>();

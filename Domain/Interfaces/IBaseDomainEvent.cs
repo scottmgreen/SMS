@@ -15,7 +15,7 @@ namespace SMS_Domain.Interfaces;
 /// Base interface for all domain events in the SMS system
 /// Supports EventBus integration for workflow notifications and SPI automation
 /// </summary>
-public interface IBaseDomainEvent
+public interface IBaseDomainEvent : IEventMetadata
 {
     /// <summary>
     /// Unique identifier for this event instance

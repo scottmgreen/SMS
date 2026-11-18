@@ -8,6 +8,10 @@ public sealed class NotificationSetting
 
     public bool Enabled { get; set; } = true;
 
+    public string TriggerEventKey { get; set; } = string.Empty;
+
+    public string TriggerDisplayName { get; set; } = string.Empty;
+
     public string TriggerDomainEvent { get; set; } = string.Empty;
 
     public string AppSettingsSection { get; set; } = string.Empty;

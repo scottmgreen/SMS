@@ -15,7 +15,7 @@ namespace SMS_Domain.Interfaces;
 /// UI events handle dashboard updates, user notifications, and component state changes
 /// These events typically have immediate execution requirements for responsive user experience
 /// </summary>
-public interface IBaseUIEvent
+public interface IBaseUIEvent : IEventMetadata
 {
     /// <summary>
     /// Unique identifier for this UI event instance

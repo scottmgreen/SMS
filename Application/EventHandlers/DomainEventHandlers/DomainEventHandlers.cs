@@ -173,55 +173,7 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
         }
     }
 
-    private async Task PublishEmailNotification(SMS_Domain.Events.HazardCreatedEvent domainEvent, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var recipients = GetEmailRecipientsByPriority(domainEvent.Priority);
-            var emailPriority = GetEmailPriorityFromHazardPriority(domainEvent.Priority);
-
-            var emailEvent = new EmailNotificationEvent(
-                toRecipients: recipients,
-                subject: $"{domainEvent.Priority} Priority Hazard: {domainEvent.HazardCode} - {domainEvent.HazardType}",
-                body: CreateHazardNotificationEmailBody(domainEvent),
-                isHtmlContent: true,
-                priority: emailPriority,
-                deliveryMode: IntegrationDeliveryMode.BestEffort,
-                reportId: HandlerHelpers.ResolveReportId(domainEvent),
-                workflowType: "HazardNotification",
-                relatedEntityType: "Hazard",
-                relatedEntityId: domainEvent.HazardCode,
-                templateName: "SMS_HazardCreated_Template",
-                templateData: new Dictionary<string, object>
-                {
-                    { "HazardCode", domainEvent.HazardCode },
-                    { "HazardType", domainEvent.HazardType },
-                    { "Priority", domainEvent.Priority.ToString() },
-                    { "Description", domainEvent.Description },
-                    { "Location", domainEvent.LocationArea },
-                    { "CreatedBy", domainEvent.CreatedBy },
-                    { "CreatedDate", domainEvent.CreatedDate.ToString("yyyy-MM-dd HH:mm") }
-                },
-                emailMetadata: new Dictionary<string, object>
-                {
-                    { "Source", "HazardCreatedEventHandler" },
-                    { "HazardId", domainEvent.HazardId },
-                    { "ReportCode", domainEvent.ReportCode },
-                    { "EventDemonstration", true }
-                });
-
-            var emailResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Manual, cancellationToken);
-
-            if (emailResult.IsFailure)
-            {
-                _logger.LogApplicationError("[INTEGRATION EVENT] Failed to queue hazard notification email: {Error}", emailResult.Error.Message);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError(ex, "[INTEGRATION EVENT] Failed to send email notifications for {HazardCode}", domainEvent.HazardCode);
-        }
-    }
+    
 
     
 
@@ -254,121 +206,11 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
         return UIEventPriority.Low;
     }
 
-    private List<string> GetEmailRecipientsByPriority(SMS_Domain.Enums.HazardPriority priority)
-    {
-        if (priority == SMS_Domain.Enums.HazardPriority.Critical)
-        {
-            return new List<string>
-            {
-                "safety.manager@pdxairport.com",
-                "operations.director@pdxairport.com",
-                "sms.coordinator@pdxairport.com"
-            };
-        }
+    
+    
 
-        if (priority == SMS_Domain.Enums.HazardPriority.High)
-        {
-            return new List<string>
-            {
-                "safety.manager@pdxairport.com",
-                "sms.coordinator@pdxairport.com"
-            };
-        }
-
-        return new List<string> { "safety.team@pdxairport.com" };
-    }
-
-    private EmailPriority GetEmailPriorityFromHazardPriority(SMS_Domain.Enums.HazardPriority hazardPriority)
-    {
-        if (hazardPriority == SMS_Domain.Enums.HazardPriority.Critical)
-        {
-            return EmailPriority.Urgent;
-        }
-
-        if (hazardPriority == SMS_Domain.Enums.HazardPriority.High)
-        {
-            return EmailPriority.High;
-        }
-
-        if (hazardPriority == SMS_Domain.Enums.HazardPriority.Medium)
-        {
-            return EmailPriority.Normal;
-        }
-
-        return EmailPriority.Low;
-    }
-
-    private string CreateHazardNotificationEmailBody(SMS_Domain.Events.HazardCreatedEvent domainEvent)
-    {
-        var priorityColor = GetPriorityColor(domainEvent.Priority);
-
-        return $@"
-<html>
-<head>
-    <style>
-        body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #f9f9f9; }}
-        .container {{ background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
-        .header {{ background-color: {priorityColor}; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px; }}
-        .details {{ background-color: #f8f9fa; padding: 15px; border-left: 4px solid {priorityColor}; margin: 15px 0; }}
-        .footer {{ color: #666; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px; }}
-        .priority {{ color: {priorityColor}; font-weight: bold; }}
-    </style>
-</head>
-<body>
-    <div class='container'>
-        <div class='header'>
-            <h2>?? New Hazard Report: <span class='priority'>{domainEvent.Priority}</span> Priority</h2>
-        </div>
-
-        <p>A new hazard has been reported in the SMS system and requires attention.</p>
-
-        <div class='details'>
-            <h3>Hazard Information:</h3>
-            <ul>
-                <li><strong>Hazard Code:</strong> {domainEvent.HazardCode}</li>
-                <li><strong>Type:</strong> {domainEvent.HazardType}</li>
-                <li><strong>Category:</strong> {domainEvent.HazardCategory}</li>
-                <li><strong>Priority:</strong> <span class='priority'>{domainEvent.Priority}</span></li>
-                <li><strong>Location:</strong> {domainEvent.LocationArea}</li>
-                <li><strong>Reported By:</strong> {domainEvent.CreatedBy}</li>
-                <li><strong>Date:</strong> {domainEvent.CreatedDate:yyyy-MM-dd HH:mm} </li>
-                <li><strong>Report Code:</strong> {domainEvent.ReportCode}</li>
-            </ul>
-
-            <h4>Description:</h4>
-            <p>{domainEvent.Description}</p>
-        </div>
-
-        <p>Please access the SMS system to review this hazard and take appropriate action.</p>
-
-        <div class='footer'>
-            <p><strong>SMS Safety Management System</strong> - Automated Notification<br/>
-            Event ID: {domainEvent.EventId} | Generated: {DateTime.Now:yyyy-MM-dd HH:mm}</p>
-        </div>
-    </div>
-</body>
-</html>";
-    }
-
-    private string GetPriorityColor(SMS_Domain.Enums.HazardPriority priority)
-    {
-        if (priority == SMS_Domain.Enums.HazardPriority.Critical)
-        {
-            return "#dc3545";
-        }
-
-        if (priority == SMS_Domain.Enums.HazardPriority.High)
-        {
-            return "#fd7e14";
-        }
-
-        if (priority == SMS_Domain.Enums.HazardPriority.Medium)
-        {
-            return "#ffc107";
-        }
-
-        return "#28a745";
-    }
+    
+    
 }
 /// <summary>
 /// Handles hazard update notifications for domain logging and UI feedback.

@@ -11,7 +11,7 @@ using System.Text.Json;
 
 namespace SMS3.Components.Pages.SMSSystem.EventBus;
 
-public class EmailNotificationSettingsDialogBase : ComponentBase
+public class EventBusSettingsBase : ComponentBase
 {
     [Inject] protected DialogService DialogService { get; set; } = default!;
     [Inject] protected INotificationHelper NotificationHelper { get; set; } = default!;
@@ -28,31 +28,20 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
         NotificationExecutionMode.Manual
     ];
 
+    protected IEnumerable<NotificationSetting> DomainEventSettings => GetOrderedSettings(IsDomainEventSetting);
+    protected IEnumerable<NotificationSetting> IntegrationEventSettings => GetOrderedSettings(IsIntegrationEventSetting);
+    protected IEnumerable<NotificationSetting> UiEventSettings => GetOrderedSettings(IsUiEventSetting);
+    protected IReadOnlyList<EventBusSettingsTreeNode> EventBusSettingsTreeNodes => BuildTreeNodes();
+
     protected override void OnInitialized()
     {
         _settings = EmailNotificationSettingsService
             .GetAllNotificationSettings()
-            .Select(x => new NotificationSetting
-            {
-                NotificationType = x.NotificationType,
-                Enabled = x.Enabled,
-                TriggerDomainEvent = x.TriggerDomainEvent,
-                AppSettingsSection = x.AppSettingsSection,
-                ChannelName = x.ChannelName,
-                ExecutionMode = x.ExecutionMode
-            })
+            .Select(CloneSetting)
             .ToList();
 
         _originalSettings = _settings
-            .Select(x => new NotificationSetting
-            {
-                NotificationType = x.NotificationType,
-                Enabled = x.Enabled,
-                TriggerDomainEvent = x.TriggerDomainEvent,
-                AppSettingsSection = x.AppSettingsSection,
-                ChannelName = x.ChannelName,
-                ExecutionMode = x.ExecutionMode
-            })
+            .Select(CloneSetting)
             .ToList();
     }
 
@@ -118,7 +107,7 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
 
     private async Task<bool> ConfirmHighImpactChangesAsync()
     {
-        var domainChange = GetSettingChange("DomainEventPublishing");
+        var domainChange = GetSettingChange("DomainEventPublishing", "Domain");
         if (domainChange is not null
             && domainChange.Value.Original.Enabled
             && !domainChange.Value.Updated.Enabled)
@@ -135,7 +124,7 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
 
             if (disableConfirm != true)
             {
-                RevertSettingToOriginal("DomainEventPublishing");
+                RevertSettingToOriginal("DomainEventPublishing", "Domain");
                 return false;
             }
         }
@@ -156,7 +145,7 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
 
             if (domainConfirm != true)
             {
-                RevertSettingToOriginal("DomainEventPublishing");
+                RevertSettingToOriginal("DomainEventPublishing", "Domain");
                 return false;
             }
         }
@@ -175,7 +164,7 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
                 continue;
             }
 
-            var change = GetSettingChange(updated.NotificationType);
+            var change = GetSettingChange(updated.NotificationType, updated.ChannelName);
             if (change is null)
             {
                 continue;
@@ -226,7 +215,7 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
         return pendingResult.Value
             .Where(x => string.Equals(x.EventType, SMS_Domain.Enums.EventType.EmailNotification.Value, StringComparison.OrdinalIgnoreCase))
             .Where(x => string.Equals(x.QueuedBy?.Trim(), "ManualExecution", StringComparison.OrdinalIgnoreCase))
-            .Where(x => IsMatchingEmailWorkflowType(x.EventData, notificationType))
+            .Where(x => IsMatchingEmailNotificationType(x.EventData, notificationType))
             .Select(x => x.QueueCode)
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -255,13 +244,17 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
         }
     }
 
-    private (NotificationSetting Original, NotificationSetting Updated)? GetSettingChange(string notificationType)
+    private (NotificationSetting Original, NotificationSetting Updated)? GetSettingChange(string notificationType, string? channelName = null)
     {
         var original = _originalSettings.FirstOrDefault(x =>
-            string.Equals(x.NotificationType, notificationType, StringComparison.OrdinalIgnoreCase));
+            string.Equals(x.NotificationType, notificationType, StringComparison.OrdinalIgnoreCase)
+            && (string.IsNullOrWhiteSpace(channelName)
+                || string.Equals(x.ChannelName, channelName, StringComparison.OrdinalIgnoreCase)));
 
         var updated = _settings.FirstOrDefault(x =>
-            string.Equals(x.NotificationType, notificationType, StringComparison.OrdinalIgnoreCase));
+            string.Equals(x.NotificationType, notificationType, StringComparison.OrdinalIgnoreCase)
+            && (string.IsNullOrWhiteSpace(channelName)
+                || string.Equals(x.ChannelName, channelName, StringComparison.OrdinalIgnoreCase)));
 
         if (original is null || updated is null)
         {
@@ -277,7 +270,7 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
         return setting.AppSettingsSection.Contains(":Channels:Email", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool IsMatchingEmailWorkflowType(string eventData, string notificationType)
+    private static bool IsMatchingEmailNotificationType(string eventData, string notificationType)
     {
         if (string.IsNullOrWhiteSpace(eventData) || string.IsNullOrWhiteSpace(notificationType))
         {
@@ -293,8 +286,8 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
                 return false;
             }
 
-            var workflowType = workflowTypeElement.GetString();
-            return string.Equals(workflowType?.Trim(), notificationType.Trim(), StringComparison.OrdinalIgnoreCase);
+            var notificationEventType = workflowTypeElement.GetString();
+            return string.Equals(notificationEventType?.Trim(), notificationType.Trim(), StringComparison.OrdinalIgnoreCase);
         }
         catch
         {
@@ -302,13 +295,17 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
         }
     }
 
-    private void RevertSettingToOriginal(string notificationType)
+    private void RevertSettingToOriginal(string notificationType, string? channelName = null)
     {
         var original = _originalSettings.FirstOrDefault(x =>
-            string.Equals(x.NotificationType, notificationType, StringComparison.OrdinalIgnoreCase));
+            string.Equals(x.NotificationType, notificationType, StringComparison.OrdinalIgnoreCase)
+            && (string.IsNullOrWhiteSpace(channelName)
+                || string.Equals(x.ChannelName, channelName, StringComparison.OrdinalIgnoreCase)));
 
         var updated = _settings.FirstOrDefault(x =>
-            string.Equals(x.NotificationType, notificationType, StringComparison.OrdinalIgnoreCase));
+            string.Equals(x.NotificationType, notificationType, StringComparison.OrdinalIgnoreCase)
+            && (string.IsNullOrWhiteSpace(channelName)
+                || string.Equals(x.ChannelName, channelName, StringComparison.OrdinalIgnoreCase)));
 
         if (original is null || updated is null)
         {
@@ -317,5 +314,79 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
 
         updated.Enabled = original.Enabled;
         updated.ExecutionMode = original.ExecutionMode;
+    }
+
+    private static NotificationSetting CloneSetting(NotificationSetting setting)
+    {
+        return new NotificationSetting
+        {
+            NotificationType = setting.NotificationType,
+            Enabled = setting.Enabled,
+            TriggerEventKey = setting.TriggerEventKey,
+            TriggerDisplayName = setting.TriggerDisplayName,
+            TriggerDomainEvent = setting.TriggerDomainEvent,
+            AppSettingsSection = setting.AppSettingsSection,
+            ChannelName = setting.ChannelName,
+            ExecutionMode = setting.ExecutionMode
+        };
+    }
+
+    private IEnumerable<NotificationSetting> GetOrderedSettings(Func<NotificationSetting, bool> predicate)
+    {
+        return _settings
+            .Where(predicate)
+            .OrderBy(x => x.NotificationType, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => x.ChannelName, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static bool IsDomainEventSetting(NotificationSetting setting)
+    {
+        return string.Equals(setting.ChannelName, "Domain", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsUiEventSetting(NotificationSetting setting)
+    {
+        return string.Equals(setting.ChannelName, "UI", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsIntegrationEventSetting(NotificationSetting setting)
+    {
+        return !IsDomainEventSetting(setting) && !IsUiEventSetting(setting);
+    }
+
+    private IReadOnlyList<EventBusSettingsTreeNode> BuildTreeNodes()
+    {
+        return
+        [
+            CreateGroupNode("DomainEvent", DomainEventSettings),
+            CreateGroupNode("IntegrationEvent", IntegrationEventSettings),
+            CreateGroupNode("UIEvent", UiEventSettings)
+        ];
+    }
+
+    private static EventBusSettingsTreeNode CreateGroupNode(string groupName, IEnumerable<NotificationSetting> settings)
+    {
+        var childNodes = settings
+            .Select(setting => new EventBusSettingsTreeNode
+            {
+                Title = setting.NotificationType,
+                Setting = setting,
+                Children = []
+            })
+            .ToList();
+
+        return new EventBusSettingsTreeNode
+        {
+            Title = $"{groupName} ({childNodes.Count})",
+            Setting = null,
+            Children = childNodes
+        };
+    }
+
+    protected sealed class EventBusSettingsTreeNode
+    {
+        public string Title { get; set; } = string.Empty;
+        public NotificationSetting? Setting { get; set; }
+        public IReadOnlyList<EventBusSettingsTreeNode> Children { get; set; } = [];
     }
 }

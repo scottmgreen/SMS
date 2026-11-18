@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Entities;
+using SMS_Domain.Interfaces;
 
 namespace SMS_Domain.Common;
 
@@ -18,6 +19,7 @@ namespace SMS_Domain.Common;
 /// </summary>
 public abstract class BaseDomainEvent :BaseAuditableEntity, IBaseDomainEvent
 {
+    private const string DomainEventCategoryName = "DomainEvent";
     
     protected BaseDomainEvent(SMSEventID id) : base(id, string.Empty, DateTime.Now)
     {
@@ -47,6 +49,39 @@ public abstract class BaseDomainEvent :BaseAuditableEntity, IBaseDomainEvent
     /// Report identifier this event originated from.
     /// </summary>
     public string ReportId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Runtime event class name.
+    /// </summary>
+    public virtual string EventClassName => GetType().Name;
+
+    /// <summary>
+    /// Logical event category name.
+    /// </summary>
+    public virtual string EventCategoryName => DomainEventCategoryName;
+
+    /// <summary>
+    /// Stable trigger key used by EventBus configuration.
+    /// </summary>
+    public virtual string TriggerEventKey => $"{EventCategoryName}:{EventClassName}";
+
+    /// <summary>
+    /// Human-readable trigger display name.
+    /// Uses IEventSource display metadata when available.
+    /// </summary>
+    public virtual string TriggerDisplayName
+    {
+        get
+        {
+            if (this is IEventSource eventSource
+                && !string.IsNullOrWhiteSpace(eventSource.EventSourceDisplayName))
+            {
+                return eventSource.EventSourceDisplayName;
+            }
+
+            return EventClassName;
+        }
+    }
 
 
 }

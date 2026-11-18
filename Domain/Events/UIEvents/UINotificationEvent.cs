@@ -16,12 +16,18 @@ namespace SMS_Domain.Events;
 /// </summary>
 public class UINotificationEvent : IBaseUIEvent
 {
+    private const string UiEventCategoryName = "UIEvent";
+
     public Guid EventId { get; private set; }
     public DateTime OccurredOn { get; private set; }
     public string EventType => SMS_Domain.Enums.EventType.UINotification.Value;
     public string ReportId { get; private set; }
     public string TargetComponent { get; private set; }
     public UIEventPriority Priority { get; private set; }
+    public string EventClassName => GetType().Name;
+    public string EventCategoryName => UiEventCategoryName;
+    public string TriggerEventKey => $"{EventCategoryName}:{EventClassName}";
+    public string TriggerDisplayName => EventClassName;
 
     // Notification Content
     public UINotificationSeverity Severity { get; private set; }

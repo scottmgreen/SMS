@@ -1,0 +1,64 @@
+@using SMS_Application.Interfaces
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+
+@inherits EventBusSettingsBase
+
+<RadzenCard>
+    <RadzenRow class="mb-3">
+        <RadzenColumn Size="12">
+            <h5>Event Bus Settings</h5>
+            <p class="mb-0">Configure enabled state and execution mode for DomainEvent, IntegrationEvent, and UIEvent notifications from appsettings.</p>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenTree Data="@EventBusSettingsTreeNodes" class="mb-3" Style="max-height: 560px; overflow: auto;">
+        <RadzenTreeLevel TextProperty="Title" ChildrenProperty="Children">
+            <Template Context="nodeData">
+                @{
+                    var node = (EventBusSettingsTreeNode)nodeData.Value;
+                }
+
+                @if (node.Setting is null)
+                {
+                    <span style="font-weight: 600;">@node.Title</span>
+                }
+                else
+                {
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; width: 100%;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <span style="min-width: 240px; font-weight: 500;">@node.Setting.NotificationType</span>
+                            <span style="min-width: 96px;">@node.Setting.ChannelName</span>
+
+                            <span>Enabled</span>
+                            <RadzenCheckBox @bind-Value="node.Setting.Enabled" Disabled="@_isSaving" />
+
+                            <span>Execution Mode</span>
+                            <RadzenDropDown TValue="NotificationExecutionMode"
+                                            Data="@_allowedModes"
+                                            @bind-Value="node.Setting.ExecutionMode"
+                                            Style="width: 170px;"
+                                            Disabled="@_isSaving" />
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--rz-text-secondary-color);">
+                            Trigger Key: @node.Setting.TriggerEventKey
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--rz-text-secondary-color);">
+                            Trigger Display: @node.Setting.TriggerDisplayName
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--rz-text-secondary-color);">
+                            AppSettings: @node.Setting.AppSettingsSection
+                        </div>
+                    </div>
+                }
+            </Template>
+        </RadzenTreeLevel>
+    </RadzenTree>
+
+    <RadzenRow class="mt-3">
+        <RadzenColumn Size="12" class="text-end">
+            <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@Close" class="me-2" Disabled="@_isSaving" />
+            <RadzenButton Text="Save" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="@SaveAsync" Disabled="@_isSaving" />
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenCard>

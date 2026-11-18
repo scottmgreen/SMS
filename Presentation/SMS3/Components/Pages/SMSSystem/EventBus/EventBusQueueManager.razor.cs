@@ -47,6 +47,7 @@ public partial class EventBusQueueManager
     private bool _isLoading = true;
     private bool _isProcessing = false;
     private bool _showQueueEventDetailsModal;
+    private bool _showEventBusDesignMapModal;
     private QueuedEvent? _selectedQueueEvent;
     private readonly Dictionary<string, string> _hazardTitleByReportId = new(StringComparer.OrdinalIgnoreCase);
 
@@ -383,15 +384,15 @@ public partial class EventBusQueueManager
         await LoadStatistics();
     }
 
-    private async Task OpenEmailNotificationSettingsAsync()
+    private async Task OpenEventBusSettingsAsync()
     {
         if (_isProcessing)
         {
             return;
         }
 
-        var result = await _dialogService.OpenAsync<EmailNotificationSettingsDialog>(
-            "Email Notification Settings",
+        var result = await _dialogService.OpenAsync<EventBusSettings>(
+            "Event Bus Settings",
             null,
             new DialogOptions
             {
@@ -406,6 +407,17 @@ public partial class EventBusQueueManager
         {
             await InvokeAsync(StateHasChanged);
         }
+    }
+
+    private async Task OpenEventBusDesignMapAsync()
+    {
+        if (_isProcessing)
+        {
+            return;
+        }
+
+        _showEventBusDesignMapModal = true;
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task ExecuteQueueEvent(string queueCode)
@@ -1187,6 +1199,12 @@ public partial class EventBusQueueManager
     {
         _showQueueEventDetailsModal = false;
         _selectedQueueEvent = null;
+        return Task.CompletedTask;
+    }
+
+    private Task CloseEventBusDesignMapModal()
+    {
+        _showEventBusDesignMapModal = false;
         return Task.CompletedTask;
     }
 

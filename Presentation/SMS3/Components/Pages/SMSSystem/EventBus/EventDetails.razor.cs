@@ -3,7 +3,7 @@ using System.Text.Json;
 using SMS_Domain.ValueObjects;
 namespace SMS3.Components.Pages.SMSSystem.EventBus;
 
-public partial class EventDetailsDialog
+public partial class EventDetails
 {
     private readonly List<(string Key, string Value)> _summaryFields = new();
     private readonly List<string> _toRecipients = new();
@@ -16,7 +16,6 @@ public partial class EventDetailsDialog
     private string _formattedEventData = string.Empty;
 
     [Parameter] public QueuedEvent Event { get; set; } = null!;
-    [Inject] private DialogService _dialogService { get; set; } = null!;
 
     protected override void OnParametersSet()
     {

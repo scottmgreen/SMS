@@ -152,11 +152,6 @@
         </RadzenColumn>
     </RadzenRow> *@
     <br /><br />
-    <RadzenRow>
-        <RadzenColumn Size="12" class="text-end">
-            <RadzenButton Text="Close" Click="@(() => _dialogService.Close())" ButtonStyle="ButtonStyle.Base" />
-        </RadzenColumn>
-    </RadzenRow>
 </RadzenCard>
 
 
@@ -167,21 +162,6 @@
         min-width: 1200px;
         max-width: 1200px;
         overflow-x: hidden;
-    }
-
-    :global(.event-details-dialog-wrapper .rz-dialog-titlebar) {
-        background-color: #212e61;
-        color: #ffffff;
-        border-bottom: 1px solid #e9ecef;
-    }
-
-    :global(.event-details-dialog-wrapper .rz-dialog-titlebar .rz-dialog-title) {
-        color: #ffffff;
-        font-weight: 600;
-    }
-
-    :global(.event-details-dialog-wrapper .rz-dialog-titlebar .rz-dialog-titlebar-close) {
-        color: #ffffff;
     }
 
     .event-detail-item {

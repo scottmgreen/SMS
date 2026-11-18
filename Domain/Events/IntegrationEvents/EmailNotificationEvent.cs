@@ -16,6 +16,8 @@ namespace SMS_Domain.Events;
 /// </summary>
 public class EmailNotificationEvent : IBaseIntegrationEvent
 {
+    private const string IntegrationEventCategoryName = "IntegrationEvent";
+
     public Guid EventId { get; private set; }
     public DateTime OccurredOn { get; private set; }
     public string EventType => SMS_Domain.Enums.EventType.EmailNotification.Value;
@@ -23,6 +25,10 @@ public class EmailNotificationEvent : IBaseIntegrationEvent
     public string TargetSystem { get; private set; }
     public IntegrationDeliveryMode DeliveryMode { get; private set; }
     public int MaxRetryAttempts { get; private set; }
+    public string EventClassName => GetType().Name;
+    public string EventCategoryName => IntegrationEventCategoryName;
+    public string TriggerEventKey => $"{EventCategoryName}:{EventClassName}";
+    public string TriggerDisplayName => EventClassName;
 
     // Email content
     public List<string> ToRecipients { get; private set; }

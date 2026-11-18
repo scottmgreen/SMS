@@ -1,0 +1,107 @@
+<RadzenCard class="event-bus-map-dialog rz-p-3">
+    <RadzenRow class="mb-3">
+        <RadzenColumn Size="12">
+            <h5 class="mb-1">Event Bus Design Map</h5>
+            <p class="mb-0 text-muted">
+                Source-discovered map of DomainEvent, IntegrationEvent, and UIEvent classes with trigger points, handlers, and chain flow.
+            </p>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenRow Gap="1rem" class="mb-3">
+        <RadzenColumn Size="6" SizeMD="3">
+            <RadzenCard>
+                <strong>DomainEvent</strong>
+                <div>@_domainEventCount</div>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="6" SizeMD="3">
+            <RadzenCard>
+                <strong>IntegrationEvent</strong>
+                <div>@_integrationEventCount</div>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="6" SizeMD="3">
+            <RadzenCard>
+                <strong>UIEvent</strong>
+                <div>@_uiEventCount</div>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="6" SizeMD="3">
+            <RadzenCard>
+                <strong>Unused</strong>
+                <div>@_unusedEventCount</div>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @if (_isLoading)
+    {
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <RadzenProgressBarCircular Value="100" ShowValue="false" />
+            <span>Discovering EventBus design map...</span>
+        </div>
+    }
+    else if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Icon="error" Summary="Map Load Failed" Detail="@_errorMessage" class="mb-3" />
+    }
+    else
+    {
+        <RadzenTree Data="@_treeNodes" class="mb-3" Style="max-height: 560px; overflow: auto;">
+            <RadzenTreeLevel TextProperty="Title" ChildrenProperty="Children">
+                <Template Context="nodeData">
+                    @{
+                        var node = (EventBusDesignTreeNode)nodeData.Value;
+                    }
+
+                    @if (node.NodeKind == EventBusTreeNodeKind.Category)
+                    {
+                        <span style="font-weight: 600;">@node.Title</span>
+                    }
+                    else if (node.NodeKind == EventBusTreeNodeKind.Event)
+                    {
+                        <span style="font-weight: 500;">@node.Title</span>
+                        @if (node.LifecycleState is not null)
+                        {
+                            <RadzenBadge BadgeStyle="@GetLifecycleBadgeStyle(node.LifecycleState)" Text="@node.LifecycleState.Name" class="ms-2" title="@node.LifecycleNotes" />
+                        }
+                        @if (node.IsUnused)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Unused" class="ms-2" />
+                        }
+                    }
+                    else if (node.NodeKind == EventBusTreeNodeKind.Section)
+                    {
+                        <span style="color: var(--rz-text-secondary-color);">@node.Title</span>
+                    }
+                    else
+                    {
+                        <span class="event-bus-map-line">@node.Title</span>
+                    }
+                </Template>
+            </RadzenTreeLevel>
+        </RadzenTree>
+    }
+
+    <RadzenRow>
+        <RadzenColumn Size="12" class="text-end">
+            <RadzenButton Text="Refresh Map" Icon="refresh" ButtonStyle="ButtonStyle.Light" Click="@RefreshAsync" Disabled="@_isLoading" />
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenCard>
+
+<style>
+    .event-bus-map-dialog {
+        width: 100%;
+        min-width: 1240px;
+        max-width: 1240px;
+        overflow-x: hidden;
+    }
+
+    .event-bus-map-line {
+        font-family: Consolas, "Courier New", monospace;
+        white-space: normal;
+        word-break: break-word;
+    }
+</style>

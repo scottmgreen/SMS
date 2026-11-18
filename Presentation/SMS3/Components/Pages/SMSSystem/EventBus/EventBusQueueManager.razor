@@ -104,10 +104,17 @@
 
                     <RadzenButton Icon="settings"
                                  Text="Notification Settings"
-                                 Click="@OpenEmailNotificationSettingsAsync"
+                                  Click="@OpenEventBusSettingsAsync"
                                  ButtonStyle="ButtonStyle.Base"
                                  class="me-2"
                                  Disabled="@_isProcessing" />
+
+                    <RadzenButton Icon="account_tree"
+                                  Text="Event Bus Map"
+                                  Click="@OpenEventBusDesignMapAsync"
+                                  ButtonStyle="ButtonStyle.Base"
+                                  class="me-2"
+                                  Disabled="@_isProcessing" />
 
                     <RadzenButton Icon="refresh"
                                   Text="Refresh"
@@ -129,12 +136,12 @@
                                  class="me-2"
                                  Disabled="@(_isProcessing)" /> *@
 
-                    @* <RadzenButton Icon="delete_sweep" 
-                                 Text="Clear Queue" 
+                    <RadzenButton Icon="delete_sweep" 
+                                 Text="Clear Event Queue" 
                                  Click="@ClearQueue" 
                                  ButtonStyle="ButtonStyle.Danger" 
                                  class="me-2"
-                                 Disabled="@(_isProcessing)" /> *@
+                                 Disabled="@(_isProcessing)" />
                 </div>
             </RadzenColumn>
         </RadzenRow>
@@ -239,6 +246,30 @@
                                                  Title="Rebuild Email Event"
                                                  class="me-1" />
                                 }
+
+@if (_showEventBusDesignMapModal)
+{
+    <div class="modal-backdrop event-bus-map-modal-backdrop">
+        <div class="modal-dialog sms-modal-body event-bus-map-modal-dialog">
+            <RadzenCard class="modal-content event-bus-map-modal-content">
+                <div class="modal-header sms-modal-header sms-header-primary">
+                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                        <RadzenIcon Icon="account_tree" Style="margin-right: 0.5rem;" />
+                        Event Bus Design Map
+                    </RadzenText>
+                </div>
+
+                <div class="event-bus-map-scroll-body">
+                    <EventBusDesignMap />
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <RadzenButton Text="Close" ButtonStyle="ButtonStyle.Base" Click="@CloseEventBusDesignMapModal" />
+                </div>
+            </RadzenCard>
+        </div>
+    </div>
+}
                             }
                             else if (queuedEvent.Status == QueuedEventStatus.Failed 
                                 && queuedEvent.EventCategory == EventCategory.IntegrationEvent
@@ -289,7 +320,7 @@
                 </div>
 
                 <div class="event-details-scroll-body">
-                    <EventDetailsDialog Event="@_selectedQueueEvent" />
+                    <EventDetails Event="@_selectedQueueEvent" />
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 mt-3">
@@ -331,6 +362,45 @@
     .event-details-scroll-body {
         max-height: calc(85vh - 150px);
         overflow-y: auto;
+    }
+
+    .event-bus-map-modal-backdrop {
+        position: fixed;
+        top: 64px;
+        left: 0;
+        right: 0;
+        height: calc(100vh - 64px);
+        background-color: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        z-index: 1050;
+    }
+
+    .event-bus-map-modal-dialog {
+        width: 1320px;
+        max-width: 1320px;
+        max-height: 88vh;
+        margin: 0;
+    }
+
+    .event-bus-map-modal-content {
+        max-height: 88vh;
+        overflow-x: hidden;
+        overflow-y: hidden;
+    }
+
+    .event-bus-map-scroll-body {
+        max-height: calc(88vh - 150px);
+        overflow-y: auto;
+    }
+
+    .event-bus-map-modal-content .event-bus-map-dialog {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        box-shadow: none;
     }
 
     .event-details-modal-content .event-details-dialog {

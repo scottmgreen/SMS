@@ -10,6 +10,7 @@
 
 using SMS_Application.Interfaces;
 using SMS_Application.EventHandlers;
+using SMS_Domain.Enums;
 using SMS_Domain.Events;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -63,6 +64,7 @@ public static class EventBusExtensions
         using var scope = app.ApplicationServices.CreateScope();
         var eventBus = scope.ServiceProvider.GetRequiredService<IBaseEventBus>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<IBaseEventBus>>();
+        var lifecycleRegistry = scope.ServiceProvider.GetRequiredService<IEventLifecycleRegistry>();
         var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
         foreach (var assembly in assemblies)
@@ -79,6 +81,40 @@ public static class EventBusExtensions
                     .First(i => i.IsGenericType &&
                                 i.GetGenericTypeDefinition() == typeof(IBaseEventHandler<>));
                 var eventType = interfaceType.GetGenericArguments()[0];
+
+                var hasLifecycleEntry = lifecycleRegistry.TryGet(eventType.Name, out var lifecycleEntry);
+                var lifecycleState = hasLifecycleEntry
+                    ? lifecycleEntry.LifecycleState
+                    : EventLifecycleState.Active;
+
+                if (lifecycleState == EventLifecycleState.PlannedStub)
+                {
+                    var notes = lifecycleEntry?.Notes ?? "No lifecycle notes supplied.";
+                    logger.LogApplicationInformation(
+                        "Skipping subscription for handler {Handler} on event {EventType} because lifecycle state is PlannedStub (intentionally stubbed). Notes: {Notes}",
+                        handlerType.Name,
+                        eventType.Name,
+                        notes);
+                    continue;
+                }
+
+                if (lifecycleState == EventLifecycleState.Deprecated)
+                {
+                    var notes = lifecycleEntry?.Notes ?? "No lifecycle notes supplied.";
+                    logger.LogApplicationWarning(
+                        "Blocked subscription for handler {Handler} on deprecated event {EventType}. Notes: {Notes}",
+                        handlerType.Name,
+                        eventType.Name,
+                        notes);
+                    continue;
+                }
+
+                if (!hasLifecycleEntry)
+                {
+                    logger.LogApplicationWarning(
+                        "No lifecycle registry entry found for event {EventType}; defaulting subscription state to Active.",
+                        eventType.Name);
+                }
 
                 // Determine event category by interface
                 if (typeof(IBaseDomainEvent).IsAssignableFrom(eventType))

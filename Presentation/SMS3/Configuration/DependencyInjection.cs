@@ -118,6 +118,7 @@ public static class DependencyInjection
         services.AddScoped<SPIDashboardRefreshEventHandler>();
         services.AddScoped<IEmailNotificationSettingsService, EmailNotificationSettingsService>();
         services.AddScoped<IEmailNotificationExecutionModeResolver, EmailNotificationSettingsService>();
+        services.AddScoped<IEventBusDesignMapService, EventBusDesignMapService>();
 
         // Add any additional UI helper services here
         // services.AddScoped<IDialogService, DialogService>();
