@@ -6,6 +6,16 @@ using SMS_Domain.Enums;
 
 namespace SMS3.Components.Pages.SMSSystem.Services;
 
+/// <summary>
+/// EventBus map design notes:
+/// - This map is dynamically built (not hardcoded).
+/// - The service scans current Domain event classes and Application/SMS3 event handlers,
+///   then derives trigger locations, owning handlers, chained-to/chained-from links,
+///   and chain-flow summaries.
+/// - Changes in triggers/chains/handlers are reflected in the map on refresh.
+/// - Lifecycle badges/notes are intentionally curated from IEventLifecycleRegistry
+///   and are not inferred from source scanning.
+/// </summary>
 public sealed class EventBusDesignMapService : IEventBusDesignMapService
 {
     private static readonly Regex HandlerClassRegex = new(
