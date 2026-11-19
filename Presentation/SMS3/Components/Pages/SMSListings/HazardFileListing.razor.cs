@@ -19,6 +19,7 @@ using SMS_Domain.ValueObjects;
 
 using SMS_Shared.Configuration;
 
+using SMS3.Configuration;
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 
@@ -44,6 +45,7 @@ public partial class HazardFileListing : ComponentBase
     private RadzenDataGrid<HazardFile>? _filesGrid;
     private IEnumerable<HazardFile> _files = new List<HazardFile>();
     private List<HazardFile> _allFiles = new List<HazardFile>(); // Store all files for client-side filtering
+    private readonly Dictionary<string, string> _uploadedByDisplayNameByCode = new(StringComparer.OrdinalIgnoreCase);
     private int _totalCount;
     private bool _isLoading = false;
 
@@ -329,6 +331,7 @@ public partial class HazardFileListing : ComponentBase
             if (result.IsSuccess && result.Value is not null)
             {
                 _allFiles = result.Value.ToList(); // Store all files for filtering/sorting
+                await PopulateUploadedByDisplayNamesAsync(_allFiles);
                 _files = _allFiles.Take(15).ToList(); // Initially show first page
                 _totalCount = _allFiles.Count();
                 _logger.LogInformation("Loaded {Count} hazard files for listing", _totalCount);
@@ -336,7 +339,7 @@ public partial class HazardFileListing : ComponentBase
                 // Show success notification if we have data
                 if (_totalCount > 0)
                 {
-                    await ShowSuccessAsyncNotification($"Successfully loaded {_totalCount} hazard files");
+                    await ShowSuccessAsyncNotification($"{_totalCount} hazard files");
                 }
                 else
                 {
@@ -360,6 +363,7 @@ public partial class HazardFileListing : ComponentBase
             _allFiles = new List<HazardFile>();
             _files = _allFiles;
             _totalCount = 0;
+            _uploadedByDisplayNameByCode.Clear();
 
             _logger.LogError(ex, "Error loading hazard files");
             await ShowErrorAsyncNotification($"Error loading hazard files: {ex.Message}");
@@ -722,6 +726,77 @@ public partial class HazardFileListing : ComponentBase
         }
 
         return filePath.TrimStart('~');
+    }
+
+    private string ResolveUploadedByDisplayName(string? uploadedBy)
+    {
+        if (string.IsNullOrWhiteSpace(uploadedBy))
+        {
+            return string.Empty;
+        }
+
+        var uploadedByCode = uploadedBy.Trim();
+        if (string.Equals(uploadedByCode, SystemConstants.FlyPdxApiSource, StringComparison.OrdinalIgnoreCase))
+        {
+            return SystemConstants.FlyPdxApiSource;
+        }
+
+        return _uploadedByDisplayNameByCode.TryGetValue(uploadedByCode, out var displayName)
+            && !string.IsNullOrWhiteSpace(displayName)
+                ? displayName
+                : uploadedByCode;
+    }
+
+    private async Task PopulateUploadedByDisplayNamesAsync(IEnumerable<HazardFile> files)
+    {
+        _uploadedByDisplayNameByCode.Clear();
+
+        var uploadedByCodes = files
+            .Select(file => file.UploadedBy?.Trim())
+            .Where(code => !string.IsNullOrWhiteSpace(code))
+            .Where(code => !string.Equals(code, SystemConstants.FlyPdxApiSource, StringComparison.OrdinalIgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (!uploadedByCodes.Any())
+        {
+            return;
+        }
+
+        var applicationUsersResult = await _mediator.SendAsync(new GetAllSMSApplicationUsersQuery(), CancellationToken.None);
+        if (applicationUsersResult.IsSuccess && applicationUsersResult.Value is not null)
+        {
+            foreach (var user in applicationUsersResult.Value.Where(user => !string.IsNullOrWhiteSpace(user.Code)))
+            {
+                _uploadedByDisplayNameByCode[user.Code.Trim()] = user.DisplayName;
+            }
+        }
+
+        var organizationalUsersResult = await _mediator.SendAsync(new GetAllSMSOrganizationalUsersQuery(), CancellationToken.None);
+        if (organizationalUsersResult.IsSuccess && organizationalUsersResult.Value is not null)
+        {
+            foreach (var user in organizationalUsersResult.Value.Where(user => !string.IsNullOrWhiteSpace(user.Code)))
+            {
+                _uploadedByDisplayNameByCode[user.Code.Trim()] = user.DisplayName;
+            }
+        }
+
+        var stakeholderUsersResult = await _mediator.SendAsync(new GetAllSMSStakeholderUsersQuery(), CancellationToken.None);
+        if (stakeholderUsersResult.IsSuccess && stakeholderUsersResult.Value is not null)
+        {
+            foreach (var user in stakeholderUsersResult.Value.Where(user => !string.IsNullOrWhiteSpace(user.Code)))
+            {
+                _uploadedByDisplayNameByCode[user.Code.Trim()] = user.DisplayName;
+            }
+        }
+
+        foreach (var code in uploadedByCodes)
+        {
+            if (code is not null && !_uploadedByDisplayNameByCode.ContainsKey(code))
+            {
+                _uploadedByDisplayNameByCode[code] = code;
+            }
+        }
     }
 
     public static bool IsImageFile(string? fileType) =>

@@ -331,7 +331,7 @@ public partial class MitigationListing : ComponentBase, IEventReceiver, IDisposa
             // Show success/info notification based on loaded row count
             if (_totalCount > 0)
             {
-                    await _notificationHelper.ShowSuccessAsync($"Successfully loaded {_totalCount} mitigations");
+                    await _notificationHelper.ShowSuccessAsync($"{_totalCount} mitigations");
             }
             else
             {

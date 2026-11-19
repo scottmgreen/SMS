@@ -89,7 +89,7 @@ public partial class Hazards : ComponentBase
             if (result.IsSuccess && result.Value is not null)
             {
                 AllHazards = result.Value.ToList();
-                await _notificationHelper.ShowSuccessAsync($"Successfully loaded {AllHazards.Count} hazards");
+                await _notificationHelper.ShowSuccessAsync($"{AllHazards.Count} hazards");
                 _logger.LogInformation("Successfully loaded {Count} hazards", AllHazards.Count);
             }
             else

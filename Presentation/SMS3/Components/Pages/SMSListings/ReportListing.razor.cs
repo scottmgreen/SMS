@@ -469,7 +469,7 @@ public partial class ReportListing : ComponentBase, IEventReceiver, IDisposable
                 _totalCount = _allReports.Count();
                 _logger.LogInformation("Loaded {Count} reports for listing", _totalCount);
 
-                await _notificationHelper.ShowSuccessAsync( $"Successfully loaded {_totalCount} reports");
+                await _notificationHelper.ShowSuccessAsync($"{_totalCount} reports");
             }
             else
             {

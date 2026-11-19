@@ -244,7 +244,7 @@ public partial class RiskAssessmentListing : ComponentBase, IEventReceiver, IDis
                 // Only show success notification if we have data
                 if (_totalCount > 0)
                 {
-                    await _notificationHelper.ShowSuccessAsync($"Successfully loaded {_totalCount} risk assessments");
+                    await _notificationHelper.ShowSuccessAsync($"{_totalCount} risk assessments");
                 }
 
                 else

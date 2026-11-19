@@ -214,7 +214,7 @@ public partial class InvestigationListing : ComponentBase, IEventReceiver, IDisp
 
                 if (_totalCount > 0)
                 {
-                    await _notificationHelper.ShowSuccessAsync($"Successfully loaded {_totalCount} investigations");
+                    await _notificationHelper.ShowSuccessAsync($"{_totalCount} investigations");
                 }
                 else
                 {

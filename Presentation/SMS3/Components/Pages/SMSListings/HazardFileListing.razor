@@ -99,7 +99,7 @@
         <RadzenDataGridColumn TItem="HazardFile" Property="UploadedBy" Title="Uploaded By" Width="150px">
             <Template Context="file">
                 <div title="@file.UploadedBy" style="font-size:smaller;font-weight: 600">
-                    @(file.UploadedBy)
+                    @ResolveUploadedByDisplayName(file.UploadedBy)
                 </div>
             </Template>
         </RadzenDataGridColumn>

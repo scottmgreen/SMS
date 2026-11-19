@@ -240,7 +240,7 @@ public partial class HazardListing : ComponentBase, IEventReceiver, IDisposable
                 _totalCount = _allHazards.Count();
                 _logger.LogInformation("Loaded {Count} hazards for listing", _totalCount);
 
-                await ShowSuccessAsyncNotification($"Successfully loaded {_totalCount} hazards");
+                await ShowSuccessAsyncNotification($"{_totalCount} hazards");
                
             }
             else

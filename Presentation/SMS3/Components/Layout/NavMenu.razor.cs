@@ -12,10 +12,12 @@ using Microsoft.JSInterop;
 using Radzen;
 using Radzen.Blazor;
 using SMS3.Components.Shared.Components;
+using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
 using SMS3.Security;
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
+using SMS_Domain.Events;
 using SMS3.Components.Shared;
 using SMS3.Hubs.Contracts;
 namespace SMS3.Components.Layout;
@@ -32,6 +34,7 @@ public partial class NavMenu
     [Inject] private IActiveUserSessionRegistry _activeUserSessionRegistry { get; set; } = default!;
     [Inject] private IHttpContextAccessor _httpContextAccessor { get; set; } = default!;
     [Inject] private IRecordLockLeaseCoordinator _recordLockLeaseCoordinator { get; set; } = default!;
+    [Inject] private IUiNotificationPublisher _uiNotificationPublisher { get; set; } = default!;
 
     [Parameter]
     public EventCallback OnLogoutRequested { get; set; }
@@ -529,11 +532,13 @@ public partial class NavMenu
             {
                 RecordLockStateStore.SetReleased(lockKey);
 
-                await EventBusDispatcher.DispatchNotificationAsync(
-                    NotificationSeverity.Info,
+                await _uiNotificationPublisher.PublishAsync(
+                    UINotificationSeverity.Info,
                     LiveUpdateEventNames.RecordEditReleased,
                     LiveUpdateRecordLockMessage.Build(lockKey, action, _currentUserService?.UserCode),
-                    3000);
+                    3000,
+                    category: "SystemEvent",
+                    sourceLayer: "Presentation");
             },
             "NavigationAway");
     }

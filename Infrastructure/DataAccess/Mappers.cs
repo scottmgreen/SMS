@@ -1055,6 +1055,9 @@ public static partial class Mappers
         hazardFile.FileType = reader.GetValue<string>(FieldNames.fHazardFileFileType) ?? string.Empty;
         hazardFile.ContentType = reader.GetValue<string>(FieldNames.fHazardFileContentType) ?? string.Empty;
         hazardFile.FileSizeBytes = reader.GetValue<long>(FieldNames.fHazardFileFileSizeBytes);
+        hazardFile.FileSize = hazardFile.FileSizeBytes > 0
+            ? hazardFile.FileSizeBytes.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            : string.Empty;
         hazardFile.StorageType = reader.GetValue<string>(FieldNames.fHazardFileStorageType) ?? "FileSystem";
         hazardFile.FilePath = reader.GetValue<string>(FieldNames.fHazardFileFilePath);
         hazardFile.FileData = reader.GetValue<byte[]>(FieldNames.fHazardFileFileData);

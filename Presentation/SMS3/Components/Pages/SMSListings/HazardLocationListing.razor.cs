@@ -219,7 +219,7 @@ public partial class HazardLocationListing : ComponentBase, IEventReceiver, IDis
                 // Show success notification if we have data
                 if (_totalCount > 0)
                 {
-                    await ShowSuccessAsyncNotification($"Successfully loaded {_totalCount} hazard locations");
+                    await ShowSuccessAsyncNotification($"{_totalCount} hazard locations");
                 }
                 else
                 {

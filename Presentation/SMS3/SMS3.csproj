@@ -10,14 +10,21 @@
     <NoWarn>$(NoWarn);1591;CA1873</NoWarn> <!-- Suppress missing XML comment warnings and costly logging argument analyzer noise -->
     
     <!-- Version Information -->
-    <Version>1.2.2</Version>
-    <AssemblyVersion>1.2.2.0</AssemblyVersion>
-    <FileVersion>1.2.2.0</FileVersion>
+    <Version>1.5.2</Version>
+    <AssemblyVersion>1.5.2.0</AssemblyVersion>
+    <FileVersion>1.5.2.0</FileVersion>
     <AssemblyTitle>SMS Presentation Layer</AssemblyTitle>
     <Product>PDX Safety Management System</Product>
     <Company>Portland International Airport</Company>
     <Copyright>Copyright © 2026 Portland International Airport</Copyright>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Components\Pages\SMSListings\Models\**" />
+    <Content Remove="Components\Pages\SMSListings\Models\**" />
+    <EmbeddedResource Remove="Components\Pages\SMSListings\Models\**" />
+    <None Remove="Components\Pages\SMSListings\Models\**" />
+  </ItemGroup>
 
   
 
@@ -41,7 +48,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\Pages\SMSListings\Models\" />
     <Folder Include="Components\Pages\SMSPromotion\" />
     <Folder Include="logs\" />
     <Folder Include="wwwroot\uploads\" />

@@ -9,23 +9,23 @@ using SMS_Infrastructure.Common;
 
 namespace SMS_Infrastructure.Services;
 
-public sealed class HazardFileExternalStorageService
+public sealed class HazardFileStorageService
 {
     private readonly IConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<HazardFileExternalStorageService> _logger;
+    private readonly ILogger<HazardFileStorageService> _logger;
 
-    public HazardFileExternalStorageService(
+    public HazardFileStorageService(
         IConfiguration configuration,
         IHttpClientFactory httpClientFactory,
-        ILogger<HazardFileExternalStorageService> logger)
+        ILogger<HazardFileStorageService> logger)
     {
         _configuration = configuration;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
     }
 
-    public async Task<Result<HazardFile>> PrepareHazardFileForStorageAsync(HazardFile hazardFile, byte[] fileData, CancellationToken ct = default)
+    public async Task<Result<HazardFile>> StoreHazardFileAsync(HazardFile hazardFile, byte[] fileData, CancellationToken ct = default)
     {
         if (hazardFile is null)
         {
@@ -37,14 +37,19 @@ public sealed class HazardFileExternalStorageService
             return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NullOrEmpty);
         }
 
-        var useMockCloudStorage = _configuration.GetValue<bool>("HazardFileCloudStorage:EnableMockCloudStorage", true);
-        var uploadEndpoint = _configuration.GetValue<string>("HazardFileCloudStorage:UploadEndpoint")?.Trim();
+        // Local storage fallback intentionally disabled.
+        // Cloud-only storage is the active production policy.
+        //
+        // if (_configuration.GetValue<bool>("HazardFileLocalStorage:Enabled", false))
+        // {
+        //     var localStorageResult = await TryStoreToLocalStorageAsync(hazardFile, fileData, ct).ConfigureAwait(false);
+        //     if (localStorageResult.IsSuccess)
+        //     {
+        //         return localStorageResult;
+        //     }
+        // }
 
-        if (useMockCloudStorage)
-        {
-            ApplyMockCloudStorage(hazardFile);
-            return Result<HazardFile>.Success(hazardFile);
-        }
+        var uploadEndpoint = _configuration.GetValue<string>("HazardFileCloudStorage:UploadEndpoint")?.Trim();
 
         if (string.IsNullOrWhiteSpace(uploadEndpoint))
         {
@@ -55,14 +60,14 @@ public sealed class HazardFileExternalStorageService
 
         try
         {
-            var cloudResult = await TryUploadToCloudAsync(hazardFile, fileData, uploadEndpoint, ct).ConfigureAwait(false);
-            if (cloudResult.IsSuccess)
+            var storageResult = await TryUploadToCloudAsync(hazardFile, fileData, uploadEndpoint, ct).ConfigureAwait(false);
+            if (storageResult.IsSuccess)
             {
-                return cloudResult;
+                return storageResult;
             }
 
             _logger.LogInfrastructureError("Cloud upload failed for {FileName}; file will not be stored.", null);
-            return cloudResult;
+            return storageResult;
         }
         catch (Exception ex)
         {
@@ -70,31 +75,6 @@ public sealed class HazardFileExternalStorageService
             return Result<HazardFile>.Failure<HazardFile>(
                 new Error("HazardFile.CloudUploadException", $"Cloud upload failed: {ex.Message}"));
         }
-    }
-
-    private void ApplyMockCloudStorage(HazardFile hazardFile)
-    {
-        var configuredBaseUri = _configuration.GetValue<string>("HazardFileCloudStorage:BaseUri")?.Trim();
-        if (string.IsNullOrWhiteSpace(configuredBaseUri))
-        {
-            throw new InvalidOperationException("HazardFileCloudStorage:BaseUri is required when mock cloud storage is enabled.");
-        }
-
-        var originalName = Path.GetFileName(hazardFile.FileName);
-        var safeOriginalName = string.Concat(originalName.Where(ch => !Path.GetInvalidFileNameChars().Contains(ch))).Trim();
-        if (string.IsNullOrWhiteSpace(safeOriginalName))
-        {
-            safeOriginalName = "hazard-file.bin";
-        }
-
-        var extension = Path.GetExtension(safeOriginalName);
-        var guidFileName = $"{Guid.NewGuid():D}{extension}";
-        var uploadSessionFolder = Guid.NewGuid().ToString("D");
-
-        hazardFile.FileName = guidFileName;
-        hazardFile.FilePath = $"{configuredBaseUri.TrimEnd('/')}/{DateTime.Now:yyyy/MM/dd}/{uploadSessionFolder}/{guidFileName}";
-        hazardFile.StorageType = "Cloud";
-        hazardFile.FileData = null;
     }
 
     private async Task<Result<HazardFile>> TryUploadToCloudAsync(HazardFile hazardFile, byte[] fileData, string uploadEndpoint, CancellationToken ct)
@@ -287,4 +267,3 @@ public sealed class HazardFileExternalStorageService
         return null;
     }
 }
-

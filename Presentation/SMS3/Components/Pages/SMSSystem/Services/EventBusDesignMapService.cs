@@ -1,18 +1,20 @@
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 using SMS_Domain.Enums;
+using SMS_Domain.Interfaces;
 
 namespace SMS3.Components.Pages.SMSSystem.Services;
 
 /// <summary>
 /// EventBus map design notes:
 /// - This map is dynamically built (not hardcoded).
-/// - The service scans current Domain event classes and Application/SMS3 event handlers,
-///   then derives trigger locations, owning handlers, chained-to/chained-from links,
-///   and chain-flow summaries.
-/// - Changes in triggers/chains/handlers are reflected in the map on refresh.
+/// - Runtime reflection/subscription metadata is the primary source of truth so the map
+///   works in publish/test/prod where source files are not deployed.
+/// - Source scanning (when repository files are available) is optional enrichment for
+///   trigger locations, chained-to/chained-from links, and chain-flow summaries.
 /// - Lifecycle badges/notes are intentionally curated from IEventLifecycleRegistry
 ///   and are not inferred from source scanning.
 /// </summary>
@@ -32,38 +34,54 @@ public sealed class EventBusDesignMapService : IEventBusDesignMapService
 
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<EventBusDesignMapService> _logger;
+    private readonly IBaseEventBus _eventBus;
     private readonly IEventLifecycleRegistry _eventLifecycleRegistry;
 
     public EventBusDesignMapService(
         IWebHostEnvironment environment,
         ILogger<EventBusDesignMapService> logger,
+        IBaseEventBus eventBus,
         IEventLifecycleRegistry eventLifecycleRegistry)
     {
         _environment = environment ?? throw new ArgumentNullException(nameof(environment));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _eventLifecycleRegistry = eventLifecycleRegistry ?? throw new ArgumentNullException(nameof(eventLifecycleRegistry));
     }
 
-    public Task<IReadOnlyList<EventBusMapEventItem>> BuildMapAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<EventBusMapEventItem>> BuildMapAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            var repositoryRoot = ResolveRepositoryRoot(_environment.ContentRootPath);
-            if (string.IsNullOrWhiteSpace(repositoryRoot))
-            {
-                _logger.LogWarning("EventBus map discovery skipped because repository root could not be resolved from {ContentRootPath}.", _environment.ContentRootPath);
-                return Task.FromResult<IReadOnlyList<EventBusMapEventItem>>([]);
-            }
+            var eventDefinitions = MergeEventDefinitions(
+                LoadRuntimeEventDefinitions(),
+                LoadLifecycleEventDefinitions(_eventLifecycleRegistry.GetAll()));
 
-            var eventDefinitions = LoadEventDefinitions(repositoryRoot);
             if (eventDefinitions.Count == 0)
             {
-                return Task.FromResult<IReadOnlyList<EventBusMapEventItem>>([]);
+                _logger.LogWarning("EventBus map discovery yielded no runtime/lifecycle event definitions.");
+                return [];
             }
 
-            var sourceFiles = LoadSourceFileSnapshots(repositoryRoot);
-            var handlerSnapshots = sourceFiles.Where(IsHandlerFile).ToList();
-            var handlerClassDetails = handlerSnapshots.SelectMany(ParseHandlerClasses).ToList();
+            var activeSubscriptions = await SafeGetActiveSubscriptionsAsync(cancellationToken);
+
+            var sourceFiles = new List<SourceFileSnapshot>();
+            var handlerClassDetails = new List<HandlerClassDetail>();
+
+            var repositoryRoot = ResolveRepositoryRoot(_environment.ContentRootPath);
+            if (!string.IsNullOrWhiteSpace(repositoryRoot))
+            {
+                eventDefinitions = MergeEventDefinitions(eventDefinitions, LoadEventDefinitions(repositoryRoot));
+                sourceFiles = LoadSourceFileSnapshots(repositoryRoot);
+                var handlerSnapshots = sourceFiles.Where(IsHandlerFile).ToList();
+                handlerClassDetails = handlerSnapshots.SelectMany(ParseHandlerClasses).ToList();
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "EventBus map source files were not found from ContentRootPath {ContentRootPath}. Using runtime-only discovery.",
+                    _environment.ContentRootPath);
+            }
 
             var categorySort = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
             {
@@ -80,15 +98,25 @@ public sealed class EventBusDesignMapService : IEventBusDesignMapService
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var triggeredAt = FindTriggerLocations(sourceFiles, definition.EventClassName);
+                var triggeredAt = sourceFiles.Count > 0
+                    ? FindTriggerLocations(sourceFiles, definition.EventClassName)
+                    : [];
 
                 var ownedHandlerClasses = handlerClassDetails
                     .Where(x => string.Equals(x.HandledEventName, definition.EventClassName, StringComparison.OrdinalIgnoreCase))
                     .ToList();
 
-                var handledBy = ownedHandlerClasses
+                var handledByFromSource = ownedHandlerClasses
                     .Select(FormatHandledBy)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                var handledByFromRuntime = ResolveRuntimeHandledBy(activeSubscriptions, definition.EventClassName);
+
+                var handledBy = handledByFromSource
+                    .Concat(handledByFromRuntime)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
                     .ToList();
 
                 var chainedTo = ownedHandlerClasses
@@ -136,13 +164,185 @@ public sealed class EventBusDesignMapService : IEventBusDesignMapService
                     isUnused));
             }
 
-            return Task.FromResult<IReadOnlyList<EventBusMapEventItem>>(discoveredItems);
+            return discoveredItems;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to build EventBus design map.");
-            return Task.FromResult<IReadOnlyList<EventBusMapEventItem>>([]);
+            return [];
         }
+    }
+
+    private static List<EventDefinition> LoadRuntimeEventDefinitions()
+    {
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+        return assemblies
+            .SelectMany(GetLoadableTypes)
+            .Where(IsRuntimeEventType)
+            .Select(type => new EventDefinition(
+                type.Name,
+                ResolveCategoryFromRuntimeType(type),
+                type.Assembly.GetName().Name ?? type.Assembly.FullName ?? string.Empty))
+            .ToList();
+    }
+
+    private static List<EventDefinition> LoadLifecycleEventDefinitions(IReadOnlyList<EventLifecycleEntry> lifecycleEntries)
+    {
+        return lifecycleEntries
+            .Where(x => !string.IsNullOrWhiteSpace(x.EventClassName))
+            .Select(x => new EventDefinition(
+                x.EventClassName.Trim(),
+                ResolveCategoryFromLifecycleCategory(x.EventCategory),
+                "LifecycleRegistry"))
+            .ToList();
+    }
+
+    private static List<EventDefinition> MergeEventDefinitions(params IEnumerable<EventDefinition>[] definitions)
+    {
+        return definitions
+            .SelectMany(x => x)
+            .Where(x => !string.IsNullOrWhiteSpace(x.EventClassName))
+            .GroupBy(x => x.EventClassName.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var preferred = group
+                                    .OrderBy(x => GetCategoryPreferenceOrder(x.Category))
+                                    .ThenBy(x => x.SourcePath, StringComparer.OrdinalIgnoreCase)
+                                    .First();
+
+                return new EventDefinition(
+                    preferred.EventClassName.Trim(),
+                    preferred.Category,
+                    preferred.SourcePath);
+            })
+            .ToList();
+    }
+
+    private static int GetCategoryPreferenceOrder(string category)
+    {
+        if (string.Equals(category, "DomainEvent", StringComparison.OrdinalIgnoreCase))
+        {
+            return 0;
+        }
+
+        if (string.Equals(category, "IntegrationEvent", StringComparison.OrdinalIgnoreCase))
+        {
+            return 1;
+        }
+
+        if (string.Equals(category, "UIEvent", StringComparison.OrdinalIgnoreCase))
+        {
+            return 2;
+        }
+
+        return 99;
+    }
+
+    private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+    {
+        try
+        {
+            return assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            return ex.Types.Where(x => x is not null)!;
+        }
+    }
+
+    private static bool IsRuntimeEventType(Type type)
+    {
+        if (type.IsAbstract || type.IsInterface)
+        {
+            return false;
+        }
+
+        if (type.Namespace is null || !type.Namespace.StartsWith("SMS_Domain.Events", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        return typeof(IBaseDomainEvent).IsAssignableFrom(type)
+               || typeof(IBaseIntegrationEvent).IsAssignableFrom(type)
+               || typeof(IBaseUIEvent).IsAssignableFrom(type);
+    }
+
+    private static string ResolveCategoryFromRuntimeType(Type eventType)
+    {
+        if (typeof(IBaseDomainEvent).IsAssignableFrom(eventType))
+        {
+            return "DomainEvent";
+        }
+
+        if (typeof(IBaseIntegrationEvent).IsAssignableFrom(eventType))
+        {
+            return "IntegrationEvent";
+        }
+
+        if (typeof(IBaseUIEvent).IsAssignableFrom(eventType))
+        {
+            return "UIEvent";
+        }
+
+        return "Unknown";
+    }
+
+    private static string ResolveCategoryFromLifecycleCategory(EventCategory eventCategory)
+    {
+        if (eventCategory == EventCategory.DomainEvent)
+        {
+            return "DomainEvent";
+        }
+
+        if (eventCategory == EventCategory.IntegrationEvent)
+        {
+            return "IntegrationEvent";
+        }
+
+        if (eventCategory == EventCategory.UIEvent)
+        {
+            return "UIEvent";
+        }
+
+        return "Unknown";
+    }
+
+    private async Task<Dictionary<string, List<string>>> SafeGetActiveSubscriptionsAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        try
+        {
+            var subscriptions = await _eventBus.GetActiveSubscriptionsAsync();
+
+            return subscriptions
+                .Where(x => !string.IsNullOrWhiteSpace(x.Key))
+                .ToDictionary(
+                    x => x.Key.Trim(),
+                    x => x.Value ?? [],
+                    StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to resolve active EventBus subscriptions for design-map runtime metadata.");
+            return new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    private static IReadOnlyList<string> ResolveRuntimeHandledBy(Dictionary<string, List<string>> activeSubscriptions, string eventClassName)
+    {
+        if (!activeSubscriptions.TryGetValue(eventClassName, out var handlers) || handlers.Count == 0)
+        {
+            return [];
+        }
+
+        return handlers
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => $"{x.Trim()} (runtime subscription)")
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     private static string? ResolveRepositoryRoot(string contentRootPath)

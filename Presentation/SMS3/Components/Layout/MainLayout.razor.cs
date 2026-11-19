@@ -111,16 +111,15 @@ public partial class MainLayout
             return;
         }
 
-        if (title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase)
-            && message.Contains("StaleTimeout", StringComparison.OrdinalIgnoreCase))
+        if (IsRecordLockEvent(title))
         {
             await InvokeAsync(() =>
             {
                 _notificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Info,
-                    Summary = "Record Lock Released",
-                    Detail = "Record lock has been released.",
+                    Summary = GetRecordLockSummary(title),
+                    Detail = BuildCompactRecordLockDetail(message),
                     Duration = duration
                 });
             });
@@ -137,6 +136,98 @@ public partial class MainLayout
                 Duration = duration
             });
         });
+    }
+
+    private static bool IsRecordLockEvent(string title)
+    {
+        return title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
+            || title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string GetRecordLockSummary(string title)
+    {
+        if (title.Contains(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase))
+        {
+            return "Record Lock";
+        }
+
+        if (title.Contains(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
+        {
+            return "Record Unlock";
+        }
+
+        return title;
+    }
+
+    private static string BuildCompactRecordLockDetail(string? message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return "Record lock state updated.";
+        }
+
+        if (message.Contains("StaleTimeout", StringComparison.OrdinalIgnoreCase))
+        {
+            return "ACT: StaleTimeout | REC: n/a";
+        }
+
+        var action = message.Split(';', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim();
+        var lockKey = LiveUpdateRecordLockMessage.TryExtractLockKey(message);
+        var userCode = LiveUpdateRecordLockMessage.TryExtractUserCode(message);
+        var heartbeat = TryExtractHeartbeat(message);
+
+        var recordCode = lockKey;
+        if (!string.IsNullOrWhiteSpace(lockKey) && LiveUpdateRecordLock.TryGetReportCode(lockKey, out var reportCode))
+        {
+            recordCode = reportCode;
+        }
+
+        var segments = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(action))
+        {
+            segments.Add($"ACT: {action}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(recordCode))
+        {
+            segments.Add($"REC: {recordCode}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(userCode))
+        {
+            segments.Add($"UC: {userCode}");
+        }
+
+        if (heartbeat.HasValue)
+        {
+            segments.Add($"HB: {(heartbeat.Value ? "1" : "0")}");
+        }
+
+        return segments.Count == 0
+            ? "Record lock state updated."
+            : string.Join(" | ", segments);
+    }
+
+    private static bool? TryExtractHeartbeat(string message)
+    {
+        const string marker = "Heartbeat=";
+        var markerIndex = message.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0)
+        {
+            return null;
+        }
+
+        var heartbeatValue = message[(markerIndex + marker.Length)..].Trim();
+        var delimiterIndex = heartbeatValue.IndexOf(';');
+        if (delimiterIndex >= 0)
+        {
+            heartbeatValue = heartbeatValue[..delimiterIndex].Trim();
+        }
+
+        return bool.TryParse(heartbeatValue, out var parsedValue)
+            ? parsedValue
+            : null;
     }
 
     public void Dispose()

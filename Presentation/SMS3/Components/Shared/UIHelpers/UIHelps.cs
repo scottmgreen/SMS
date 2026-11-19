@@ -408,26 +408,92 @@ public interface INotificationHelper
     Task ShowWarningAsync(string message, int duration = 5000);
 }
 
+public interface IUiNotificationPublisher
+{
+    Task PublishAsync(
+        UINotificationSeverity severity,
+        string title,
+        string message,
+        int duration = 5000,
+        string category = "UserAction",
+        string sourceLayer = "Presentation",
+        string? targetUserCode = null,
+        string? targetSessionKey = null,
+        Dictionary<string, object>? metadata = null);
+}
+
+public sealed class UiNotificationPublisher : IUiNotificationPublisher
+{
+    private readonly IBaseEventBus _eventBus;
+    private readonly ILogger<UiNotificationPublisher> _logger;
+
+    public UiNotificationPublisher(
+        IBaseEventBus eventBus,
+        ILogger<UiNotificationPublisher> logger)
+    {
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task PublishAsync(
+        UINotificationSeverity severity,
+        string title,
+        string message,
+        int duration = 5000,
+        string category = "UserAction",
+        string sourceLayer = "Presentation",
+        string? targetUserCode = null,
+        string? targetSessionKey = null,
+        Dictionary<string, object>? metadata = null)
+    {
+        var effectiveMetadata = metadata is not null
+            ? new Dictionary<string, object>(metadata)
+            : new Dictionary<string, object>();
+
+        if (!string.IsNullOrWhiteSpace(targetUserCode))
+        {
+            effectiveMetadata["TargetUserCode"] = targetUserCode;
+        }
+
+        if (!string.IsNullOrWhiteSpace(targetSessionKey))
+        {
+            effectiveMetadata["TargetSessionKey"] = targetSessionKey;
+        }
+
+        var uiEvent = new UINotificationEvent(
+            severity,
+            title,
+            message,
+            duration,
+            category: category,
+            sourceLayer: sourceLayer,
+            metadata: effectiveMetadata);
+
+        var result = await _eventBus.PublishUIEventAsync(uiEvent);
+        if (!result.IsSuccess)
+        {
+            _logger.LogWarning("Failed to publish UI notification event: {ErrorMessage}", result.Error?.Message);
+        }
+    }
+}
+
 /// <summary>
 /// Notification helper service that routes all toasts through the EventBus UI notification pipeline
 /// </summary>
 public sealed class NotificationHelper : INotificationHelper
 {
-    private readonly IBaseEventBus _eventBus;
+    private readonly IUiNotificationPublisher _uiNotificationPublisher;
     private readonly ICurrentUserService _currentUserService;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly ILogger<NotificationHelper> _logger;
 
     public NotificationHelper(
-        IBaseEventBus eventBus,
+        IUiNotificationPublisher uiNotificationPublisher,
         ICurrentUserService currentUserService,
-        IHttpContextAccessor httpContextAccessor,
-        ILogger<NotificationHelper> logger)
+        IHttpContextAccessor httpContextAccessor)
     {
-        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _uiNotificationPublisher = uiNotificationPublisher ?? throw new ArgumentNullException(nameof(uiNotificationPublisher));
         _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
         _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task ShowSuccessAsync(string message, int duration = 4000)
@@ -455,32 +521,15 @@ public sealed class NotificationHelper : INotificationHelper
         var targetUserCode = _currentUserService?.UserCode;
         var targetSessionKey = BuildCurrentSessionKey();
 
-        var metadata = new Dictionary<string, object>();
-
-        if (!string.IsNullOrWhiteSpace(targetUserCode))
-        {
-            metadata["TargetUserCode"] = targetUserCode;
-        }
-
-        if (!string.IsNullOrWhiteSpace(targetSessionKey))
-        {
-            metadata["TargetSessionKey"] = targetSessionKey;
-        }
-
-        var uiEvent = new UINotificationEvent(
+        await _uiNotificationPublisher.PublishAsync(
             severity,
             title,
             message,
             duration,
             category: "UserAction",
             sourceLayer: "Presentation",
-            metadata: metadata);
-
-        var result = await _eventBus.PublishUIEventAsync(uiEvent);
-        if (!result.IsSuccess)
-        {
-            _logger.LogWarning("Failed to publish UI notification event: {ErrorMessage}", result.Error?.Message);
-        }
+            targetUserCode: targetUserCode,
+            targetSessionKey: targetSessionKey);
     }
 
     private string BuildCurrentSessionKey()

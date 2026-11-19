@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.SignalR;
-using Radzen;
 using SMS_Application.Interfaces;
+using SMS_Domain.Events;
 using SMS_Domain.Enums;
 using SMS3.Components.Shared;
+using SMS3.Components.Shared.UIHelpers;
 using SMS3.Hubs.Contracts;
 
 namespace SMS3.Hubs;
@@ -11,13 +12,16 @@ public class LiveUpdatesPublisher : ILiveUpdatesPublisher
 {
     private readonly IHubContext<LiveUpdatesHub> _hubContext;
     private readonly IActiveUserSessionRegistry _activeUserSessionRegistry;
+    private readonly IUiNotificationPublisher _uiNotificationPublisher;
 
     public LiveUpdatesPublisher(
         IHubContext<LiveUpdatesHub> hubContext,
-        IActiveUserSessionRegistry activeUserSessionRegistry)
+        IActiveUserSessionRegistry activeUserSessionRegistry,
+        IUiNotificationPublisher uiNotificationPublisher)
     {
         _hubContext = hubContext;
         _activeUserSessionRegistry = activeUserSessionRegistry;
+        _uiNotificationPublisher = uiNotificationPublisher;
     }
 
     public async Task PublishToApplicationUsersAsync(LiveUpdateEnvelope envelope)
@@ -30,11 +34,13 @@ public class LiveUpdatesPublisher : ILiveUpdatesPublisher
         if (envelope.EventName.Equals(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
             || envelope.EventName.Equals(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
         {
-            await EventBusDispatcher.DispatchNotificationAsync(
-                NotificationSeverity.Info,
+            await _uiNotificationPublisher.PublishAsync(
+                UINotificationSeverity.Info,
                 envelope.EventName,
                 envelope.Message ?? string.Empty,
-                5000);
+                5000,
+                category: "SystemEvent",
+                sourceLayer: "Presentation");
 
             return;
         }
@@ -53,11 +59,13 @@ public class LiveUpdatesPublisher : ILiveUpdatesPublisher
                 ? "Report returned to validation and ready for processing"
                 : "New report submitted";
 
-            await EventBusDispatcher.DispatchNotificationAsync(
-                NotificationSeverity.Info,
+            await _uiNotificationPublisher.PublishAsync(
+                UINotificationSeverity.Info,
                 envelope.EventName,
                 envelope.Message ?? defaultMessage,
                 5000,
+                category: "SystemEvent",
+                sourceLayer: "Presentation",
                 targetUserCode: userCode);
         }
     }
@@ -78,11 +86,13 @@ public class LiveUpdatesPublisher : ILiveUpdatesPublisher
             ? "Report returned to validation and ready for processing"
             : "New report submitted";
 
-        await EventBusDispatcher.DispatchNotificationAsync(
-            NotificationSeverity.Info,
+        await _uiNotificationPublisher.PublishAsync(
+            UINotificationSeverity.Info,
             envelope.EventName,
             envelope.Message ?? fallbackMessage,
             5000,
+            category: "SystemEvent",
+            sourceLayer: "Presentation",
             targetUserCode: userCode);
     }
 }

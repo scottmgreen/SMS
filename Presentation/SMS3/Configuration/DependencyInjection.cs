@@ -108,6 +108,7 @@ public static class DependencyInjection
         services.AddSingleton<IRecordLockStore, RecordLockStore>();
 
         // Notification system with feature management integration
+        services.AddScoped<IUiNotificationPublisher, UiNotificationPublisher>();
         services.AddScoped<INotificationHelper, NotificationHelper>();
         services.AddScoped<INotificationBellRefreshService, NotificationBellRefreshService>();
         services.AddScoped<ILiveUpdatesPublisher, LiveUpdatesPublisher>();

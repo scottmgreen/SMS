@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Entities;
+using System.Globalization;
 
 using Microsoft.Extensions.Logging;
 
@@ -21,16 +22,16 @@ namespace SMS_Application.CommandHandlers;
 public class CreateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateHazardFileCommand, Result<HazardFile>>
 {
     private readonly IHazardFileService _hazardFileService;
-    private readonly HazardFileExternalStorageService _externalStorageService;
+    private readonly HazardFileStorageService _hazardFileStorageService;
     private readonly ILogger<CreateHazardFileCommandHandler> _logger;
 
     public CreateHazardFileCommandHandler(
         IHazardFileService hazardFileService,
-        HazardFileExternalStorageService externalStorageService,
+        HazardFileStorageService hazardFileStorageService,
         ILogger<CreateHazardFileCommandHandler> logger)
     {
         _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
-        _externalStorageService = externalStorageService ?? throw new ArgumentNullException(nameof(externalStorageService));
+        _hazardFileStorageService = hazardFileStorageService ?? throw new ArgumentNullException(nameof(hazardFileStorageService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -46,13 +47,18 @@ public class CreateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHan
 
             _logger.LogApplicationInformation(" Processing CreateHazardFileCommand for Code: {Code}", request.HazardFile.Code);
 
-            var shouldPrepareExternalStorage =
+            if (string.IsNullOrWhiteSpace(request.HazardFile.FileSize) && request.HazardFile.FileSizeBytes > 0)
+            {
+                request.HazardFile.FileSize = request.HazardFile.FileSizeBytes.ToString(CultureInfo.InvariantCulture);
+            }
+
+            var shouldStoreFile =
                 !string.IsNullOrWhiteSpace(request.HazardFile.HazardCode)
                 && request.HazardFile.FileData is { Length: > 0 };
 
-            if (shouldPrepareExternalStorage)
+            if (shouldStoreFile)
             {
-                var preparationResult = await _externalStorageService.PrepareHazardFileForStorageAsync(
+                var preparationResult = await _hazardFileStorageService.StoreHazardFileAsync(
                     request.HazardFile,
                     request.HazardFile.FileData!,
                     cancellationToken);

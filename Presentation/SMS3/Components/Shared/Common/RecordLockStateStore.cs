@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
-using Radzen;
 
 using SMS3.Components.Shared.UIHelpers;
+using SMS_Domain.Events;
 using SMS3.Hubs.Contracts;
 
 namespace SMS3.Components.Shared;
@@ -304,8 +304,23 @@ public static class RecordLockStateStore
         {
             try
             {
+                using var scope = ServiceLocator.Current?.CreateScope();
+                var uiNotificationPublisher = scope?.ServiceProvider.GetService<IUiNotificationPublisher>();
+                if (uiNotificationPublisher is not null)
+                {
+                    await uiNotificationPublisher.PublishAsync(
+                        UINotificationSeverity.Info,
+                        LiveUpdateEventNames.RecordEditReleased,
+                        LiveUpdateRecordLockMessage.Build(lockKey!, "StaleTimeout"),
+                        3000,
+                        category: "SystemEvent",
+                        sourceLayer: "Presentation");
+
+                    return;
+                }
+
                 await EventBusDispatcher.DispatchNotificationAsync(
-                    NotificationSeverity.Info,
+                    Radzen.NotificationSeverity.Info,
                     LiveUpdateEventNames.RecordEditReleased,
                     LiveUpdateRecordLockMessage.Build(lockKey!, "StaleTimeout"),
                     3000);

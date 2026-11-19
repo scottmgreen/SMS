@@ -2186,7 +2186,9 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             StorageType = "Database",
                             FilePath = null,
                             FileData = attachedFile.Data,
-                            UploadedBy = HazardReport.SubmittedBy ?? _currentUserService.UserCode,
+                            UploadedBy = string.IsNullOrWhiteSpace(_currentUserService.UserCode)
+                                ? SystemConstants.FlyPdxApiSource
+                                : _currentUserService.UserCode,
                             UploadedDate = DateTime.Now,
                             IsActive = true,
                             IsConfidential = HazardReport.IsAnonymous

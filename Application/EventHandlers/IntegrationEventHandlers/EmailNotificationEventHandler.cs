@@ -480,6 +480,13 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
         foreach (var recipient in recipients.Where(r => !string.IsNullOrWhiteSpace(r)))
         {
             var normalizedRecipient = recipient.Trim();
+
+            if (!enforceGroupContactOnly && IsValidEmail(normalizedRecipient))
+            {
+                resolved.Add(normalizedRecipient);
+                continue;
+            }
+
             var groupContactEmails = await ResolveGroupContactEmailsForRecipientAsync(normalizedRecipient, cancellationToken);
 
             if (groupContactEmails.Count > 0)

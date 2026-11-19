@@ -9,6 +9,8 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.IdentityModel.Tokens;
+using System.Net;
+using System.Net.Http.Headers;
 
 using SMS_Application.Interfaces;
 using SMS_Application.Commands;
@@ -40,6 +42,7 @@ namespace SMS3.Api.Services
         private readonly IBaseEventBus _eventBus;
         private readonly ILiveUpdatesPublisher _liveUpdatesPublisher;
         private readonly WorkflowStatusSyncService _workflowStatusSyncService;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
         private readonly ILogger<PDXSMSApiService> _logger;
 
@@ -48,6 +51,7 @@ namespace SMS3.Api.Services
             IBaseEventBus eventBus,
             ILiveUpdatesPublisher liveUpdatesPublisher,
             WorkflowStatusSyncService workflowStatusSyncService,
+            IHttpClientFactory httpClientFactory,
             IConfiguration configuration,
             ILogger<PDXSMSApiService> logger)
         {
@@ -55,6 +59,7 @@ namespace SMS3.Api.Services
             _eventBus = eventBus;
             _liveUpdatesPublisher = liveUpdatesPublisher;
             _workflowStatusSyncService = workflowStatusSyncService;
+            _httpClientFactory = httpClientFactory;
             _configuration = configuration;
             _logger = logger;
         }
@@ -441,6 +446,8 @@ namespace SMS3.Api.Services
                     string storageType;
                     string? filePath = null;
                     long fileSizeBytes = 0;
+                    var effectiveFileName = attachment.FileName;
+                    var effectiveFileType = Path.GetExtension(attachment.FileName)?.TrimStart('.') ?? "unknown";
 
                     // If bytes are present, treat as direct upload fallback and persist in Database storage.
                     if (hasBase64Content)
@@ -507,6 +514,18 @@ namespace SMS3.Api.Services
 
                         storageType = "Cloud";
                         filePath = normalizedFileUri;
+
+                        if (TryGetFileNameFromUri(normalizedFileUri, out var uriFileName))
+                        {
+                            effectiveFileName = uriFileName;
+                        }
+
+                        if (TryGetFileTypeFromUri(normalizedFileUri, out var uriFileType))
+                        {
+                            effectiveFileType = uriFileType;
+                        }
+
+                        fileSizeBytes = await TryGetFileSizeBytesFromUriAsync(normalizedFileUri);
                     }
 
                     // Create hazard file entity
@@ -515,8 +534,8 @@ namespace SMS3.Api.Services
                         Code = "HF-0000", // Database will generate actual code
                         HazardCode = hazardCode,
                         ReportCode = reportCode,
-                        FileName = attachment.FileName,
-                        FileType = Path.GetExtension(attachment.FileName)?.TrimStart('.') ?? "unknown",
+                        FileName = effectiveFileName,
+                        FileType = effectiveFileType,
                         ContentType = attachment.ContentType ?? "application/octet-stream",
                         FileSizeBytes = fileSizeBytes,
                         StorageType = storageType,
@@ -557,6 +576,131 @@ namespace SMS3.Api.Services
                 processedFiles, failedFiles);
 
             return (processedFiles, failedFiles);
+        }
+
+        private static bool TryGetFileNameFromUri(string fileUri, out string fileName)
+        {
+            fileName = string.Empty;
+
+            if (!Uri.TryCreate(fileUri, UriKind.Absolute, out var parsedUri))
+            {
+                return false;
+            }
+
+            var decodedPath = Uri.UnescapeDataString(parsedUri.AbsolutePath ?? string.Empty);
+            if (string.IsNullOrWhiteSpace(decodedPath))
+            {
+                return false;
+            }
+
+            var segments = decodedPath
+                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .Select(segment => segment.Trim())
+                .Where(segment => !string.IsNullOrWhiteSpace(segment))
+                .ToList();
+
+            if (segments.Count == 0)
+            {
+                return false;
+            }
+
+            var guidSegment = segments.FirstOrDefault(segment => Guid.TryParse(segment, out _));
+            var leafSegment = segments[^1];
+
+            if (!string.IsNullOrWhiteSpace(guidSegment))
+            {
+                fileName = Guid.TryParse(guidSegment, out var parsedGuid)
+                    ? parsedGuid.ToString("D").ToUpperInvariant()
+                    : guidSegment.ToUpperInvariant();
+                return true;
+            }
+
+            var candidate = Path.GetFileName(leafSegment);
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                return false;
+            }
+
+            fileName = candidate;
+            return true;
+        }
+
+        private static bool TryGetFileTypeFromUri(string fileUri, out string fileType)
+        {
+            fileType = string.Empty;
+
+            if (!Uri.TryCreate(fileUri, UriKind.Absolute, out var parsedUri))
+            {
+                return false;
+            }
+
+            var leafSegment = Path.GetFileName(Uri.UnescapeDataString(parsedUri.AbsolutePath ?? string.Empty));
+            if (string.IsNullOrWhiteSpace(leafSegment))
+            {
+                return false;
+            }
+
+            var extension = Path.GetExtension(leafSegment)?.TrimStart('.');
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                return false;
+            }
+
+            fileType = extension;
+            return true;
+        }
+
+        private async Task<long> TryGetFileSizeBytesFromUriAsync(string fileUri)
+        {
+            try
+            {
+                using var httpClient = _httpClientFactory.CreateClient();
+
+                using var headRequest = new HttpRequestMessage(HttpMethod.Head, fileUri);
+                headRequest.Version = HttpVersion.Version11;
+                headRequest.VersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
+
+                using var headResponse = await httpClient.SendAsync(headRequest, HttpCompletionOption.ResponseHeadersRead);
+                if (headResponse.IsSuccessStatusCode
+                    && headResponse.Content.Headers.ContentLength is long headContentLength
+                    && headContentLength >= 0)
+                {
+                    return headContentLength;
+                }
+
+                if (headResponse.StatusCode == HttpStatusCode.MethodNotAllowed
+                    || !headResponse.Content.Headers.ContentLength.HasValue)
+                {
+                    using var rangeRequest = new HttpRequestMessage(HttpMethod.Get, fileUri);
+                    rangeRequest.Headers.Range = new RangeHeaderValue(0, 0);
+                    rangeRequest.Version = HttpVersion.Version11;
+                    rangeRequest.VersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
+
+                    using var rangeResponse = await httpClient.SendAsync(rangeRequest, HttpCompletionOption.ResponseHeadersRead);
+                    if (rangeResponse.Content.Headers.ContentRange?.Length is long totalLength && totalLength >= 0)
+                    {
+                        return totalLength;
+                    }
+
+                    if (rangeResponse.IsSuccessStatusCode
+                        && rangeResponse.Content.Headers.ContentLength is long rangeContentLength
+                        && rangeContentLength >= 0)
+                    {
+                        return rangeContentLength;
+                    }
+                }
+
+                _logger.LogWarning(
+                    "Could not derive attachment file size from URI. FileUri={FileUri}; HeadStatusCode={StatusCode}",
+                    fileUri,
+                    (int)headResponse.StatusCode);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to derive attachment file size from URI. FileUri={FileUri}", fileUri);
+            }
+
+            return 0;
         }
 
         #region Private Helper Methods

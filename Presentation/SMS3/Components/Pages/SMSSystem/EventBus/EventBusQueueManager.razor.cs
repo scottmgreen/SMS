@@ -7,21 +7,11 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using System.Text;
-using Radzen;
-using Radzen.Blazor;
-using SMS_Application.Interfaces;
-using SMS_Application.Commands;
-using SMS_Application.Queries;
-
-using SMS_Domain.Enums;
 using SMS_Domain.Events;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
+
 using SMS3.Components.Shared.UIHelpers;
+
+using System.Text;
 
 namespace SMS3.Components.Pages.SMSSystem.EventBus;
 
@@ -511,19 +501,22 @@ public partial class EventBusQueueManager
                         ? "SMS Integrated Email Template"
                         : "Generic Email Template";
 
+                    var deferSendToQueueExecution = templateSelection == true
+                        && queuedEvent.Status == QueuedEventStatus.Pending;
+
                     var dialogParameters = new Dictionary<string, object?>
                     {
                         { "InitialModel", model },
-                        { "DeferSendToQueueExecution", queuedEvent.Status == QueuedEventStatus.Pending },
+                        { "DeferSendToQueueExecution", deferSendToQueueExecution },
                         { "DialogTitleOverride", dialogTitle }
                     };
 
                     var dialogResult = templateSelection == true
-                        ? await _dialogService.OpenAsync<Components.EmailComposeDialog>(
+                        ? await _dialogService.OpenAsync<Components.IntegratedEmailCompose>(
                             string.Empty,
                             dialogParameters,
                             new DialogOptions { Width = "1050px", Height = "900px", Resizable = true, Draggable = true, ShowClose = false, ShowTitle = false, CssClass = "sms-email-compose-dialog" })
-                        : await _dialogService.OpenAsync<Components.GenericComposeDialog>(
+                        : await _dialogService.OpenAsync<Components.GenericEmailCompose>(
                             string.Empty,
                             dialogParameters,
                             new DialogOptions { Width = "1050px", Height = "900px", Resizable = true, Draggable = true, ShowClose = false, ShowTitle = false, CssClass = "sms-email-compose-dialog" });
@@ -541,6 +534,25 @@ public partial class EventBusQueueManager
                         await _notificationHelper.ShowSuccessAsync("Email Re-Sent: Email was sent again without changing the original queue record.", 3000);
 
                         _logger.LogInformation("Email queue event {QueueCode} re-sent from queue manager for status {Status}", queueCode, queuedEvent.Status);
+                        return;
+                    }
+
+                    if (templateSelection == false)
+                    {
+                        var cancelResult = await _mediator.SendAsync(new CancelQueuedEventCommand(queueCode, "ManualUI"), CancellationToken.None);
+                        if (cancelResult.IsSuccess)
+                        {
+                            await _notificationHelper.ShowSuccessAsync("Email Sent: Generic template email sent. Original queued event was cancelled.", 3000);
+                            _logger.LogInformation("Generic compose email sent and queued event {QueueCode} cancelled.", queueCode);
+                        }
+                        else
+                        {
+                            await _notificationHelper.ShowWarningAsync("Email sent, but the original queued event could not be cancelled automatically.");
+                            _logger.LogWarning("Generic compose email sent but failed to cancel queued event {QueueCode}: {Error}", queueCode, cancelResult.Error?.Message ?? "Unknown error");
+                        }
+
+                        await LoadQueuedEvents();
+                        await LoadStatistics();
                         return;
                     }
                 }
