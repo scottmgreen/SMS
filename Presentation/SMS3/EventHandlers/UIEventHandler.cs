@@ -26,7 +26,10 @@ public class UIEventHandler : BaseUIEventHandler<UINotificationEvent>
     {
         try
         {
-            if (!IsNotificationEnabled(uiEvent.Severity))
+            var isLockBroadcastEvent = uiEvent.Title.Contains(SMS3.Hubs.Contracts.LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
+                || uiEvent.Title.Contains(SMS3.Hubs.Contracts.LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase);
+
+            if (!isLockBroadcastEvent && !IsNotificationEnabled(uiEvent.Severity))
             {
                 _logger.LogInformation("UINotificationHandler: Skipped {Severity} notification because FeatureManagement toggle is disabled", uiEvent.Severity);
                 return Result.Success();
@@ -54,9 +57,6 @@ public class UIEventHandler : BaseUIEventHandler<UINotificationEvent>
                 && uiEvent.Metadata.TryGetValue("TargetSessionKey", out var targetSessionValue)
                 ? targetSessionValue?.ToString()
                 : null;
-
-            var isLockBroadcastEvent = uiEvent.Title.Contains(SMS3.Hubs.Contracts.LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
-                || uiEvent.Title.Contains(SMS3.Hubs.Contracts.LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase);
 
             // Enforce user-specific toasts when target user is supplied.
             // If no target is supplied, default to the publishing user's session identity.
