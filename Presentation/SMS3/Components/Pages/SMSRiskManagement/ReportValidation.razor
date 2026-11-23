@@ -152,19 +152,12 @@ else
 
                             <!-- Validation Comments -->
                             <RadzenStack Gap="0.25rem">
-                                <RadzenFormField Text="Validation Comments *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                <RadzenFormField Text="Validation Comments" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
                                     <RadzenTextArea @bind-Value="@_validationComments" Rows="4"
                                                     Placeholder="Provide detailed reasoning for your validation decision..."
                                                     Style="width: 100%; min-width: 100%;"
-                                                    class="@(string.IsNullOrWhiteSpace(_validationComments) ? "default-validation-textarea" : "default-success-textarea")" />
+                                                    class="@(!string.IsNullOrWhiteSpace(_validationComments) ? "default-success-textarea" : string.Empty)" />
                                 </RadzenFormField>
-                                @if (string.IsNullOrWhiteSpace(_validationComments))
-                                {
-                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger); margin-top: 0.25rem;">
-                                        <RadzenIcon Icon="error" Style="font-size: 0.875rem; margin-right: 0.25rem;" />
-                                        Validation comments are required
-                                    </RadzenText>
-                                }
                             </RadzenStack>
 
                             <!-- SMS Risk Fields (Conditional) -->

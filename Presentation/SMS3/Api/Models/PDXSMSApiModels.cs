@@ -40,7 +40,7 @@ namespace SMS3.Api.Models;
         public string LocationDescription { get; init; } = string.Empty;
         public decimal? LocationLatitude { get; init; }
         public decimal? LocationLongitude { get; init; }
-        public DateTime? HazardIncidentDateTime { get; init; }
+        public DateTime? IncidentDateTime { get; init; }
         [JsonConverter(typeof(SingleOrArrayConverter<FileAttachment>))]
         public List<FileAttachment>? ReportAttachments { get; init; }
     }

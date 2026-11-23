@@ -5,6 +5,7 @@ using SMS_Domain.Enums;
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Hubs.Contracts;
+using Radzen;
 
 namespace SMS3.Hubs;
 
@@ -34,13 +35,11 @@ public class LiveUpdatesPublisher : ILiveUpdatesPublisher
         if (envelope.EventName.Equals(LiveUpdateEventNames.RecordEditLocked, StringComparison.OrdinalIgnoreCase)
             || envelope.EventName.Equals(LiveUpdateEventNames.RecordEditReleased, StringComparison.OrdinalIgnoreCase))
         {
-            await _uiNotificationPublisher.PublishAsync(
-                UINotificationSeverity.Info,
+            await EventBusDispatcher.DispatchNotificationAsync(
+                NotificationSeverity.Info,
                 envelope.EventName,
                 envelope.Message ?? string.Empty,
-                5000,
-                category: "SystemEvent",
-                sourceLayer: "Presentation");
+                5000);
 
             return;
         }

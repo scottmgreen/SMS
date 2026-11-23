@@ -30,6 +30,7 @@ public partial class MainLayout
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private IWebHostEnvironment _environment { get; set; } = default!;
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
+    [Inject] private IConfiguration _configuration { get; set; } = default!;
     [Inject] private ILogger<MainLayout> _logger { get; set; } = default!;
     [Inject] private NotificationService _notificationService { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -113,6 +114,11 @@ public partial class MainLayout
 
         if (IsRecordLockEvent(title))
         {
+            if (!IsRecordLockToastEnabled())
+            {
+                return;
+            }
+
             await InvokeAsync(() =>
             {
                 _notificationService.Notify(new NotificationMessage
@@ -136,6 +142,11 @@ public partial class MainLayout
                 Duration = duration
             });
         });
+    }
+
+    private bool IsRecordLockToastEnabled()
+    {
+        return _configuration.GetValue<bool?>("NotificationEvents:RecordLockNotification:Enabled") ?? false;
     }
 
     private static bool IsRecordLockEvent(string title)

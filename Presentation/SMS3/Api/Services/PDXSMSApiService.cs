@@ -307,7 +307,7 @@ namespace SMS3.Api.Services
                     SubmittedDate = request.ReportSubmittedDate ?? DateTime.Now,
                     SubmittingDepartment = request.ReportSubmittingDepartment ?? string.Empty,
                     SubmittingDepartmentJobFunction = request.ReportSubmittingDepartmentJobFunction ?? string.Empty,
-                    IncidentDateTime = request.HazardIncidentDateTime ?? DateTime.Now,
+                    IncidentDateTime = request.IncidentDateTime ?? DateTime.Now,
                     IsAnonymous = request.ReportIsAnonymous.GetValueOrDefault(true),
                     ReportContactName = request.ReportContactName ?? string.Empty,
                     ReportContactCell = request.ReportContactCell ?? string.Empty,

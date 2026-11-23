@@ -375,12 +375,6 @@ public partial class ReportValidation : ComponentBase
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(_validationComments))
-            {
-                await _notificationHelper.ShowErrorAsync("Validation comments are required");
-                return;
-            }
-
             // Create validation record first
             await CreateValidationRecord();
 
